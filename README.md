@@ -1,12 +1,12 @@
 # Home Assistant Bring! Shopping Lists API
 
+[![PyPI version](https://badge.fury.io/py/homeassistant-bring-api.svg)](https://badge.fury.io/py/homeassistant-bring-api)
+
 An unofficial python package to access the Bring! shopping lists API.
 
 ## Credits
 
-> This home assistant focused implementation of the api is derived from the generic python implementation by [eliasball](https://github.com/eliasball/python-bring-api). This fork has been synced last time on 2024-02-11 and diverges from that point on to focus on home assistant.
-
-> The implementation of [eliasball](https://github.com/eliasball/python-bring-api) is a **minimal** python port of the [node-bring-api](https://github.com/foxriver76/node-bring-api) by [foxriver76](https://github.com/foxriver76). All credit goes to him for making this awesome API possible!
+> This home assistant focused implementation of the api is derived from the generic python implementation by [eliasball](https://github.com/eliasball/python-bring-api). This fork has been synced last time on 2024-02-11 and diverges from that point on to focus on home assistant. The implementation of [eliasball](https://github.com/eliasball/python-bring-api) is a **minimal** python port of the [node-bring-api](https://github.com/foxriver76/node-bring-api) by [foxriver76](https://github.com/foxriver76). All credit goes to him for making this awesome API possible!
 
 ## Disclaimer
 
