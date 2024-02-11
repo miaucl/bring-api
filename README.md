@@ -30,7 +30,7 @@ import asyncio
 import logging
 import sys
 
-from src.homeassistant_bring_api.bring import Bring
+from homeassistant_bring_api.bring import Bring
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
