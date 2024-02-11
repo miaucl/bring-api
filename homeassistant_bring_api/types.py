@@ -12,7 +12,8 @@ class BringList(TypedDict):
 class BringPurchase(TypedDict):
     """A purchase class. Represents a single item."""
 
-    name: str
+    uuid: str
+    itemId: str
     specification: str
 
 class BringListItemDetails(TypedDict):
@@ -52,6 +53,7 @@ class BringItemsResponse(TypedDict):
     uuid: str
     status: str
     purchase: List[BringPurchase]
+    recently: List[BringPurchase]
 
 class BringListItemsDetailsResponse(List[BringListItemDetails]):
     """A response class of a list of item details."""
