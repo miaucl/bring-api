@@ -517,12 +517,13 @@ class Bring:
                 return r
         except asyncio.TimeoutError as e:
             _LOGGER.error(
-                "Exception: Cannot execute batch operations for list %s:\n%s",
+                "Exception: Cannot execute batch operation %s for list %s:\n%s",
+                operation.name,
                 list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Executing batch operations for list {list_uuid} failed due to connection timeout."
+                f"Operation {operation.name} for list {list_uuid} failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
@@ -531,5 +532,5 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Executing batch operations for list {list_uuid} failed due to request exception."
+                f"Operation {operation.name} for list {list_uuid} failed due to request exception."
             ) from e
