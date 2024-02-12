@@ -71,3 +71,15 @@ class BringNotificationType(Enum):
     CHANGED_LIST = "CHANGED_LIST"
     SHOPPING_DONE = "SHOPPING_DONE"
     URGENT_MESSAGE = "URGENT_MESSAGE"
+
+class BringItem(TypedDict):
+    """A BringItem """
+    itemId: str
+    spec: str
+    uuid: str
+
+class BringItemOperation(Enum):
+    """Operation to be be executed on list items."""
+    ADD = "TO_PURCHASE"
+    COMPLETE = "TO_RECENTLY"
+    REMOVE = "REMOVE"

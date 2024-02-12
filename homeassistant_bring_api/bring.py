@@ -1,12 +1,21 @@
-from json import JSONDecodeError
-import aiohttp
 import asyncio
-import traceback
-
-from .types import BringNotificationType, BringAuthResponse, BringItemsResponse, BringListResponse, BringListItemsDetailsResponse
-from .exceptions import BringAuthException, BringRequestException, BringParseException
-
 import logging
+import traceback
+from json import JSONDecodeError
+from typing import List
+
+import aiohttp
+
+from .exceptions import BringAuthException, BringParseException, BringRequestException
+from .types import (
+    BringAuthResponse,
+    BringItem,
+    BringItemOperation,
+    BringItemsResponse,
+    BringListItemsDetailsResponse,
+    BringListResponse,
+    BringNotificationType,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -443,3 +452,66 @@ class Bring:
         except aiohttp.ClientError as e:
             _LOGGER.error(f'Exception: Cannot send notification {notificationType} for list {listUuid}:\n{traceback.format_exc()}')
             raise BringRequestException(f'Sending notification {notificationType} for list {listUuid} failed due to request exception.') from e
+
+
+    async def change_list(
+        self,
+        list_uuid: str,
+        items: BringItem | List[BringItem],
+        operation: BringItemOperation = BringItemOperation.ADD
+    ) -> aiohttp.ClientResponse:
+        """
+        Batch update items on a shopping list.
+        TODO: add docstring, add translation
+        """
+        _base_params = {
+            "accuracy": "0.0",
+            "altitude": "0.0",
+            "itemId": "",
+            "latitude": "0.0",
+            "longitude": "0.0",
+            "operation": "",
+            "spec": "",
+            "uuid": "",
+        }
+
+        json = {
+            "changes": [],
+            "sender": "",
+        }
+    
+        if isinstance(items, dict):
+            items = [items]
+        for item in items:
+            json["changes"].append( {
+                **_base_params,
+                **item,
+                "operation": operation.value
+            })
+
+        try:
+            url = f"{self.url}bringlists/{list_uuid}/items"
+            async with self._session.put(
+                url, headers=self.postHeaders, json=json
+            ) as r:
+                _LOGGER.debug("Response from %s: %s", url, r.status)
+                r.raise_for_status()
+                return r
+        except asyncio.TimeoutError as e:
+            _LOGGER.error(
+                "Exception: Cannot execute batch operations for list %s:\n%s",
+                list_uuid,
+                traceback.format_exc(),
+            )
+            raise BringRequestException(
+                f"Executing batch operations for list {list_uuid} failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.error(
+                "Exception: Cannot execute batch operations for %s:\n%s",
+                list_uuid,
+                traceback.format_exc(),
+            )
+            raise BringRequestException(
+                f"Executing batch operations for list {list_uuid} failed due to request exception."
+            ) from e
