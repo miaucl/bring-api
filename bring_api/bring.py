@@ -510,7 +510,7 @@ class Bring:
         try:
             url = f"{self.url}bringlists/{list_uuid}/items"
             async with self._session.put(
-                url, headers=self.postHeaders, json=json
+                url, headers=self.headers, json=json
             ) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
