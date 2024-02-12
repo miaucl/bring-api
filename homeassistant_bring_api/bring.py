@@ -1,12 +1,26 @@
-from json import JSONDecodeError
-import aiohttp
+"""Home Assistant Bring API."""
+
 import asyncio
-import traceback
-
-from .types import BringNotificationType, BringAuthResponse, BringItemsResponse, BringListResponse, BringListItemsDetailsResponse
-from .exceptions import BringAuthException, BringRequestException, BringParseException
-
 import logging
+import traceback
+from json import JSONDecodeError
+
+import aiohttp
+
+from .exceptions import (
+    BringAuthException,
+    BringEMailInvalidException,
+    BringParseException,
+    BringRequestException,
+    BringUserUnknownException,
+)
+from .types import (
+    BringAuthResponse,
+    BringItemsResponse,
+    BringListItemsDetailsResponse,
+    BringListResponse,
+    BringNotificationType,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -443,3 +457,78 @@ class Bring:
         except aiohttp.ClientError as e:
             _LOGGER.error(f'Exception: Cannot send notification {notificationType} for list {listUuid}:\n{traceback.format_exc()}')
             raise BringRequestException(f'Sending notification {notificationType} for list {listUuid} failed due to request exception.') from e
+
+
+
+    async def checkemail(self, mail: str = None) -> bool:
+        """
+        Validate if an e-mail is valid and if user exists.
+        
+        Parameters
+        ----------
+        mail : str
+            An e-mail address.
+            
+        Returns
+        -------
+        bool
+            True if user exists.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
+        BringEMailInvalidException
+            If emailValid is false
+        BringUserUnknownException
+            If userExists is false
+        """
+        mail = mail or self.mail
+
+        if not mail:
+            raise ValueError('Argument mail missing.')
+
+        params = { 'email': mail }
+
+        try:
+            url = f'{self.url}bringauth/checkemail'
+            async with self._session.get(url, headers=self.headers, params=params) as r:
+                _LOGGER.debug('Response from %s: %s', url, r.status)
+                r.raise_for_status()
+
+                try:
+                    data = await r.json()
+                except JSONDecodeError as e:
+                    _LOGGER.error(
+                        "Exception: Cannot get verification for %s:\n%s",
+                        mail,
+                        traceback.format_exc(),
+                    )
+                    raise BringParseException(
+                        "Verifying email failed during parsing of request response."
+                    ) from e
+        except asyncio.TimeoutError as e:
+            _LOGGER.error(
+                "Exception: Cannot get verification for %s:\n%s", mail, traceback.format_exc()
+            )
+            raise BringRequestException(
+                "Verifying email failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.error(
+                "Exception: Cannot get verification for %s:\n%s", mail, traceback.format_exc()
+            )
+            raise BringRequestException(
+                "Verifying email failed due to request exception."
+            ) from e
+
+        if not data['emailValid']:
+            _LOGGER.error('Exception: E-mail %s is invalid.', mail)
+            raise BringEMailInvalidException(f'E-mail {mail} is invalid.')
+        if not data['userExists']:
+            _LOGGER.error('Exception: User %s does not exist.', mail)
+            raise BringUserUnknownException(f'User {mail} does not exist.')
+
+        return True
