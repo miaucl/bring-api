@@ -462,7 +462,25 @@ class Bring:
     ) -> aiohttp.ClientResponse:
         """
         Batch update items on a shopping list.
-        TODO: add docstring, add translation
+        
+        Parameters
+        ----------
+        list_uuid : str
+            The listUuid of the list to make the changes to 
+        items : BringItem or List of BringItem
+            Item(s) to add, complete or remove from the list
+        operation : BringItemOperation
+            The Operation (ADD, COMPLETE, RMEOVE) to perform for the supplied on the list
+
+        Returns
+        -------
+        Response
+            The server response object.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
         """
         _base_params = {
             "accuracy": "0.0",
@@ -479,7 +497,7 @@ class Bring:
             "changes": [],
             "sender": "",
         }
-    
+
         if isinstance(items, dict):
             items = [items]
         for item in items:
