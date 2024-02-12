@@ -470,7 +470,7 @@ class Bring:
         items : BringItem or List of BringItem
             Item(s) to add, complete or remove from the list
         operation : BringItemOperation
-            The Operation (ADD, COMPLETE, RMEOVE) to perform for the supplied on the list
+            The Operation (ADD, COMPLETE, REMOVE) to perform for the supplied items on the list
 
         Returns
         -------
