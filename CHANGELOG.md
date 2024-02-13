@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.2
+
+Add ruff as formatter and linter.
+
 ## 0.1.1
 
 Change name of package to `bring-api`.
