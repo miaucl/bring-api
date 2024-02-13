@@ -95,3 +95,26 @@ You can fix this according to [this](https://stackoverflow.com/questions/6812329
 ```python
 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 ```
+
+## Dev
+
+Setup the dev environment using VSCode, is is highly recommended.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements_dev.txt
+```
+
+Install [pre-commit](https://pre-commit.com)
+
+```bash
+pre-commit install
+
+# Run the commit hooks manually
+pre-commit run --all-files
+```
+
+Following VSCode integrations may be helpful:
+
+* [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
