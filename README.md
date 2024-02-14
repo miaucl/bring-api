@@ -63,6 +63,113 @@ async def main():
 asyncio.run(main())
 ```
 
+## Manipulating lists with `change_list`
+
+This method uses the newer API endpoint for adding, completing and removing items from a list, which is also used in the Bring App. The items can be identified by their uuid and therefore some things are possible that are not possible with the legacy endpoints like:
+- Add/complete/remove multiple items at once
+- Adding multiple items with the same Name but different specifications
+- You can work with a unique identifier for an item even before adding it to a list, just use uuid4 to generate a random uuid!
+
+Usage examples:
+
+### Add an item 
+
+```python
+item = {
+  "itemId": "Cilantro",
+  "spec": "fresh",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+}
+await bring.change_list(
+  lists[0]['listUuid'],
+  item,
+  BringItemOperation.ADD)
+```
+
+### Multiple items
+
+```python
+# multiple items can be passed as list of items
+items = [{
+  "itemId": "Cilantro",
+  "spec": "fresh",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+},
+{
+  "itemId": "Parsley",
+  "spec": "dried",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+}]
+await bring.change_list(
+  lists[0]['listUuid'],
+  items,
+  BringItemOperation.ADD)
+```
+
+### Add multiple items with the same name but different specifications.
+
+When adding items with the same name the parameter `uuid` is required, otherwise the previous item will be matched by `itemId` and it's specification will be overwritten
+
+```python
+items = [
+  {
+    "itemId": "Cilantro",
+    "spec": "100g, dried",
+    "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+  },
+    {
+    "itemId": "Cilantro",
+    "spec": "fresh",
+    "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+  }
+]
+await bring.change_list(
+  lists[0]['listUuid'],
+  items,
+  BringItemOperation.ADD)
+```
+
+### Removing or completing an item only with the uuid
+
+The Bring App still submits the `itemId` and `spec` parameters, but leaving them out works just fine. Leaving out the `uuid` and submitting `itemId` and `spec` will also work. When submitting only `itemId` the Bring API will then match what fits best if there are multiple items with the same `itemId` on the list.
+
+```python
+await bring.change_list(
+  lists[0]['listUuid'],
+  {"uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
+  BringItemOperation.REMOVE)
+
+await bring.change_list(
+  lists[0]['listUuid'],
+  {"uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
+  BringItemOperation.COMPLETE)  
+```
+
+### Renaming an item (not recommended)
+
+An item that is already on the list can be renamed by sending it's `uuid` with a changed `itemId`. But it is highly advised against it because the Bring App will behave weirdly as it does not refresh an items name, not even when force reloading (go to the top of the list and pulling down). Users have to close the list by going to the overview or closing the app and only then when the list is completely refreshed the change of the name will show up.
+
+```python
+# Add an item
+item = {
+  "itemId": "Cilantro",
+  "uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+}
+await bring.change_list(
+  lists[0]['listUuid'],
+  item,
+  BringItemOperation.ADD)
+
+# Rename the item, and submit it again with the same uuid
+item["itemId"] = "Coriander"
+await bring.change_list(
+  lists[0]['listUuid'],
+  item,
+  BringItemOperation.ADD)  
+```
+
+
+
 ## Exceptions
 
 In case something goes wrong during a request, several exceptions can be thrown.
