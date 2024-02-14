@@ -16,7 +16,7 @@ jobs:
     - name: Install pypa/build
       run: >-
         python3 -m
-        pip install
+        pip install -r requirements.txt
         build
         --user
     - name: Build a binary wheel and a source tarball
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/homeassistant-bring-api  # Replace <package-name> with your PyPI project name
+      url: https://pypi.org/p/bring-api  # Replace <package-name> with your PyPI project name
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:

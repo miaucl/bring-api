@@ -1,12 +1,12 @@
-# Home Assistant Bring! Shopping Lists API
+# Bring! Shopping Lists API
 
-[![PyPI version](https://badge.fury.io/py/homeassistant-bring-api.svg)](https://badge.fury.io/py/homeassistant-bring-api)
+[![PyPI version](https://badge.fury.io/py/bring-api.svg)](https://badge.fury.io/py/bring-api)
 
 An unofficial python package to access the Bring! shopping lists API.
 
 ## Credits
 
-> This home assistant focused implementation of the api is derived from the generic python implementation by [eliasball](https://github.com/eliasball/python-bring-api). This fork has been synced last time on 2024-02-11 and diverges from that point on to focus on home assistant. The implementation of [eliasball](https://github.com/eliasball/python-bring-api) is a **minimal** python port of the [node-bring-api](https://github.com/foxriver76/node-bring-api) by [foxriver76](https://github.com/foxriver76). All credit goes to him for making this awesome API possible!
+> This implementation of the api is derived from the generic python implementation by [eliasball](https://github.com/eliasball/python-bring-api), which uses the legacy version of the api. This fork has been synced last time on 2024-02-11 and diverges from that point on using the non-legacy version. The implementation of [eliasball](https://github.com/eliasball/python-bring-api) is a **minimal** python port of the [node-bring-api](https://github.com/foxriver76/node-bring-api) by [foxriver76](https://github.com/foxriver76). All credit goes to him for making this awesome API possible!
 
 ## Disclaimer
 
@@ -14,7 +14,7 @@ The developers of this module are in no way endorsed by or affiliated with Bring
 
 ## Installation
 
-`pip install homeassistant-bring-api`
+`pip install bring-api`
 
 ## Documentation
 
@@ -22,7 +22,7 @@ See below for usage examples. See [Exceptions](#exceptions) for API-specific exc
 
 ## Usage Example
 
-The API is based on the async HTTP library `aiohttp`, which is the preferred method by home assistant.
+The API is based on the async HTTP library `aiohttp`.
 
 ```python
 import aiohttp
@@ -30,7 +30,7 @@ import asyncio
 import logging
 import sys
 
-from homeassistant_bring_api.bring import Bring
+from bring_api.bring import Bring
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -95,3 +95,26 @@ You can fix this according to [this](https://stackoverflow.com/questions/6812329
 ```python
 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 ```
+
+## Dev
+
+Setup the dev environment using VSCode, is is highly recommended.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements_dev.txt
+```
+
+Install [pre-commit](https://pre-commit.com)
+
+```bash
+pre-commit install
+
+# Run the commit hooks manually
+pre-commit run --all-files
+```
+
+Following VSCode integrations may be helpful:
+
+* [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)

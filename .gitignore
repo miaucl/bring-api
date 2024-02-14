@@ -3,3 +3,4 @@ python_bring_api.egg-info/
 test/
 .venv
 __pycache__
+.ruff_cache
