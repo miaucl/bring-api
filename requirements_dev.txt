@@ -14,6 +14,7 @@ mypy-extensions==1.0.0
 nodeenv==1.8.0
 platformdirs==4.2.0
 pre-commit==3.6.1
+python-dotenv==1.0.1
 PyYAML==6.0.1
 ruff==0.2.1
 tomli==2.0.1
