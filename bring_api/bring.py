@@ -642,7 +642,7 @@ class Bring:
     async def change_list(
         self,
         list_uuid: str,
-        items: BringItem | List[BringItem],
+        items: BringItem | List[BringItem] | list[dict[str, str]],
         operation: BringItemOperation = BringItemOperation.ADD,
     ) -> aiohttp.ClientResponse:
         """Batch update items on a shopping list.
@@ -677,18 +677,14 @@ class Bring:
             "spec": "",
             "uuid": "",
         }
-
-        json = {
-            "changes": [],
-            "sender": "",
-        }
-
         if isinstance(items, dict):
             items = [items]
-        for item in items:
-            json["changes"].append(
-                {**_base_params, **item, "operation": operation.value}
-            )
+        json = {
+            "changes": [
+                {**_base_params, **item, "operation": operation.value} for item in items
+            ],
+            "sender": "",
+        }
 
         try:
             url = f"{self.url}bringlists/{list_uuid}/items"
