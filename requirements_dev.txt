@@ -9,10 +9,15 @@ frozenlist==1.4.1
 identify==2.5.34
 idna==3.6
 multidict==6.0.5
+mypy==1.8.0
+mypy-extensions==1.0.0
 nodeenv==1.8.0
 platformdirs==4.2.0
 pre-commit==3.6.1
+python-dotenv==1.0.1
 PyYAML==6.0.1
 ruff==0.2.1
+tomli==2.0.1
+typing_extensions==4.9.0
 virtualenv==20.25.0
 yarl==1.9.4

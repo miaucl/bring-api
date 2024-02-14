@@ -3,6 +3,7 @@ import asyncio
 from json import JSONDecodeError
 import logging
 import traceback
+from typing import cast
 
 import aiohttp
 
@@ -16,8 +17,10 @@ from .exceptions import (
 from .types import (
     BringAuthResponse,
     BringItemsResponse,
+    BringListItemDetails,
     BringListItemsDetailsResponse,
     BringListResponse,
+    BringNotificationsConfigType,
     BringNotificationType,
 )
 
@@ -86,11 +89,11 @@ class Bring:
             You should check your email and password.
 
         """
-        data = {"email": self.mail, "password": self.password}
+        user_data = {"email": self.mail, "password": self.password}
 
         try:
             url = f"{self.url}bringauth"
-            async with self._session.post(url, data=data) as r:
+            async with self._session.post(url, data=user_data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
 
                 if r.status == 401:
@@ -114,7 +117,14 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = await r.json()
+                    data = cast(
+                        BringAuthResponse,
+                        {
+                            key: val
+                            for key, val in (await r.json()).items()
+                            if key in BringAuthResponse.__annotations__
+                        },
+                    )
                 except JSONDecodeError as e:
                     _LOGGER.error(
                         "Exception: Cannot login:\n %s", traceback.format_exc()
@@ -177,7 +187,15 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    return await r.json()
+                    data = cast(
+                        BringListResponse,
+                        {
+                            key: val
+                            for key, val in (await r.json()).items()
+                            if key in BringListResponse.__annotations__
+                        },
+                    )
+                    return data
                 except JSONDecodeError as e:
                     _LOGGER.error(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
@@ -224,7 +242,15 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    return (await r.json())["items"]
+                    data = cast(
+                        BringItemsResponse,
+                        {
+                            key: val
+                            for key, val in (await r.json())["items"].items()
+                            if key in BringItemsResponse.__annotations__
+                        },
+                    )
+                    return data
                 except JSONDecodeError as e:
                     _LOGGER.error(
                         "Exception: Cannot get items for list %s:\n%s",
@@ -282,7 +308,18 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    return await r.json()
+                    data = [
+                        cast(
+                            BringListItemDetails,
+                            {
+                                key: val
+                                for key, val in item.items()
+                                if key in BringListItemDetails.__annotations__
+                            },
+                        )
+                        for item in (await r.json())["items"]
+                    ]
+                    return cast(BringListItemsDetailsResponse, data)
                 except JSONDecodeError as e:
                     _LOGGER.error(
                         "Exception: Cannot get item details for list %s:\n%s",
@@ -312,7 +349,7 @@ class Bring:
             ) from e
 
     async def saveItem(
-        self, listUuid: str, itemName: str, specification=""
+        self, listUuid: str, itemName: str, specification: str = ""
     ) -> aiohttp.ClientResponse:
         """Save an item to a shopping list.
 
@@ -370,7 +407,7 @@ class Bring:
             ) from e
 
     async def updateItem(
-        self, listUuid: str, itemName: str, specification=""
+        self, listUuid: str, itemName: str, specification: str = ""
     ) -> aiohttp.ClientResponse:
         """Update an existing list item.
 
@@ -532,7 +569,7 @@ class Bring:
         self,
         listUuid: str,
         notificationType: BringNotificationType,
-        itemName: str = None,
+        itemName: str,
     ) -> aiohttp.ClientResponse:
         """Send a push notification to all other members of a shared list.
 
@@ -556,11 +593,11 @@ class Bring:
             If the request fails.
 
         """
-        json = {
-            "arguments": [],
-            "listNotificationType": notificationType.value,
-            "senderPublicUserUuid": self.publicUuid,
-        }
+        json = BringNotificationsConfigType(
+            arguments=[],
+            listNotificationType=notificationType.value,
+            senderPublicUserUuid=self.publicUuid,
+        )
 
         if not isinstance(notificationType, BringNotificationType):
             _LOGGER.error(

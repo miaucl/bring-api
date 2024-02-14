@@ -113,8 +113,15 @@ pre-commit install
 
 # Run the commit hooks manually
 pre-commit run --all-files
+
+# Run tests locally (using a .env file is supported and recommended)
+export EMAIL=...
+export PASSWORD=...
+export LIST=...
+python test.py
 ```
 
 Following VSCode integrations may be helpful:
 
 * [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+* [mypy](https://marketplace.visualstudio.com/items?itemName=matangover.mypy)

@@ -1,0 +1,24 @@
+name: Test
+
+on: [ push, pull_request, workflow_dispatch ]
+
+env:
+  DEFAULT_PYTHON: "3.12"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - uses: actions/setup-python@v5.0.0
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON }}
+          check-latest: true
+      - run: pip install -r requirements.txt
+      - run: pip install python-dotenv 
+      - run: python test.py
+        env:
+          EMAIL: ${{ vars.EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          LIST: ${{ vars.LIST }}
+          
