@@ -84,3 +84,11 @@ class BringNotificationType(Enum):
     CHANGED_LIST = "CHANGED_LIST"
     SHOPPING_DONE = "SHOPPING_DONE"
     URGENT_MESSAGE = "URGENT_MESSAGE"
+
+
+class BringNotificationsConfigType(TypedDict):
+    """A notification config."""
+
+    arguments: List[str]
+    listNotificationType: str
+    senderPublicUserUuid: str
