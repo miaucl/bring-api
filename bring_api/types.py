@@ -86,6 +86,14 @@ class BringNotificationType(Enum):
     URGENT_MESSAGE = "URGENT_MESSAGE"
 
 
+class BringNotificationsConfigType(TypedDict):
+    """A notification config."""
+
+    arguments: List[str]
+    listNotificationType: str
+    senderPublicUserUuid: str
+
+
 class BringItem(TypedDict):
     """A BringItem."""
 

@@ -1,7 +1,9 @@
 {
   "cSpell.words": [
     "aiohttp",
-    "asyncio"
+    "asyncio",
+    "mypy",
+    "venv"
   ],
   "[python]": {
     "editor.formatOnSave": true,
