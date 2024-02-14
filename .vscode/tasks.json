@@ -6,7 +6,7 @@
     {
       "label": "Python: Run Test",
       "type": "shell",
-      "command": ".venv/bin/python test.py",
+      "command": "${command:python.interpreterPath} test.py",
       "problemMatcher": [],
       "group": {
         "kind": "test",
