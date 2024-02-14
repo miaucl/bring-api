@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.3
+
+Add mypy for type-checking.
+
 ## 0.1.2
 
 Add ruff as formatter and linter.

@@ -8,3 +8,16 @@ repos:
         args: [ --fix ]
       # Run the formatter.
       - id: ruff-format
+  - repo: local
+    hooks:
+      # Run mypy through our wrapper script in order to get the possible
+      # pyenv and/or virtualenv activated; it may not have been e.g. if
+      # committing from a GUI tool that was not launched from an activated
+      # shell.
+      - id: mypy
+        name: mypy
+        entry: scripts/run-in-env.sh mypy --strict
+        language: script
+        types: [python]
+        require_serial: true
+        files: ^(bring_api)/.+\.py$

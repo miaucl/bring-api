@@ -118,3 +118,4 @@ pre-commit run --all-files
 Following VSCode integrations may be helpful:
 
 * [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+* [mypy](https://marketplace.visualstudio.com/items?itemName=matangover.mypy)
