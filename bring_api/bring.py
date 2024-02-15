@@ -3,7 +3,7 @@ import asyncio
 from json import JSONDecodeError
 import logging
 import traceback
-from typing import cast
+from typing import Optional, cast
 
 import aiohttp
 
@@ -32,8 +32,31 @@ class Bring:
 
         self.mail = mail
         self.password = password
-        self.uuid = ""
         self.publicUuid = ""
+        self.supported_locales = [
+            "en-AU",
+            "de-DE",
+            "fr-FR",
+            "it-IT",
+            "en-CA",
+            "nl-NL",
+            "nb-NO",
+            "pl-PL",
+            "pt-BR",
+            "ru-RU",
+            "sv-SE",
+            "de-CH",
+            "fr-CH",
+            "it-CH",
+            "es-ES",
+            "tr-TR",
+            "en-GB",
+            "en-US",
+            "hu-HU",
+            "de-AT",
+        ]
+        self.translations: dict[str, dict[str, str]] = {}
+        self.uuid = ""
 
         self.url = "https://api.getbring.com/rest/v2/"
 
@@ -244,6 +267,18 @@ class Bring:
                             if key in BringItemsResponse.__annotations__
                         },
                     )
+
+                    for item in data["purchase"]:
+                        item["itemId"] = await self.translate(
+                            item["itemId"],
+                            to_locale="de-DE",
+                        )
+                    for item in data["recently"]:
+                        item["itemId"] = await self.translate(
+                            item["itemId"],
+                            to_locale="de-DE",
+                        )
+
                     return data
                 except JSONDecodeError as e:
                     _LOGGER.error(
@@ -368,7 +403,10 @@ class Bring:
 
         """
         data = {
-            "purchase": itemName,
+            "purchase": await self.translate(
+                itemName,
+                from_locale="de-DE",
+            ),
             "specification": specification,
         }
         try:
@@ -425,7 +463,13 @@ class Bring:
             If the request fails.
 
         """
-        data = {"purchase": itemName, "specification": specification}
+        data = {
+            "purchase": await self.translate(
+                itemName,
+                from_locale="de-DE",
+            ),
+            "specification": specification,
+        }
         try:
             url = f"{self.url}bringlists/{listUuid}"
             async with self._session.put(url, headers=self.putHeaders, data=data) as r:
@@ -477,7 +521,10 @@ class Bring:
 
         """
         data = {
-            "remove": itemName,
+            "remove": await self.translate(
+                itemName,
+                from_locale="de-DE",
+            ),
         }
         try:
             url = f"{self.url}bringlists/{listUuid}"
@@ -531,7 +578,12 @@ class Bring:
             If the request fails.
 
         """
-        data = {"recently": itemName}
+        data = {
+            "recently": await self.translate(
+                itemName,
+                from_locale="de-DE",
+            )
+        }
         try:
             url = f"{self.url}bringlists/{listUuid}"
             async with self._session.put(url, headers=self.putHeaders, data=data) as r:
@@ -636,3 +688,41 @@ class Bring:
             raise BringRequestException(
                 f"Sending notification {notificationType} for list {listUuid} failed due to request exception."
             ) from e
+
+    async def translate(
+        self,
+        item_id: str,
+        *,
+        to_locale: Optional[str] = None,
+        from_locale: Optional[str] = None,
+    ) -> str:
+        """Translate a catalog item from or to a language."""
+
+        locale = to_locale or from_locale
+
+        if not locale:
+            _LOGGER.debug("One of the arguments from_locale or to_locale required.")
+            raise ValueError("One of the arguments from_locale or to_locale required.")
+
+        if locale not in self.supported_locales:
+            _LOGGER.debug("Locale %s not supported by Bring.", locale)
+            raise ValueError(f"Locale {locale} not supported by Bring.")
+
+        if locale not in self.translations:
+            self.translations[locale] = {
+                "Poulet": "Hähnchen",
+                "Pouletbrüstli": "Hähnchenbrust",
+                "Zucchetti": "Zucchini",
+                "Glacé": "Eis",
+                "Gipfeli": "Croissant",
+                "WC-Papier": "Toilettenpapier",
+            }
+
+        if to_locale:
+            item_id = self.translations[locale].get(item_id, item_id)
+        else:
+            item_id = (
+                {value: key for key, value in self.translations[locale].items()}
+            ).get(item_id, item_id)
+
+        return item_id
