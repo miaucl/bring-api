@@ -35,7 +35,7 @@ class Bring:
         self.uuid = ""
         self.publicUuid = ""
 
-        self.url = "https://api.getbring.com/rest/v2/"
+        self.url = "https://api.getbring.com/rest/"
 
         self.headers = {
             "Authorization": "Bearer",
@@ -86,7 +86,7 @@ class Bring:
         user_data = {"email": self.mail, "password": self.password}
 
         try:
-            url = f"{self.url}bringauth"
+            url = f"{self.url}v2/bringauth"
             async with self._session.post(url, data=user_data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
 
@@ -230,7 +230,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{listUuid}"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -286,6 +286,8 @@ class Bring:
         list
             The JSON response as a list. A list of item details.
             Caution: This is NOT a list of the items currently marked as 'to buy'. See getItems() for that.
+            This contains the items that where customized by changing their default icon, category or uploading
+            an image.
 
         Raises
         ------
@@ -372,7 +374,7 @@ class Bring:
             "specification": specification,
         }
         try:
-            url = f"{self.url}bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{listUuid}"
             async with self._session.put(url, headers=self.putHeaders, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -427,7 +429,7 @@ class Bring:
         """
         data = {"purchase": itemName, "specification": specification}
         try:
-            url = f"{self.url}bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{listUuid}"
             async with self._session.put(url, headers=self.putHeaders, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -480,7 +482,7 @@ class Bring:
             "remove": itemName,
         }
         try:
-            url = f"{self.url}bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{listUuid}"
             async with self._session.put(url, headers=self.putHeaders, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -533,7 +535,7 @@ class Bring:
         """
         data = {"recently": itemName}
         try:
-            url = f"{self.url}bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{listUuid}"
             async with self._session.put(url, headers=self.putHeaders, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -609,7 +611,7 @@ class Bring:
             else:
                 json["arguments"] = [itemName]
         try:
-            url = f"{self.url}bringnotifications/lists/{listUuid}"
+            url = f"{self.url}v2/bringnotifications/lists/{listUuid}"
             async with self._session.post(
                 url, headers=self.postHeaders, json=json
             ) as r:
