@@ -61,7 +61,7 @@ class Bring:
             "hu-HU",
             "de-AT",
         ]
-        self.translations: dict[str, dict[str, str]] = {}
+        self.__translations: dict[str, dict[str, str]] = {}
         self.uuid = ""
 
         self.url = "https://api.getbring.com/rest/"
@@ -184,6 +184,10 @@ class Bring:
             **self.headers,
             "Content-Type": "application/json; charset=UTF-8",
         }
+
+        if len(self.__translations) == 0:
+            await self.__load_article_locales()
+
         return data
 
     async def loadLists(self) -> BringListResponse:
@@ -275,12 +279,12 @@ class Bring:
                     )
 
                     for item in data["purchase"]:
-                        item["itemId"] = await self.translate(
+                        item["itemId"] = await self.__translate(
                             item["itemId"],
                             to_locale="de-DE",
                         )
                     for item in data["recently"]:
-                        item["itemId"] = await self.translate(
+                        item["itemId"] = await self.__translate(
                             item["itemId"],
                             to_locale="de-DE",
                         )
@@ -411,7 +415,7 @@ class Bring:
 
         """
         data = {
-            "purchase": await self.translate(
+            "purchase": await self.__translate(
                 itemName,
                 from_locale="de-DE",
             ),
@@ -472,7 +476,7 @@ class Bring:
 
         """
         data = {
-            "purchase": await self.translate(
+            "purchase": await self.__translate(
                 itemName,
                 from_locale="de-DE",
             ),
@@ -529,7 +533,7 @@ class Bring:
 
         """
         data = {
-            "remove": await self.translate(
+            "remove": await self.__translate(
                 itemName,
                 from_locale="de-DE",
             ),
@@ -587,7 +591,7 @@ class Bring:
 
         """
         data = {
-            "recently": await self.translate(
+            "recently": await self.__translate(
                 itemName,
                 from_locale="de-DE",
             )
@@ -756,7 +760,48 @@ class Bring:
 
         return True
 
-    async def translate(
+    async def __load_article_locales(self) -> None:
+        locales_url = "https://web.getbring.com/locale/"
+
+        for locale in self.supported_locales:
+            try:
+                url = f"{locales_url}articles.{locale}.json"
+                async with self._session.get(url) as r:
+                    _LOGGER.debug("Response from %s: %s", url, r.status)
+                    r.raise_for_status()
+
+                    try:
+                        self.__translations[locale] = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot load articles.%s.json:\n%s",
+                            locale,
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            f"Loading article translations for locale {locale} failed during parsing of request response."
+                        ) from e
+            except asyncio.TimeoutError as e:
+                _LOGGER.error(
+                    "Exception: Cannot load articles.%s.json::\n%s",
+                    locale,
+                    traceback.format_exc(),
+                )
+                raise BringRequestException(
+                    "Loading article translations for locale {locale} failed due to connection timeout."
+                ) from e
+
+            except aiohttp.ClientError as e:
+                _LOGGER.error(
+                    "Exception: Cannot load articles.%s.json:\n%s",
+                    locale,
+                    traceback.format_exc(),
+                )
+                raise BringRequestException(
+                    f"Loading article translations for locale {locale} failed due to request exception."
+                ) from e
+
+    async def __translate(
         self,
         item_id: str,
         *,
@@ -775,21 +820,11 @@ class Bring:
             _LOGGER.debug("Locale %s not supported by Bring.", locale)
             raise ValueError(f"Locale {locale} not supported by Bring.")
 
-        if locale not in self.translations:
-            self.translations[locale] = {
-                "Poulet": "Hähnchen",
-                "Pouletbrüstli": "Hähnchenbrust",
-                "Zucchetti": "Zucchini",
-                "Glacé": "Eis",
-                "Gipfeli": "Croissant",
-                "WC-Papier": "Toilettenpapier",
-            }
-
         if to_locale:
-            item_id = self.translations[locale].get(item_id, item_id)
+            item_id = self.__translations[locale].get(item_id, item_id)
         else:
             item_id = (
-                {value: key for key, value in self.translations[locale].items()}
+                {value: key for key, value in self.__translations[locale].items()}
             ).get(item_id, item_id)
 
         return item_id
