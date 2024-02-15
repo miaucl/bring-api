@@ -2,6 +2,9 @@
 
 ## 0.2.0
 
+* Add new method does_user_exist ([tr4nt0r](https://github.com/tr4nt0r))
+* Fixes for test workflow
+
 ## 0.1.4
 
 Add test workflow.
