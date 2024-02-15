@@ -639,7 +639,7 @@ class Bring:
                 f"Sending notification {notificationType} for list {listUuid} failed due to request exception."
             ) from e
 
-    async def change_list(
+    async def batch_update_list(
         self,
         list_uuid: str,
         items: BringItem | List[BringItem] | list[dict[str, str]],

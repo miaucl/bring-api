@@ -63,7 +63,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## Manipulating lists with `change_list`
+## Manipulating lists with `batch_update_list`
 
 This method uses the newer API endpoint for adding, completing and removing items from a list, which is also used in the Bring App. The items can be identified by their uuid and therefore some things are possible that are not possible with the legacy endpoints like:
 - Add/complete/remove multiple items at once
@@ -80,7 +80,7 @@ item = {
   "spec": "fresh",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
 }
-await bring.change_list(
+await bring.batch_update_list(
   lists[0]['listUuid'],
   item,
   BringItemOperation.ADD)
@@ -100,7 +100,7 @@ items = [{
   "spec": "dried",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
 }]
-await bring.change_list(
+await bring.batch_update_list(
   lists[0]['listUuid'],
   items,
   BringItemOperation.ADD)
@@ -123,7 +123,7 @@ items = [
     "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
   }
 ]
-await bring.change_list(
+await bring.batch_update_list(
   lists[0]['listUuid'],
   items,
   BringItemOperation.ADD)
@@ -134,12 +134,12 @@ await bring.change_list(
 The Bring App still submits the `itemId` and `spec` parameters, but leaving them out works just fine. Leaving out the `uuid` and submitting `itemId` and `spec` will also work. When submitting only `itemId` the Bring API will then match what fits best if there are multiple items with the same `itemId` on the list.
 
 ```python
-await bring.change_list(
+await bring.batch_update_list(
   lists[0]['listUuid'],
   {"uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
   BringItemOperation.REMOVE)
 
-await bring.change_list(
+await bring.batch_update_list(
   lists[0]['listUuid'],
   {"uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
   BringItemOperation.COMPLETE)  
@@ -155,14 +155,14 @@ item = {
   "itemId": "Cilantro",
   "uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
 }
-await bring.change_list(
+await bring.batch_update_list(
   lists[0]['listUuid'],
   item,
   BringItemOperation.ADD)
 
 # Rename the item, and submit it again with the same uuid
 item["itemId"] = "Coriander"
-await bring.change_list(
+await bring.batch_update_list(
   lists[0]['listUuid'],
   item,
   BringItemOperation.ADD)  

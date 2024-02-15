@@ -59,21 +59,23 @@ async def test_batch_list_operations(bring: Bring, lst: BringList):
             "uuid": item_uuid_2,
         },
     ]
-    await bring.change_list(lst["listUuid"], add_items, BringItemOperation.ADD)
+    await bring.batch_update_list(lst["listUuid"], add_items, BringItemOperation.ADD)
 
     # Get all the pending items of a list
     items = await bring.getItems(lst["listUuid"])
     logging.info("List purchase items: %s", items["purchase"])
 
     # Complete items on the list
-    await bring.change_list(lst["listUuid"], add_items, BringItemOperation.COMPLETE)
+    await bring.batch_update_list(
+        lst["listUuid"], add_items, BringItemOperation.COMPLETE
+    )
 
     # Get all the recent items of a list
     items = await bring.getItems(lst["listUuid"])
     logging.info("List recently items: %s", items["recently"])
 
     # Remove items on the list
-    await bring.change_list(lst["listUuid"], add_items, BringItemOperation.REMOVE)
+    await bring.batch_update_list(lst["listUuid"], add_items, BringItemOperation.REMOVE)
 
     # Get all the items of a list
     items = await bring.getItems(lst["listUuid"])
