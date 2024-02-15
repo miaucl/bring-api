@@ -69,6 +69,10 @@ async def main():
     async with aiohttp.ClientSession() as session:
         # Create Bring instance with email and password
         bring = Bring(session, os.environ["EMAIL"], os.environ["PASSWORD"])
+
+        # run before login
+        await test_does_user_exist(bring)
+
         # Login
         await bring.login()
 
@@ -78,8 +82,6 @@ async def main():
         logging.info("Selected list: %s (%s)", lst["name"], lst["listUuid"])
 
         await test_add_complete_remove(bring, lst)
-
-        await test_does_user_exist(bring)
 
 
 asyncio.run(main())
