@@ -3,12 +3,14 @@ import asyncio
 import logging
 import os
 import sys
+import uuid
 
 import aiohttp
 from dotenv import load_dotenv
 
 from bring_api.bring import Bring
-from bring_api.types import BringList
+from bring_api.exceptions import BringEMailInvalidException, BringUserUnknownException
+from bring_api.types import BringList, BringNotificationType
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -40,11 +42,49 @@ async def test_add_complete_remove(bring: Bring, lst: BringList):
     logging.info("List all items: %s / %s", items["purchase"], items["recently"])
 
 
+async def test_push_notifications(bring: Bring, lst: BringList):
+    """Test sending push notifications."""
+
+    # Send a going shopping notification
+    await bring.notify(lst["listUuid"], BringNotificationType.GOING_SHOPPING, "")
+
+    # Send a urgent message with argument item name
+    await bring.notify(
+        lst["listUuid"], BringNotificationType.URGENT_MESSAGE, "Pouletbrüstli"
+    )
+
+
+async def test_does_user_exist(bring: Bring):
+    """Test does_user_exist."""
+
+    rnd = str(uuid.uuid4())
+
+    # Test invalid e-mail
+    try:
+        await bring.does_user_exist(f"{rnd}@gmail")
+    except BringEMailInvalidException:
+        logging.info("e-mail %s@gmail asserted as invalid.", rnd)
+
+    # Test unknown user by generating random uuid
+    try:
+        await bring.does_user_exist(f"{rnd}@gmail.com")
+    except BringUserUnknownException:
+        logging.info("e-mail %s@gmail.com asserted as user unknown.", rnd)
+
+    # Test for known existing user
+    if await bring.does_user_exist():
+        logging.info("e-mail %s asserted as valid and user exists", bring.mail)
+
+
 async def main():
     """Test Bring API."""
     async with aiohttp.ClientSession() as session:
         # Create Bring instance with email and password
         bring = Bring(session, os.environ["EMAIL"], os.environ["PASSWORD"])
+
+        # run before login
+        await test_does_user_exist(bring)
+
         # Login
         await bring.login()
 
@@ -54,6 +94,8 @@ async def main():
         logging.info("Selected list: %s (%s)", lst["name"], lst["listUuid"])
 
         await test_add_complete_remove(bring, lst)
+
+        await test_push_notifications(bring, lst)
 
 
 asyncio.run(main())
