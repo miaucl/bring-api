@@ -1,6 +1,6 @@
 name: Test
 
-on: [ push, pull_request, workflow_dispatch ]
+on: [ push, pull_request_target ]
 
 env:
   DEFAULT_PYTHON: "3.12"
@@ -26,7 +26,7 @@ jobs:
           exit 1
       - uses: actions/checkout@v4.1.1
         with:
-            ref: ${{  github.event.pull_request.head.sha }}
+            ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
