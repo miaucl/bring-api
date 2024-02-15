@@ -23,3 +23,11 @@ class BringParseException(BringException):
     """When parsing the response of a request fails."""
 
     pass
+
+
+class BringEMailInvalidException(BringException):
+    """When checkemail returns emailValid false ."""
+
+
+class BringUserUnknownException(BringException):
+    """When checkemail returns userExists false."""
