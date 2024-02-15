@@ -69,11 +69,11 @@ async def test_does_user_exist(bring: Bring):
     try:
         await bring.does_user_exist(f"{rnd}@gmail.com")
     except BringUserUnknownException:
-        logging.info("e-mail %s@gmail asserted as unknown.")
+        logging.info("e-mail %s@gmail.com asserted as user unknown.", rnd)
 
     # Test for known existing user
     if await bring.does_user_exist():
-        logging.info("e-mail of known existing user asserted as valid")
+        logging.info("e-mail %s asserted as valid and user exists", bring.mail)
 
 
 async def main():
