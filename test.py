@@ -80,21 +80,21 @@ async def test_batch_list_operations(bring: Bring, lst: BringList):
     """Test batch list operations."""
 
     # Add items with same name but different specifications
-    item_uuid_1 = str(uuid.uuid4())
-    item_uuid_2 = str(uuid.uuid4())
     add_items = [
         {
             "itemId": "Cilantro",
             "spec": "100g, dried",
-            "uuid": item_uuid_1,
+            "uuid": str(uuid.uuid4()),
         },
         {
             "itemId": "Cilantro",
             "spec": "fresh",
-            "uuid": item_uuid_2,
+            "uuid": str(uuid.uuid4()),
         },
     ]
+
     await bring.batch_update_list(lst["listUuid"], add_items, BringItemOperation.ADD)
+    logging.info("Add %s items to list %s", len(add_items), os.environ["LIST"])
 
     # Get all the pending items of a list
     items = await bring.getItems(lst["listUuid"])
@@ -104,6 +104,7 @@ async def test_batch_list_operations(bring: Bring, lst: BringList):
     await bring.batch_update_list(
         lst["listUuid"], add_items, BringItemOperation.COMPLETE
     )
+    logging.info("Complete %s items on the list %s", len(add_items), os.environ["LIST"])
 
     # Get all the recent items of a list
     items = await bring.getItems(lst["listUuid"])
@@ -111,10 +112,58 @@ async def test_batch_list_operations(bring: Bring, lst: BringList):
 
     # Remove items on the list
     await bring.batch_update_list(lst["listUuid"], add_items, BringItemOperation.REMOVE)
+    logging.info("Remove items from the list %s: %s", os.environ["LIST"], add_items)
 
     # Get all the items of a list
     items = await bring.getItems(lst["listUuid"])
     logging.info("List all items: %s / %s", items["purchase"], items["recently"])
+
+    # Batch update list with add, complete and remove operations
+    item1_uuid = str(uuid.uuid4())
+    item2_uuid = str(uuid.uuid4())
+    add_complete_delete_items = [
+        {
+            "itemId": "Hähnchen",
+            "spec": "gegrillt",
+            "uuid": item1_uuid,
+            "operation": "TO_PURCHASE",
+        },
+        {
+            "itemId": "Hähnchenbrust",
+            "spec": "gebraten",
+            "uuid": item2_uuid,
+            "operation": "TO_PURCHASE",
+        },
+        {
+            "itemId": "Hähnchen",
+            "spec": "",
+            "uuid": item1_uuid,
+            "operation": "TO_RECENTLY",
+        },
+        {
+            "itemId": "Hähnchenbrust",
+            "spec": "",
+            "uuid": item2_uuid,
+            "operation": "TO_RECENTLY",
+        },
+        {
+            "itemId": "Hähnchen",
+            "spec": "",
+            "uuid": item1_uuid,
+            "operation": "REMOVE",
+        },
+        {
+            "itemId": "Hähnchenbrust",
+            "spec": "",
+            "uuid": item2_uuid,
+            "operation": "REMOVE",
+        },
+    ]
+    await bring.batch_update_list(lst["listUuid"], add_complete_delete_items)
+    logging.info(
+        "Submit batch update with ADD, COMPLETE, REMOVE operations to list %s",
+        os.environ["LIST"],
+    )
 
 
 async def main():

@@ -73,11 +73,27 @@ This method uses the newer API endpoint for adding, completing and removing item
 Usage examples:
 
 ### Add an item 
+When adding an item, the `itemId` is required, `spec` and `uuid` are optional. If you need a unique identifier before adding an item, you can just generate a uuid4.
 
 ```python
 item = {
   "itemId": "Cilantro",
   "spec": "fresh",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+}
+await bring.batch_update_list(
+  lists[0]['listUuid'],
+  item,
+  BringItemOperation.ADD)
+```
+### Updating an items specification
+
+When updating an item, use ADD operation again. The `itemId` is required and the item `spec` will be added/updated on the existing item on the list. For better matching an existing item (if there is more than one item with the same `itemId`), you can use it's unique identifier `uuid`.
+
+```python
+item = {
+  "itemId": "Cilantro",
+  "spec": "dried",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
 }
 await bring.batch_update_list(
@@ -129,25 +145,25 @@ await bring.batch_update_list(
   BringItemOperation.ADD)
 ```
 
-### Removing or completing an item only with the uuid
+### Removing or completing an item
 
-The Bring App still submits the `itemId` and `spec` parameters, but leaving them out works just fine. Leaving out the `uuid` and submitting `itemId` and `spec` will also work. When submitting only `itemId` the Bring API will then match what fits best if there are multiple items with the same `itemId` on the list.
+When removing or completing an item you must submit `itemId` and `uuid`, `spec` is optional. Only the `uuid` will not work. Leaving out the `uuid` and submitting `itemId` and `spec` will also work. When submitting only `itemId` the Bring API will match the oldest item.
 
 ```python
 await bring.batch_update_list(
   lists[0]['listUuid'],
-  {"uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
+  {"itemId": "Cilantro", "uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
   BringItemOperation.REMOVE)
 
 await bring.batch_update_list(
   lists[0]['listUuid'],
-  {"uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
+  {"itemId": "Cilantro", "uuid" : "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
   BringItemOperation.COMPLETE)  
 ```
 
 ### Renaming an item (not recommended)
 
-An item that is already on the list can be renamed by sending it's `uuid` with a changed `itemId`. But it is highly advised against it because the Bring App will behave weirdly as it does not refresh an items name, not even when force reloading (go to the top of the list and pulling down). Users have to close the list by going to the overview or closing the app and only then when the list is completely refreshed the change of the name will show up.
+An item that is already on the list can be renamed by sending it's `uuid` with a changed `itemId`. But it is highly advised against it because the Bring App will behave weirdly as it does not refresh an items name, not even when force reloading (going to the top of the list and pulling down). Users have to close the list by going to the overview or closing the app and only then when the list is completely refreshed the change of the name will show up.
 
 ```python
 # Add an item

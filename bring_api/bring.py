@@ -710,7 +710,7 @@ class Bring:
         self,
         list_uuid: str,
         items: BringItem | List[BringItem] | list[dict[str, str]],
-        operation: BringItemOperation = BringItemOperation.ADD,
+        operation: Optional[BringItemOperation] = None,
     ) -> aiohttp.ClientResponse:
         """Batch update items on a shopping list.
 
@@ -720,8 +720,10 @@ class Bring:
             The listUuid of the list to make the changes to
         items : BringItem or List of BringItem
             Item(s) to add, complete or remove from the list
-        operation : BringItemOperation
-            The Operation (ADD, COMPLETE, REMOVE) to perform for the supplied items on the list
+        operation : BringItemOperation, optional
+            The Operation (ADD, COMPLETE, REMOVE) to perform for the supplied items on the list.
+            Parameter can be ommited, and the BringItem key 'operation' can be set to TO_PURCHASE, TO_RECENTLY or REMOVE.
+            Defaults to BringItemOperation.ADD if operation is neither passed as parameter nor is set in the BringItem.
 
         Returns
         -------
@@ -734,21 +736,25 @@ class Bring:
             If the request fails.
 
         """
+        if operation is None:
+            operation = BringItemOperation.ADD
+
         _base_params = {
             "accuracy": "0.0",
             "altitude": "0.0",
-            "itemId": "",
             "latitude": "0.0",
             "longitude": "0.0",
-            "operation": "",
-            "spec": "",
-            "uuid": "",
         }
         if isinstance(items, dict):
             items = [items]
         json = {
             "changes": [
-                {**_base_params, **item, "operation": operation.value} for item in items
+                {
+                    **_base_params,
+                    **item,
+                    "operation": item.get("operation", operation.value),
+                }
+                for item in items
             ],
             "sender": "",
         }
