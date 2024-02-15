@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from bring_api.bring import Bring
 from bring_api.exceptions import BringEMailInvalidException, BringUserUnknownException
-from bring_api.types import BringList
+from bring_api.types import BringList, BringNotificationType
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -40,6 +40,18 @@ async def test_add_complete_remove(bring: Bring, lst: BringList):
     # Get all the items of a list
     items = await bring.getItems(lst["listUuid"])
     logging.info("List all items: %s / %s", items["purchase"], items["recently"])
+
+
+async def test_push_notifications(bring: Bring, lst: BringList):
+    """Test sending push notifications."""
+
+    # Send a going shopping notification
+    await bring.notify(lst["listUuid"], BringNotificationType.GOING_SHOPPING, "")
+
+    # Send a urgent message with argument item name
+    await bring.notify(
+        lst["listUuid"], BringNotificationType.URGENT_MESSAGE, "Pouletbrüstli"
+    )
 
 
 async def test_does_user_exist(bring: Bring):
@@ -82,6 +94,8 @@ async def main():
         logging.info("Selected list: %s (%s)", lst["name"], lst["listUuid"])
 
         await test_add_complete_remove(bring, lst)
+
+        await test_push_notifications(bring, lst)
 
 
 asyncio.run(main())
