@@ -3,11 +3,13 @@ import asyncio
 import logging
 import os
 import sys
+import uuid
 
 import aiohttp
 from dotenv import load_dotenv
 
 from bring_api.bring import Bring
+from bring_api.exceptions import BringEMailInvalidException, BringUserUnknownException
 from bring_api.types import BringList
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -40,6 +42,28 @@ async def test_add_complete_remove(bring: Bring, lst: BringList):
     logging.info("List all items: %s / %s", items["purchase"], items["recently"])
 
 
+async def test_does_user_exist(bring: Bring):
+    """Test does_user_exist."""
+
+    rnd = str(uuid.uuid4())
+
+    # Test invalid e-mail
+    try:
+        await bring.does_user_exist(f"{rnd}@gmail")
+    except BringEMailInvalidException:
+        logging.info("e-mail %s@gmail asserted as invalid.", rnd)
+
+    # Test unknown user by generating random uuid
+    try:
+        await bring.does_user_exist(f"{rnd}@gmail.com")
+    except BringUserUnknownException:
+        logging.info("e-mail %s@gmail asserted as unknown.")
+
+    # Test for known existing user
+    if await bring.does_user_exist():
+        logging.info("e-mail of known existing user asserted as valid")
+
+
 async def main():
     """Test Bring API."""
     async with aiohttp.ClientSession() as session:
@@ -54,6 +78,8 @@ async def main():
         logging.info("Selected list: %s (%s)", lst["name"], lst["listUuid"])
 
         await test_add_complete_remove(bring, lst)
+
+        await test_does_user_exist(bring)
 
 
 asyncio.run(main())

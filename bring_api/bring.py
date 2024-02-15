@@ -3,7 +3,7 @@ import asyncio
 from json import JSONDecodeError
 import logging
 import traceback
-from typing import cast
+from typing import Optional, cast
 
 import aiohttp
 
@@ -643,8 +643,8 @@ class Bring:
                 f"Sending notification {notificationType} for list {listUuid} failed due to request exception."
             ) from e
 
-    async def checkemail(self, mail: str = None) -> bool:
-        """Validate if an e-mail is valid and if user exists.
+    async def does_user_exist(self, mail: Optional[str] = None) -> bool:
+        """Check if e-mail is valid and user exists.
 
         Parameters
         ----------
@@ -660,12 +660,10 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
-        BringParseException
-            If the parsing of the request response fails.
         BringEMailInvalidException
-            If emailValid is false
+            If the email is invalid.
         BringUserUnknownException
-            If userExists is false
+            If the user is does not exist
 
         """
         mail = mail or self.mail
@@ -676,22 +674,16 @@ class Bring:
         params = {"email": mail}
 
         try:
-            url = f"{self.url}bringauth/checkemail"
+            url = f"{self.url}bringusers"
             async with self._session.get(url, headers=self.headers, params=params) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == 404:
+                    _LOGGER.error("Exception: User %s does not exist.", mail)
+                    raise BringUserUnknownException(f"User {mail} does not exist.")
+
                 r.raise_for_status()
 
-                try:
-                    data = await r.json()
-                except JSONDecodeError as e:
-                    _LOGGER.error(
-                        "Exception: Cannot get verification for %s:\n%s",
-                        mail,
-                        traceback.format_exc(),
-                    )
-                    raise BringParseException(
-                        "Verifying email failed during parsing of request response."
-                    ) from e
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot get verification for %s:\n%s",
@@ -703,19 +695,9 @@ class Bring:
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
-                "Exception: Cannot get verification for %s:\n%s",
+                "Exception: E-mail %s is invalid.",
                 mail,
-                traceback.format_exc(),
             )
-            raise BringRequestException(
-                "Verifying email failed due to request exception."
-            ) from e
-
-        if not data["emailValid"]:
-            _LOGGER.error("Exception: E-mail %s is invalid.", mail)
-            raise BringEMailInvalidException(f"E-mail {mail} is invalid.")
-        if not data["userExists"]:
-            _LOGGER.error("Exception: User %s does not exist.", mail)
-            raise BringUserUnknownException(f"User {mail} does not exist.")
+            raise BringEMailInvalidException(f"E-mail {mail} is invalid.") from e
 
         return True
