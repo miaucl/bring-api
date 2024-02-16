@@ -605,8 +605,8 @@ class Bring:
                 raise ValueError(
                     "notificationType is URGENT_MESSAGE but argument itemName missing."
                 )
-            else:
-                json["arguments"] = [item_name]
+
+            json["arguments"] = [item_name]
         try:
             url = f"{self.url}v2/bringnotifications/lists/{list_uuid}"
             async with self._session.post(url, headers=self.headers, json=json) as r:
