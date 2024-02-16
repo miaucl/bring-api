@@ -39,7 +39,7 @@ class Bring:
         self.mail = mail
         self.password = password
         self.uuid = ""
-        self.publicUuid = ""
+        self.public_uuid = ""
 
         self.url = "https://api.getbring.com/rest/"
 
@@ -150,7 +150,7 @@ class Bring:
             )
 
         self.uuid = data["uuid"]
-        self.publicUuid = data.get("publicUuid", "")
+        self.public_uuid = data.get("publicUuid", "")
         self.headers["X-BRING-USER-UUID"] = self.uuid
         self.headers["Authorization"] = f'Bearer {data["access_token"]}'
         self.putHeaders = {
@@ -598,7 +598,7 @@ class Bring:
         json = BringNotificationsConfigType(
             arguments=[],
             listNotificationType=notificationType.value,
-            senderPublicUserUuid=self.publicUuid,
+            senderPublicUserUuid=self.public_uuid,
         )
 
         if not isinstance(notificationType, BringNotificationType):
