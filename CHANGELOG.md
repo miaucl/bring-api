@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.3.0
+
+* Refactor for PEP8 compliance and code clean-up (breaking change) ([tr4nt0r](https://github.com/tr4nt0r))
+
 ## 0.2.0
 
 * Add new method does_user_exist ([tr4nt0r](https://github.com/tr4nt0r))

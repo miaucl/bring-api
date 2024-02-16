@@ -42,23 +42,23 @@ async def main():
     await bring.login()
 
     # Get information about all available shopping lists
-    lists = (await bring.loadLists())["lists"]
+    lists = (await bring.load_lists())["lists"]
 
     # Save an item with specifications to a certain shopping list
-    await bring.saveItem(lists[0]['listUuid'], 'Milk', 'low fat')
+    await bring.save_item(lists[0]['listUuid'], 'Milk', 'low fat')
 
     # Save another item
-    await bring.saveItem(lists[0]['listUuid'], 'Carrots')
+    await bring.save_item(lists[0]['listUuid'], 'Carrots')
 
     # Get all the items of a list
-    items = await bring.getItems(lists[0]['listUuid'])
+    items = await bring.get_list(lists[0]['listUuid'])
     print(items)
 
     # Check off an item
-    await bring.completeItem(lists[0]['listUuid'], 'Carrots')
+    await bring.complete_item(lists[0]['listUuid'], 'Carrots')
 
     # Remove an item from a list
-    await bring.removeItem(lists[0]['listUuid'], 'Milk')
+    await bring.remove_item(lists[0]['listUuid'], 'Milk')
 
 asyncio.run(main())
 ```
