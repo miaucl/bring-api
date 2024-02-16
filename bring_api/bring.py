@@ -89,7 +89,8 @@ class Bring:
                     else:
                         _LOGGER.error("Exception: Cannot login: %s", errmsg["message"])
                     raise BringAuthException(
-                        "Login failed due to authorization failure, please check your email and password."
+                        "Login failed due to authorization failure, "
+                        "please check your email and password."
                     )
                 if r.status == 400:
                     _LOGGER.error("Exception: Cannot login: %s", await r.text())
@@ -128,7 +129,8 @@ class Bring:
         if "uuid" not in data or "access_token" not in data:
             _LOGGER.error("Exception: Cannot login: Data missing in API response.")
             raise BringAuthException(
-                "Login failed due to missing data in the API response, please check your email and password."
+                "Login failed due to missing data in the API response,"
+                "please check your email and password."
             )
 
         self.uuid = data["uuid"]
@@ -266,9 +268,10 @@ class Bring:
         -------
         list
             The JSON response as a list. A list of item details.
-            Caution: This is NOT a list of the items currently marked as 'to buy'. See getItems() for that.
-            This contains the items that where customized by changing their default icon, category or uploading
-            an image.
+            Caution: This is NOT a list of the items currently marked as 'to buy'.
+            See getItems() for that.
+            This contains the items that where customized by changing
+            their default icon, category or uploading an image.
 
         Raises
         ------
@@ -369,7 +372,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Saving item {itemName} ({specification}) to list {listUuid} failed due to connection timeout."
+                f"Saving item {itemName} ({specification}) to list {listUuid}"
+                "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
@@ -380,7 +384,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Saving item {itemName} ({specification}) to list {listUuid} failed due to request exception."
+                f"Saving item {itemName} ({specification}) to list {listUuid}"
+                "failed due to request exception."
             ) from e
 
     async def updateItem(
@@ -424,7 +429,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Updating item {itemName} ({specification}) in list {listUuid} failed due to connection timeout."
+                f"Updating item {itemName} ({specification}) in list {listUuid}"
+                "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
@@ -435,7 +441,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Updating item {itemName} ({specification}) in list {listUuid} failed due to request exception."
+                f"Updating item {itemName} ({specification}) in list {listUuid}"
+                "failed due to request exception."
             ) from e
 
     async def removeItem(self, listUuid: str, itemName: str) -> aiohttp.ClientResponse:
@@ -476,7 +483,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Removing item {itemName} from list {listUuid} failed due to connection timeout."
+                f"Removing item {itemName} from list {listUuid}"
+                "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
@@ -486,7 +494,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Removing item {itemName} from list {listUuid} failed due to request exception."
+                f"Removing item {itemName} from list {listUuid}"
+                "failed due to request exception."
             ) from e
 
     async def completeItem(
@@ -581,7 +590,8 @@ class Bring:
                 "Exception: notificationType %s not supported.", notificationType
             )
             raise TypeError(
-                f"notificationType {notificationType} not supported, must be of type BringNotificationType."
+                f"notificationType {notificationType} not supported,"
+                "must be of type BringNotificationType."
             )
         if notificationType is BringNotificationType.URGENT_MESSAGE:
             if not itemName or len(itemName) == 0:
@@ -605,7 +615,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Sending notification {notificationType} for list {listUuid} failed due to connection timeout."
+                f"Sending notification {notificationType} for list {listUuid}"
+                "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
@@ -615,7 +626,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Sending notification {notificationType} for list {listUuid} failed due to request exception."
+                f"Sending notification {notificationType} for list {listUuid}"
+                "failed due to request exception."
             ) from e
 
     async def does_user_exist(self, mail: Optional[str] = None) -> bool:
