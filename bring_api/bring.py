@@ -542,7 +542,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Completing item {item_name} from list {list_uuid} failed due to connection timeout."
+                f"Completing item {item_name} from list {list_uuid}"
+                "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
@@ -552,7 +553,8 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Completing item {item_name} from list {list_uuid} failed due to request exception."
+                f"Completing item {item_name} from list {list_uuid}"
+                "failed due to request exception."
             ) from e
 
     async def notify(
