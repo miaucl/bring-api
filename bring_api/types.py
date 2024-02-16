@@ -92,3 +92,24 @@ class BringNotificationsConfigType(TypedDict):
     arguments: List[str]
     listNotificationType: str
     senderPublicUserUuid: str
+
+
+class BringUserSettings(TypedDict):
+    """A user settings class. Represents a single user setting."""
+
+    key: str
+    value: str
+
+
+class BringUserListSettings(TypedDict):
+    """A user list settings class. Represents a single list setting."""
+
+    listUuid: str
+    usersettings: List[BringUserSettings]
+
+
+class BringUserSettingsResponse(TypedDict):
+    """A user settings response class."""
+
+    usersettings: List[BringUserSettings]
+    userlistsettings: List[BringUserListSettings]

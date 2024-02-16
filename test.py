@@ -76,6 +76,42 @@ async def test_does_user_exist(bring: Bring):
         logging.info("e-mail %s asserted as valid and user exists", bring.mail)
 
 
+async def test_translation(bring: Bring, lst: BringList):
+    """Test article translations."""
+    # Replace test list locale to get predictable results and
+    # read back items with different locale asure catalog items where added correctly.
+    locale_to = "de-DE"
+    locale_from = "de-CH"
+
+    locale_org = bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"]
+
+    test_items = {
+        "Pouletbrüstli": "Hähnchenbrust",
+        "Glacé": "Eis",
+        "Zucchetti": "Zucchini",
+        "Gipfeli": "Croissant",
+        "Pelati": "Dosentomaten",
+        "Fischstäbli": "Fischstäbchen",
+        "Guetzli": "Plätzchen",
+    }
+    for k, v in test_items.items():
+        # Save an item an item to
+        bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"] = locale_to
+        await bring.saveItem(lst["listUuid"], v)
+
+        # Get all the pending items of a list
+        bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"] = locale_from
+        items = await bring.getItems(lst["listUuid"])
+        item = next(ii["itemId"] for ii in items["purchase"] if ii["itemId"] == k)
+        assert item == k
+        logging.info("Item: %s, translation: %s", v, item)
+
+        await bring.removeItem(lst["listUuid"], k)
+
+    # reset locale to original value for other tests
+    bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"] = locale_org
+
+
 async def main():
     """Test Bring API."""
     async with aiohttp.ClientSession() as session:
@@ -96,6 +132,8 @@ async def main():
         await test_add_complete_remove(bring, lst)
 
         await test_push_notifications(bring, lst)
+
+        await test_translation(bring, lst)
 
 
 asyncio.run(main())
