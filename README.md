@@ -68,9 +68,8 @@ asyncio.run(main())
 In case something goes wrong during a request, several exceptions can be thrown.
 They will either be BringRequestException, BringParseException, or BringAuthException, depending on the context. All inherit from BringException.
 
-### Another asyncio event loop is already running
-
-Because even the sync methods use async calls under the hood, you might encounter an error that another asyncio event loop is already running on the same thread. This is expected behavior according to the asyncio.run() [documentation](https://docs.python.org/3/library/asyncio-runner.html#asyncio.run). You cannot call the sync methods when another event loop is already running. When you are already inside an async function, you should use the async methods instead.
+### Another asyncio event loop is 
+With the async calls, you might encounter an error that another asyncio event loop is already running on the same thread. This is expected behavior according to the asyncio.run() [documentation](https://docs.python.org/3/library/asyncio-runner.html#asyncio.run). You cannot use more than one aiohttp session per thread, reuse the existing one!
 
 ### Exception ignored: RuntimeError: Event loop is closed
 
