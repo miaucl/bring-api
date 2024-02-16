@@ -91,7 +91,7 @@ class Bring:
                     raise BringAuthException(
                         "Login failed due to authorization failure, please check your email and password."
                     )
-                elif r.status == 400:
+                if r.status == 400:
                     _LOGGER.error("Exception: Cannot login: %s", await r.text())
                     raise BringAuthException(
                         "Login failed due to bad request, please check your email."
