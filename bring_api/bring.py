@@ -140,7 +140,7 @@ class Bring:
 
         return data
 
-    async def loadLists(self) -> BringListResponse:
+    async def load_lists(self) -> BringListResponse:
         """Load all shopping lists.
 
         Returns
@@ -191,12 +191,12 @@ class Bring:
                 "Loading lists failed due to request exception."
             ) from e
 
-    async def getItems(self, listUuid: str) -> BringItemsResponse:
+    async def get_list(self, list_uuid: str) -> BringItemsResponse:
         """Get all items from a shopping list.
 
         Parameters
         ----------
-        listUuid : str
+        list_uuid : str
             A list uuid returned by loadLists()
 
         Returns
@@ -213,7 +213,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}v2/bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -231,7 +231,7 @@ class Bring:
                 except JSONDecodeError as e:
                     _LOGGER.error(
                         "Exception: Cannot get items for list %s:\n%s",
-                        listUuid,
+                        list_uuid,
                         traceback.format_exc(),
                     )
                     raise BringParseException(
@@ -240,7 +240,7 @@ class Bring:
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot get items for list %s:\n%s",
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
@@ -249,19 +249,21 @@ class Bring:
         except aiohttp.ClientError as e:
             _LOGGER.error(
                 "Exception: Cannot get items for list %s:\n%s",
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
                 "Loading list items failed due to request exception."
             ) from e
 
-    async def getAllItemDetails(self, listUuid: str) -> BringListItemsDetailsResponse:
+    async def get_all_item_details(
+        self, list_uuid: str
+    ) -> BringListItemsDetailsResponse:
         """Get all details from a shopping list.
 
         Parameters
         ----------
-        listUuid : str
+        list_uuid : str
             A list uuid returned by loadLists()
 
         Returns
@@ -282,7 +284,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}bringlists/{listUuid}/details"
+            url = f"{self.url}bringlists/{list_uuid}/details"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -303,7 +305,7 @@ class Bring:
                 except JSONDecodeError as e:
                     _LOGGER.error(
                         "Exception: Cannot get item details for list %s:\n%s",
-                        listUuid,
+                        list_uuid,
                         traceback.format_exc(),
                     )
                     raise BringParseException(
@@ -312,7 +314,7 @@ class Bring:
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot get item details for list %s:\n%s",
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
@@ -321,23 +323,23 @@ class Bring:
         except aiohttp.ClientError as e:
             _LOGGER.error(
                 "Exception: Cannot get item details for list %s:\n%s",
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
                 "Loading list details failed due to request exception."
             ) from e
 
-    async def saveItem(
-        self, listUuid: str, itemName: str, specification: str = ""
+    async def save_item(
+        self, list_uuid: str, item_name: str, specification: str = ""
     ) -> aiohttp.ClientResponse:
         """Save an item to a shopping list.
 
         Parameters
         ----------
-        listUuid : str
+        list_uuid : str
             A list uuid returned by loadLists()
-        itemName : str
+        item_name : str
             The name of the item you want to save.
         specification : str, optional
             The details you want to add to the item.
@@ -354,11 +356,11 @@ class Bring:
 
         """
         data = {
-            "purchase": itemName,
+            "purchase": item_name,
             "specification": specification,
         }
         try:
-            url = f"{self.url}v2/bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -366,38 +368,38 @@ class Bring:
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot save item %s (%s) to list %s:\n%s",
-                itemName,
+                item_name,
                 specification,
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Saving item {itemName} ({specification}) to list {listUuid}"
+                f"Saving item {item_name} ({specification}) to list {list_uuid}"
                 "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
                 "Exception: Cannot save item %s (%s) to list %s:\n%s",
-                itemName,
+                item_name,
                 specification,
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Saving item {itemName} ({specification}) to list {listUuid}"
+                f"Saving item {item_name} ({specification}) to list {list_uuid}"
                 "failed due to request exception."
             ) from e
 
-    async def updateItem(
-        self, listUuid: str, itemName: str, specification: str = ""
+    async def update_item(
+        self, list_uuid: str, item_name: str, specification: str = ""
     ) -> aiohttp.ClientResponse:
         """Update an existing list item.
 
         Parameters
         ----------
-        listUuid : str
+        list_uuid : str
             A list uuid returned by loadLists()
-        itemName : str
+        item_name : str
             The name of the item you want to update.
         specification : str, optional
             The details you want to update on the item.
@@ -413,9 +415,9 @@ class Bring:
             If the request fails.
 
         """
-        data = {"purchase": itemName, "specification": specification}
+        data = {"purchase": item_name, "specification": specification}
         try:
-            url = f"{self.url}v2/bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -423,36 +425,38 @@ class Bring:
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot update item %s (%s) to list %s:\n%s",
-                itemName,
+                item_name,
                 specification,
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Updating item {itemName} ({specification}) in list {listUuid}"
+                f"Updating item {item_name} ({specification}) in list {list_uuid}"
                 "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
                 "Exception: Cannot update item %s (%s) to list %s:\n%s",
-                itemName,
+                item_name,
                 specification,
-                listUuid,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Updating item {itemName} ({specification}) in list {listUuid}"
+                f"Updating item {item_name} ({specification}) in list {list_uuid}"
                 "failed due to request exception."
             ) from e
 
-    async def removeItem(self, listUuid: str, itemName: str) -> aiohttp.ClientResponse:
+    async def remove_item(
+        self, list_uuid: str, item_name: str
+    ) -> aiohttp.ClientResponse:
         """Remove an item from a shopping list.
 
         Parameters
         ----------
-        listUuid : str
+        list_uuid : str
             A list uuid returned by loadLists()
-        itemName : str
+        item_name : str
             The name of the item you want to remove.
 
         Returns
@@ -467,10 +471,10 @@ class Bring:
 
         """
         data = {
-            "remove": itemName,
+            "remove": item_name,
         }
         try:
-            url = f"{self.url}v2/bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -478,28 +482,28 @@ class Bring:
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot delete item %s from list %s:\n%s",
-                itemName,
-                listUuid,
+                item_name,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Removing item {itemName} from list {listUuid}"
+                f"Removing item {item_name} from list {list_uuid}"
                 "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
                 "Exception: Cannot delete item %s from list %s:\n%s",
-                itemName,
-                listUuid,
+                item_name,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Removing item {itemName} from list {listUuid}"
+                f"Removing item {item_name} from list {list_uuid}"
                 "failed due to request exception."
             ) from e
 
-    async def completeItem(
-        self, listUuid: str, itemName: str
+    async def complete_item(
+        self, list_uuid: str, item_name: str
     ) -> aiohttp.ClientResponse:
         """Complete an item from a shopping list. This will add it to recent items.
 
@@ -507,9 +511,9 @@ class Bring:
 
         Parameters
         ----------
-        listUuid : str
+        list_uuid : str
             A list uuid returned by loadLists()
-        itemName : str
+        item_name : str
             The name of the item you want to complete.
 
         Returns
@@ -523,9 +527,9 @@ class Bring:
             If the request fails.
 
         """
-        data = {"recently": itemName}
+        data = {"recently": item_name}
         try:
-            url = f"{self.url}v2/bringlists/{listUuid}"
+            url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -533,39 +537,39 @@ class Bring:
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot complete item %s in list %s:\n%s",
-                itemName,
-                listUuid,
+                item_name,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Completing item {itemName} from list {listUuid} failed due to connection timeout."
+                f"Completing item {item_name} from list {list_uuid} failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
                 "Exception: Cannot complete item %s in list %s:\n%s",
-                itemName,
-                listUuid,
+                item_name,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Completing item {itemName} from list {listUuid} failed due to request exception."
+                f"Completing item {item_name} from list {list_uuid} failed due to request exception."
             ) from e
 
     async def notify(
         self,
-        listUuid: str,
-        notificationType: BringNotificationType,
-        itemName: str,
+        list_uuid: str,
+        notification_type: BringNotificationType,
+        item_name: str,
     ) -> aiohttp.ClientResponse:
         """Send a push notification to all other members of a shared list.
 
         Parameters
         ----------
-        listUuid : str
+        list_uuid : str
             A list uuid returned by loadLists()
-        notificationType : BringNotificationType
+        notification_type : BringNotificationType
             The type of notification to be sent
-        itemName : str, optional
+        item_name : str, optional
             The text that **must** be included in the URGENT_MESSAGE BringNotificationType.
 
         Returns
@@ -581,28 +585,28 @@ class Bring:
         """
         json = BringNotificationsConfigType(
             arguments=[],
-            listNotificationType=notificationType.value,
+            listNotificationType=notification_type.value,
             senderPublicUserUuid=self.public_uuid,
         )
 
-        if not isinstance(notificationType, BringNotificationType):
+        if not isinstance(notification_type, BringNotificationType):
             _LOGGER.error(
-                "Exception: notificationType %s not supported.", notificationType
+                "Exception: notificationType %s not supported.", notification_type
             )
             raise TypeError(
-                f"notificationType {notificationType} not supported,"
+                f"notificationType {notification_type} not supported,"
                 "must be of type BringNotificationType."
             )
-        if notificationType is BringNotificationType.URGENT_MESSAGE:
-            if not itemName or len(itemName) == 0:
+        if notification_type is BringNotificationType.URGENT_MESSAGE:
+            if not item_name or len(item_name) == 0:
                 _LOGGER.error("Exception: Argument itemName missing.")
                 raise ValueError(
                     "notificationType is URGENT_MESSAGE but argument itemName missing."
                 )
             else:
-                json["arguments"] = [itemName]
+                json["arguments"] = [item_name]
         try:
-            url = f"{self.url}v2/bringnotifications/lists/{listUuid}"
+            url = f"{self.url}v2/bringnotifications/lists/{list_uuid}"
             async with self._session.post(url, headers=self.headers, json=json) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
@@ -610,23 +614,23 @@ class Bring:
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot send notification %s for list %s:\n%s",
-                notificationType,
-                listUuid,
+                notification_type,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Sending notification {notificationType} for list {listUuid}"
+                f"Sending notification {notification_type} for list {list_uuid}"
                 "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
                 "Exception: Cannot send notification %s for list %s:\n%s",
-                notificationType,
-                listUuid,
+                notification_type,
+                list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Sending notification {notificationType} for list {listUuid}"
+                f"Sending notification {notification_type} for list {list_uuid}"
                 "failed due to request exception."
             ) from e
 
