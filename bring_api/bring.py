@@ -51,24 +51,6 @@ class Bring:
             "X-BRING-COUNTRY": "DE",
             "X-BRING-USER-UUID": "",
         }
-        self.putHeaders = {
-            "Authorization": "",
-            "X-BRING-API-KEY": "",
-            "X-BRING-CLIENT-SOURCE": "",
-            "X-BRING-CLIENT": "",
-            "X-BRING-COUNTRY": "",
-            "X-BRING-USER-UUID": "",
-            "Content-Type": "",
-        }
-        self.postHeaders = {
-            "Authorization": "",
-            "X-BRING-API-KEY": "",
-            "X-BRING-CLIENT-SOURCE": "",
-            "X-BRING-CLIENT": "",
-            "X-BRING-COUNTRY": "",
-            "X-BRING-USER-UUID": "",
-            "Content-Type": "",
-        }
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
@@ -153,14 +135,7 @@ class Bring:
         self.public_uuid = data.get("publicUuid", "")
         self.headers["X-BRING-USER-UUID"] = self.uuid
         self.headers["Authorization"] = f'Bearer {data["access_token"]}'
-        self.putHeaders = {
-            **self.headers,
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        }
-        self.postHeaders = {
-            **self.headers,
-            "Content-Type": "application/json; charset=UTF-8",
-        }
+
         return data
 
     async def loadLists(self) -> BringListResponse:
@@ -381,7 +356,7 @@ class Bring:
         }
         try:
             url = f"{self.url}v2/bringlists/{listUuid}"
-            async with self._session.put(url, headers=self.putHeaders, data=data) as r:
+            async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
                 return r
@@ -436,7 +411,7 @@ class Bring:
         data = {"purchase": itemName, "specification": specification}
         try:
             url = f"{self.url}v2/bringlists/{listUuid}"
-            async with self._session.put(url, headers=self.putHeaders, data=data) as r:
+            async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
                 return r
@@ -489,7 +464,7 @@ class Bring:
         }
         try:
             url = f"{self.url}v2/bringlists/{listUuid}"
-            async with self._session.put(url, headers=self.putHeaders, data=data) as r:
+            async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
                 return r
@@ -542,7 +517,7 @@ class Bring:
         data = {"recently": itemName}
         try:
             url = f"{self.url}v2/bringlists/{listUuid}"
-            async with self._session.put(url, headers=self.putHeaders, data=data) as r:
+            async with self._session.put(url, headers=self.headers, data=data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
                 return r
@@ -618,9 +593,7 @@ class Bring:
                 json["arguments"] = [itemName]
         try:
             url = f"{self.url}v2/bringnotifications/lists/{listUuid}"
-            async with self._session.post(
-                url, headers=self.postHeaders, json=json
-            ) as r:
+            async with self._session.post(url, headers=self.headers, json=json) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
                 return r
