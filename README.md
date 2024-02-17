@@ -42,23 +42,23 @@ async def main():
     await bring.login()
 
     # Get information about all available shopping lists
-    lists = (await bring.loadLists())["lists"]
+    lists = (await bring.load_lists())["lists"]
 
     # Save an item with specifications to a certain shopping list
-    await bring.saveItem(lists[0]['listUuid'], 'Milk', 'low fat')
+    await bring.save_item(lists[0]['listUuid'], 'Milk', 'low fat')
 
     # Save another item
-    await bring.saveItem(lists[0]['listUuid'], 'Carrots')
+    await bring.save_item(lists[0]['listUuid'], 'Carrots')
 
     # Get all the items of a list
-    items = await bring.getItems(lists[0]['listUuid'])
+    items = await bring.get_list(lists[0]['listUuid'])
     print(items)
 
     # Check off an item
-    await bring.completeItem(lists[0]['listUuid'], 'Carrots')
+    await bring.complete_item(lists[0]['listUuid'], 'Carrots')
 
     # Remove an item from a list
-    await bring.removeItem(lists[0]['listUuid'], 'Milk')
+    await bring.remove_item(lists[0]['listUuid'], 'Milk')
 
 asyncio.run(main())
 ```
@@ -68,9 +68,8 @@ asyncio.run(main())
 In case something goes wrong during a request, several exceptions can be thrown.
 They will either be BringRequestException, BringParseException, or BringAuthException, depending on the context. All inherit from BringException.
 
-### Another asyncio event loop is already running
-
-Because even the sync methods use async calls under the hood, you might encounter an error that another asyncio event loop is already running on the same thread. This is expected behavior according to the asyncio.run() [documentation](https://docs.python.org/3/library/asyncio-runner.html#asyncio.run). You cannot call the sync methods when another event loop is already running. When you are already inside an async function, you should use the async methods instead.
+### Another asyncio event loop is 
+With the async calls, you might encounter an error that another asyncio event loop is already running on the same thread. This is expected behavior according to the asyncio.run() [documentation](https://docs.python.org/3/library/asyncio-runner.html#asyncio.run). You cannot use more than one aiohttp session per thread, reuse the existing one!
 
 ### Exception ignored: RuntimeError: Event loop is closed
 

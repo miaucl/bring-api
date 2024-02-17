@@ -68,8 +68,6 @@ class BringItemsResponse(TypedDict):
 class BringListItemsDetailsResponse(List[BringListItemDetails]):
     """A response class of a list of item details."""
 
-    pass
-
 
 class BringNotificationType(Enum):
     """Notification type.
