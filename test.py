@@ -97,7 +97,7 @@ async def test_batch_list_operations(bring: Bring, lst: BringList):
     logging.info("Add %s items to list %s", len(add_items), os.environ["LIST"])
 
     # Get all the pending items of a list
-    items = await bring.getItems(lst["listUuid"])
+    items = await bring.get_list(lst["listUuid"])
     logging.info("List purchase items: %s", items["purchase"])
 
     # Complete items on the list
@@ -107,7 +107,7 @@ async def test_batch_list_operations(bring: Bring, lst: BringList):
     logging.info("Complete %s items on the list %s", len(add_items), os.environ["LIST"])
 
     # Get all the recent items of a list
-    items = await bring.getItems(lst["listUuid"])
+    items = await bring.get_list(lst["listUuid"])
     logging.info("List recently items: %s", items["recently"])
 
     # Remove items on the list
@@ -115,7 +115,7 @@ async def test_batch_list_operations(bring: Bring, lst: BringList):
     logging.info("Remove items from the list %s: %s", os.environ["LIST"], add_items)
 
     # Get all the items of a list
-    items = await bring.getItems(lst["listUuid"])
+    items = await bring.get_list(lst["listUuid"])
     logging.info("List all items: %s / %s", items["purchase"], items["recently"])
 
     # Batch update list with add, complete and remove operations
