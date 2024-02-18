@@ -46,7 +46,7 @@ async def test_push_notifications(bring: Bring, lst: BringList):
     """Test sending push notifications."""
 
     # Send a going shopping notification
-    await bring.notify(lst["listUuid"], BringNotificationType.GOING_SHOPPING, "")
+    await bring.notify(lst["listUuid"], BringNotificationType.GOING_SHOPPING)
 
     # Send a urgent message with argument item name
     await bring.notify(

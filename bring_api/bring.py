@@ -561,7 +561,7 @@ class Bring:
         self,
         list_uuid: str,
         notification_type: BringNotificationType,
-        item_name: str,
+        item_name: Optional[str] = None,
     ) -> aiohttp.ClientResponse:
         """Send a push notification to all other members of a shared list.
 
