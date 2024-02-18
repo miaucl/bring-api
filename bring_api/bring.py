@@ -264,7 +264,7 @@ class Bring:
 
                     for lst in data.values():
                         for item in lst:  # type: ignore[attr-defined]
-                            item["itemId"] = await self.__translate(
+                            item["itemId"] = self.__translate(
                                 item["itemId"],
                                 to_locale=self.__list_locale(list_uuid),
                             )
@@ -398,7 +398,7 @@ class Bring:
 
         """
         data = {
-            "purchase": await self.__translate(
+            "purchase": self.__translate(
                 item_name,
                 from_locale=self.__list_locale(list_uuid),
             ),
@@ -461,7 +461,7 @@ class Bring:
 
         """
         data = {
-            "purchase": await self.__translate(
+            "purchase": self.__translate(
                 item_name,
                 from_locale=self.__list_locale(list_uuid),
             ),
@@ -522,7 +522,7 @@ class Bring:
 
         """
         data = {
-            "remove": await self.__translate(
+            "remove": self.__translate(
                 item_name,
                 from_locale=self.__list_locale(list_uuid),
             ),
@@ -582,7 +582,7 @@ class Bring:
 
         """
         data = {
-            "recently": await self.__translate(
+            "recently": self.__translate(
                 item_name,
                 from_locale=self.__list_locale(list_uuid),
             )
@@ -806,7 +806,7 @@ class Bring:
                     "failed due to request exception."
                 ) from e
 
-    async def __translate(
+    def __translate(
         self,
         item_id: str,
         *,
