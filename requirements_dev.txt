@@ -5,5 +5,12 @@ python-dotenv>=1.0.1
 ruff~=0.2
 pytest-asyncio==0.23.5
 pytest==8.0.0
-
-
+python-dotenv==1.0.1
+PyYAML==6.0.1
+ruff==0.2.1
+tomli==2.0.1
+typing_extensions==4.9.0
+virtualenv==20.25.0
+yarl==1.9.4
+pytest-sugar
+pytest-xdist
