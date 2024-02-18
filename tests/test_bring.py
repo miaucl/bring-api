@@ -16,19 +16,6 @@ from bring_api.exceptions import (
 load_dotenv()
 
 
-# @pytest.fixture
-# async def session():
-#     """Create  a client session."""
-#     return aiohttp.ClientSession()
-
-
-# @pytest.fixture
-# async def bring(session) -> Bring:
-#     """Create Bring instance with email and password."""
-#     __bring = Bring(session, os.environ["EMAIL"], os.environ["PASSWORD"])
-#     return __bring
-
-
 class TestDoesUserExist:
     """Tests for does_user_exist method."""
 
@@ -77,7 +64,7 @@ class TestLogin:
         ):
             await __bring.login()
 
-    async def test_authorized(self, bring):
+    async def test_successfull_login(self, bring):
         """Test login with valid user."""
         data = await bring.login()
         assert "access_token" in data
@@ -85,3 +72,10 @@ class TestLogin:
         assert str(uuid.UUID(data["uuid"])) == data["uuid"], "uuid invalid"
         assert "publicUuid" in data
         assert str(uuid.UUID(data["publicUuid"])) == data["publicUuid"], "uuid invalid"
+
+
+class TestNotifications:
+    """Tests for notification method."""
+
+    def test_notify_going_shopping(self, bring):
+        """Test GOING_SHOPPING notification."""
