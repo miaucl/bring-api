@@ -170,7 +170,7 @@ class Bring:
 
         locale = (await self.sync_current_user())["userLocale"]
         self.headers["X-BRING-COUNTRY"] = locale["country"]
-        self.user_locale = f"{locale["country"]}-{locale["language"]}"
+        self.user_locale = f'{locale["language"]}-{locale["country"]}'
 
         if len(self.__translations) == 0:
             await self.__load_article_translations()
@@ -626,7 +626,7 @@ class Bring:
         self,
         list_uuid: str,
         notification_type: BringNotificationType,
-        item_name: str,
+        item_name: Optional[str] = None,
     ) -> aiohttp.ClientResponse:
         """Send a push notification to all other members of a shared list.
 
