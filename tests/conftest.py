@@ -13,8 +13,8 @@ load_dotenv()
 @pytest.fixture
 async def session():
     """Create  a client session."""
-    __session = aiohttp.ClientSession()
-    return __session
+    async with aiohttp.ClientSession() as __session:
+        yield __session
 
 
 @pytest.fixture
