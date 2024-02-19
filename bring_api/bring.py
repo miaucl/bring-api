@@ -844,6 +844,9 @@ class Bring:
 
         locale = to_locale or from_locale
 
+        if locale == "de-CH":
+            return item_id
+
         if not locale:
             _LOGGER.debug("One of the arguments from_locale or to_locale required.")
             raise ValueError("One of the arguments from_locale or to_locale required.")
