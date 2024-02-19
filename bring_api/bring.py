@@ -23,6 +23,7 @@ from .types import (
     BringListResponse,
     BringNotificationsConfigType,
     BringNotificationType,
+    BringSyncCurrentUserResponse,
     BringUserListSettings,
     BringUserSettings,
     BringUserSettingsResponse,
@@ -44,6 +45,7 @@ class Bring:
         self.password = password
         self.public_uuid = ""
         self.userlistsettings: dict[str, dict[str, str]] = {}
+        self.user_locale = "de-CH"
         self.supported_locales = [
             "en-AU",
             "de-DE",
@@ -166,8 +168,12 @@ class Bring:
         self.headers["X-BRING-USER-UUID"] = self.uuid
         self.headers["Authorization"] = f'Bearer {data["access_token"]}'
 
+        locale = (await self.sync_current_user())["userLocale"]
+        self.headers["X-BRING-COUNTRY"] = locale["country"]
+        self.user_locale = f"{locale["country"]}-{locale["language"]}"
+
         if len(self.__translations) == 0:
-            await self.__load_article_locales()
+            await self.__load_article_translations()
 
         if len(self.userlistsettings) == 0:
             await self.__load_user_list_settings()
@@ -266,7 +272,7 @@ class Bring:
                         for item in lst:  # type: ignore[attr-defined]
                             item["itemId"] = self.__translate(
                                 item["itemId"],
-                                to_locale=self.__list_locale(list_uuid),
+                                to_locale=self.__locale(list_uuid),
                             )
 
                     return data
@@ -400,7 +406,7 @@ class Bring:
         data = {
             "purchase": self.__translate(
                 item_name,
-                from_locale=self.__list_locale(list_uuid),
+                from_locale=self.__locale(list_uuid),
             ),
             "specification": specification,
         }
@@ -463,7 +469,7 @@ class Bring:
         data = {
             "purchase": self.__translate(
                 item_name,
-                from_locale=self.__list_locale(list_uuid),
+                from_locale=self.__locale(list_uuid),
             ),
             "specification": specification,
         }
@@ -524,7 +530,7 @@ class Bring:
         data = {
             "remove": self.__translate(
                 item_name,
-                from_locale=self.__list_locale(list_uuid),
+                from_locale=self.__locale(list_uuid),
             ),
         }
         try:
@@ -584,7 +590,7 @@ class Bring:
         data = {
             "recently": self.__translate(
                 item_name,
-                from_locale=self.__list_locale(list_uuid),
+                from_locale=self.__locale(list_uuid),
             )
         }
         try:
@@ -754,8 +760,8 @@ class Bring:
 
         return True
 
-    async def __load_article_locales(self) -> None:
-        """Load all translation dictionaries.
+    async def __load_article_translations(self) -> None:
+        """Load all translation dictionaries into memory.
 
         Raises
         ------
@@ -864,7 +870,7 @@ class Bring:
             ) from e
 
     async def __load_user_list_settings(self) -> None:
-        """Load user list settings.
+        """Load user list settings into memory.
 
         Raises
         ------
@@ -986,28 +992,76 @@ class Bring:
                 "Loading user settings failed due to request exception."
             ) from e
 
-    def __list_locale(self, list_uuid: str) -> str:
-        """Get locale for list.
+    def __locale(self, list_uuid: str) -> str:
+        """Get list or user locale.
 
         Returns
         -------
         str
-            The locale from userlistsettings.
+            The locale from userlistsettings or user.
 
         Raises
         ------
         BringTranslationException
-            If list locale could not be determined from the userlistsettings.
+            If list locale could not be determined from the userlistsettings or user.
+
+        """
+        if list_uuid in self.userlistsettings:
+            return self.userlistsettings[list_uuid]["listArticleLanguage"]
+        return self.user_locale
+
+    async def sync_current_user(self) -> BringSyncCurrentUserResponse:
+        """Sync current user.
+
+        Returns
+        -------
+        dict
+            The JSON response as a dict.
+
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
 
         """
         try:
-            return self.userlistsettings[list_uuid]["listArticleLanguage"]
-        except KeyError as e:
+            url = f"{self.url}v2/bringusers/{self.uuid}"
+            async with self._session.get(url, headers=self.headers) as r:
+                _LOGGER.debug("Response from %s: %s", url, r.status)
+                r.raise_for_status()
+
+                try:
+                    data = cast(
+                        BringSyncCurrentUserResponse,
+                        {
+                            key: val
+                            for key, val in (await r.json()).items()
+                            if key in BringSyncCurrentUserResponse.__annotations__
+                        },
+                    )
+                    return data
+                except JSONDecodeError as e:
+                    _LOGGER.error(
+                        "Exception: Cannot get lists:\n %s", traceback.format_exc()
+                    )
+                    raise BringParseException(
+                        "Loading lists failed during parsing of request response."
+                    ) from e
+        except asyncio.TimeoutError as e:
             _LOGGER.error(
-                "Exception: Cannot determine locale for list %s:\n%s",
-                list_uuid,
+                "Exception: Cannot get current user settings:\n %s",
                 traceback.format_exc(),
             )
-            raise BringTranslationException(
-                "Translation failed due to error determining locale for list"
+            raise BringRequestException(
+                "Loading current user settings failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.error(
+                "Exception: Cannot  current user settings:\n %s", traceback.format_exc()
+            )
+            raise BringRequestException(
+                "Loading current user settings failed due to request exception."
             ) from e

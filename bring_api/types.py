@@ -111,3 +111,13 @@ class BringUserSettingsResponse(TypedDict):
 
     usersettings: List[BringUserSettings]
     userlistsettings: List[BringUserListSettings]
+
+
+class BringSyncCurrentUserResponse(TypedDict):
+    """A sync current user response class."""
+
+    email: str
+    name: str
+    publicUuid: str
+    userLocale: dict[str, str]
+    userUuid: str
