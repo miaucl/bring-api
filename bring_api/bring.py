@@ -7,6 +7,8 @@ from typing import Optional, cast
 
 import aiohttp
 
+from bring_api.const import API_BASE_URL, DEFAULT_HEADERS
+
 from .exceptions import (
     BringAuthException,
     BringEMailInvalidException,
@@ -41,16 +43,9 @@ class Bring:
         self.uuid = ""
         self.public_uuid = ""
 
-        self.url = "https://api.getbring.com/rest/"
+        self.url = API_BASE_URL
 
-        self.headers = {
-            "Authorization": "Bearer",
-            "X-BRING-API-KEY": "cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Sp",
-            "X-BRING-CLIENT": "android",
-            "X-BRING-APPLICATION": "bring",
-            "X-BRING-COUNTRY": "DE",
-            "X-BRING-USER-UUID": "",
-        }
+        self.headers = DEFAULT_HEADERS
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
