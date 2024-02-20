@@ -7,7 +7,11 @@ from typing import Any, Optional, cast
 
 import aiohttp
 
-from bring_api.const import BRING_DEFAULT_LOCALE, BRING_SUPPORTED_LOCALES
+from bring_api.const import (
+    BRING_DEFAULT_LOCALE,
+    BRING_SUPPORTED_LOCALES,
+    LOCALES_BASE_URL,
+)
 
 from .exceptions import (
     BringAuthException,
@@ -750,11 +754,10 @@ class Bring:
             If the request fails.
 
         """
-        locales_url = "https://web.getbring.com/locale/"
 
         for locale in BRING_SUPPORTED_LOCALES:
             try:
-                url = f"{locales_url}articles.{locale}.json"
+                url = f"{LOCALES_BASE_URL}articles.{locale}.json"
                 async with self._session.get(url) as r:
                     _LOGGER.debug("Response from %s: %s", url, r.status)
                     r.raise_for_status()

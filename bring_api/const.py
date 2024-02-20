@@ -1,6 +1,7 @@
 """Constants for bring-api."""
 from typing import Final
 
+LOCALES_BASE_URL: Final = "https://web.getbring.com/locale/"
 BRING_SUPPORTED_LOCALES: Final = [
     "en-AU",
     "de-DE",
