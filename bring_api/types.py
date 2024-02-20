@@ -92,6 +92,37 @@ class BringNotificationsConfigType(TypedDict):
     senderPublicUserUuid: str
 
 
+class BringUserSettingsEntry(TypedDict):
+    """A user settings class. Represents a single user setting."""
+
+    key: str
+    value: str
+
+
+class BringUserListSettingEntry(TypedDict):
+    """A user list settings class. Represents a single list setting."""
+
+    listUuid: str
+    usersettings: List[BringUserSettingsEntry]
+
+
+class BringUserSettingsResponse(TypedDict):
+    """A user settings response class."""
+
+    usersettings: List[BringUserSettingsEntry]
+    userlistsettings: List[BringUserListSettingEntry]
+
+
+class BringSyncCurrentUserResponse(TypedDict):
+    """A sync current user response class."""
+
+    email: str
+    name: str
+    publicUuid: str
+    userLocale: dict[str, str]
+    userUuid: str
+
+
 class BringItem(TypedDict):
     """A BringItem."""
 
