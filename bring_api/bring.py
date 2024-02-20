@@ -1100,6 +1100,10 @@ class Bring:
                 {
                     **_base_params,
                     **item,
+                    "itemId": self.__translate(
+                        item["itemId"],
+                        from_locale=self.__locale(list_uuid),
+                    ),
                     "operation": item.get("operation", operation.value),
                 }
                 for item in items
