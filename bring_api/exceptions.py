@@ -23,3 +23,7 @@ class BringEMailInvalidException(BringException):
 
 class BringUserUnknownException(BringException):
     """When checkemail returns userExists false."""
+
+
+class BringTranslationException(BringException):
+    """When translating an article fails."""
