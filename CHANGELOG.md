@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.4.0
+
+* **Localization support:** catalog items are now automatically translated based on the shopping lists language if configured, otherwise the users default language is used ([tr4nt0r](https://github.com/tr4nt0r))
+* **New API method:** sync_current_user ([tr4nt0r](https://github.com/tr4nt0r))
+* **New API method:** get_all_user_settings to determine list language ([tr4nt0r](https://github.com/tr4nt0r))
+
 ## 0.3.1
 
 * Unpin requirements and remove subdependencies ([tr4nt0r](https://github.com/tr4nt0r))
