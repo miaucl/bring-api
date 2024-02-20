@@ -2,6 +2,7 @@
 import asyncio
 from json import JSONDecodeError
 import logging
+import time
 import traceback
 from typing import Optional, cast
 
@@ -16,6 +17,7 @@ from .exceptions import (
 )
 from .types import (
     BringAuthResponse,
+    BringAuthTokenRespone,
     BringItemsResponse,
     BringListItemDetails,
     BringListItemsDetailsResponse,
@@ -40,9 +42,9 @@ class Bring:
         self.password = password
         self.uuid = ""
         self.public_uuid = ""
-
+        self.refresh_token = ""
         self.url = "https://api.getbring.com/rest/"
-
+        self.__expires_in: int
         self.headers = {
             "Authorization": "Bearer",
             "X-BRING-API-KEY": "cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Sp",
@@ -51,6 +53,15 @@ class Bring:
             "X-BRING-COUNTRY": "DE",
             "X-BRING-USER-UUID": "",
         }
+
+    @property
+    def expires_in(self) -> int:
+        """Refresh token expiration."""
+        return max(0, self.__expires_in - int(time.time()))
+
+    @expires_in.setter
+    def expires_in(self, expires_in: int | str) -> None:
+        self.__expires_in = int(time.time()) + int(expires_in)
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
@@ -136,7 +147,9 @@ class Bring:
         self.uuid = data["uuid"]
         self.public_uuid = data.get("publicUuid", "")
         self.headers["X-BRING-USER-UUID"] = self.uuid
-        self.headers["Authorization"] = f'Bearer {data["access_token"]}'
+        self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
+        self.refresh_token = data["refresh_token"]
+        self.expires_in = data["expires_in"]
 
         return data
 
@@ -694,3 +707,51 @@ class Bring:
             raise BringEMailInvalidException(f"E-mail {mail} is invalid.") from e
 
         return True
+
+    async def retrieve_new_access_token(
+        self, refresh_token: str | None = None
+    ) -> BringAuthTokenRespone:
+        """Refresh the access token."""
+
+        refresh_token = refresh_token or self.refresh_token
+
+        user_data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+        try:
+            url = f"{self.url}v2/bringauth/token"
+            async with self._session.post(
+                url, headers=self.headers, data=user_data
+            ) as r:
+                _LOGGER.debug("Response from %s: %s", url, r.status)
+                r.raise_for_status()
+
+                try:
+                    data = cast(
+                        BringAuthTokenRespone,
+                        {
+                            key: val
+                            for key, val in (await r.json()).items()
+                            if key in BringAuthTokenRespone.__annotations__
+                        },
+                    )
+                except JSONDecodeError as e:
+                    _LOGGER.error(
+                        "Exception: Cannot login:\n %s", traceback.format_exc()
+                    )
+                    raise BringParseException(
+                        "Cannot parse login request response."
+                    ) from e
+        except asyncio.TimeoutError as e:
+            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            raise BringRequestException(
+                "Authentication failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            raise BringRequestException(
+                "Authentication failed due to request exception."
+            ) from e
+
+        self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
+        self.expires_in = data["expires_in"]
+
+        return data

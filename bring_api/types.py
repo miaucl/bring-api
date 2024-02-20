@@ -90,3 +90,12 @@ class BringNotificationsConfigType(TypedDict):
     arguments: List[str]
     listNotificationType: str
     senderPublicUserUuid: str
+
+
+class BringAuthTokenRespone(TypedDict):
+    """A refresh token response class."""
+
+    access_token: str
+    refresh_token: str
+    token_type: str
+    expires_in: int
