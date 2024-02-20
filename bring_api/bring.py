@@ -3,9 +3,11 @@ import asyncio
 from json import JSONDecodeError
 import logging
 import traceback
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 import aiohttp
+
+from bring_api.const import BRING_DEFAULT_LOCALE, BRING_SUPPORTED_LOCALES
 
 from .exceptions import (
     BringAuthException,
@@ -45,29 +47,8 @@ class Bring:
         self.password = password
         self.public_uuid = ""
         self.userlistsettings: dict[str, dict[str, str]] = {}
-        self.user_locale = "de-CH"
-        self.supported_locales = [
-            "en-AU",
-            "de-DE",
-            "fr-FR",
-            "it-IT",
-            "en-CA",
-            "nl-NL",
-            "nb-NO",
-            "pl-PL",
-            "pt-BR",
-            "ru-RU",
-            "sv-SE",
-            "de-CH",
-            "fr-CH",
-            "it-CH",
-            "es-ES",
-            "tr-TR",
-            "en-GB",
-            "en-US",
-            "hu-HU",
-            "de-AT",
-        ]
+        self.user_locale = BRING_DEFAULT_LOCALE
+
         self.__translations: dict[str, dict[str, str]] = {}
         self.uuid = ""
 
@@ -269,7 +250,7 @@ class Bring:
                     )
 
                     for lst in data.values():
-                        for item in lst:  # type: ignore[attr-defined]
+                        for item in cast(dict[Any, Any], lst):
                             item["itemId"] = self.__translate(
                                 item["itemId"],
                                 to_locale=self.__locale(list_uuid),
@@ -771,7 +752,7 @@ class Bring:
         """
         locales_url = "https://web.getbring.com/locale/"
 
-        for locale in self.supported_locales:
+        for locale in BRING_SUPPORTED_LOCALES:
             try:
                 url = f"{locales_url}articles.{locale}.json"
                 async with self._session.get(url) as r:
@@ -851,7 +832,7 @@ class Bring:
             _LOGGER.debug("One of the arguments from_locale or to_locale required.")
             raise ValueError("One of the arguments from_locale or to_locale required.")
 
-        if locale not in self.supported_locales:
+        if locale not in BRING_SUPPORTED_LOCALES:
             _LOGGER.debug("Locale %s not supported by Bring.", locale)
             raise ValueError(f"Locale {locale} not supported by Bring.")
         try:
