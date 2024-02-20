@@ -26,8 +26,8 @@ from .types import (
     BringNotificationsConfigType,
     BringNotificationType,
     BringSyncCurrentUserResponse,
-    BringUserListSettings,
-    BringUserSettings,
+    BringUserListSettingEntry,
+    BringUserSettingsEntry,
     BringUserSettingsResponse,
 )
 
@@ -863,8 +863,13 @@ class Bring:
         """
         try:
             self.userlistsettings = {
-                i["listUuid"]: {ii["key"]: ii["value"] for ii in i["usersettings"]}
-                for i in (await self.get_all_user_settings())["userlistsettings"]
+                user_list_setting["listUuid"]: {
+                    user_setting["key"]: user_setting["value"]
+                    for user_setting in user_list_setting["usersettings"]
+                }
+                for user_list_setting in (await self.get_all_user_settings())[
+                    "userlistsettings"
+                ]
             }
         except Exception as e:
             _LOGGER.error(
@@ -901,11 +906,11 @@ class Bring:
                 try:
                     usersettings = [
                         cast(
-                            BringUserSettings,
+                            BringUserSettingsEntry,
                             {
                                 key: val
                                 for key, val in item.items()
-                                if key in BringUserSettings.__annotations__
+                                if key in BringUserSettingsEntry.__annotations__
                             },
                         )
                         for item in (await r.json())["usersettings"]
@@ -915,11 +920,11 @@ class Bring:
                     for i, listitem in enumerate(userlistsettings):
                         userlistsettings[i]["usersettings"] = [
                             cast(
-                                BringUserSettings,
+                                BringUserSettingsEntry,
                                 {
                                     key: val
                                     for key, val in item.items()
-                                    if key in BringUserSettings.__annotations__
+                                    if key in BringUserSettingsEntry.__annotations__
                                 },
                             )
                             for item in listitem["usersettings"]
@@ -927,11 +932,11 @@ class Bring:
 
                     userlistsettings = [
                         cast(
-                            BringUserListSettings,
+                            BringUserListSettingEntry,
                             {
                                 key: val
                                 for key, val in item.items()
-                                if key in BringUserListSettings.__annotations__
+                                if key in BringUserListSettingEntry.__annotations__
                             },
                         )
                         for item in userlistsettings
