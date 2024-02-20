@@ -825,25 +825,24 @@ class Bring:
 
         locale = to_locale or from_locale
 
-        if locale == "de-CH":
+        if locale == BRING_DEFAULT_LOCALE:
             return item_id
 
         if not locale:
-            _LOGGER.debug("One of the arguments from_locale or to_locale required.")
             raise ValueError("One of the arguments from_locale or to_locale required.")
 
         if locale not in BRING_SUPPORTED_LOCALES:
             _LOGGER.debug("Locale %s not supported by Bring.", locale)
             raise ValueError(f"Locale {locale} not supported by Bring.")
         try:
-            if to_locale:
-                item_id = self.__translations[locale].get(item_id, item_id)
-            else:
-                item_id = (
+            return (
+                self.__translations[locale].get(item_id, item_id)
+                if to_locale
+                else (
                     {value: key for key, value in self.__translations[locale].items()}
                 ).get(item_id, item_id)
+            )
 
-            return item_id
         except Exception as e:
             _LOGGER.error(
                 "Exception: Cannot load translation dictionary:\n%s",
