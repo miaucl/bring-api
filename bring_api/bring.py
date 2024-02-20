@@ -7,12 +7,13 @@ from typing import Any, Optional, cast
 
 import aiohttp
 
-from bring_api.const import (
+from .const import (
+    API_BASE_URL,
     BRING_DEFAULT_LOCALE,
     BRING_SUPPORTED_LOCALES,
+    DEFAULT_HEADERS,
     LOCALES_BASE_URL,
 )
-
 from .exceptions import (
     BringAuthException,
     BringEMailInvalidException,
@@ -49,6 +50,7 @@ class Bring:
 
         self.mail = mail
         self.password = password
+
         self.public_uuid = ""
         self.userlistsettings: dict[str, dict[str, str]] = {}
         self.user_locale = BRING_DEFAULT_LOCALE
@@ -56,16 +58,9 @@ class Bring:
         self.__translations: dict[str, dict[str, str]] = {}
         self.uuid = ""
 
-        self.url = "https://api.getbring.com/rest/"
+        self.url = API_BASE_URL
 
-        self.headers = {
-            "Authorization": "Bearer",
-            "X-BRING-API-KEY": "cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Sp",
-            "X-BRING-CLIENT": "android",
-            "X-BRING-APPLICATION": "bring",
-            "X-BRING-COUNTRY": "DE",
-            "X-BRING-USER-UUID": "",
-        }
+        self.headers = DEFAULT_HEADERS
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
