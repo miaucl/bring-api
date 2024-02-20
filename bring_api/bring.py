@@ -148,7 +148,7 @@ class Bring:
         self.headers["X-BRING-USER-UUID"] = self.uuid
         self.headers["Authorization"] = f'Bearer {data["access_token"]}'
 
-        locale = (await self.sync_current_user())["userLocale"]
+        locale = (await self.get_user_account())["userLocale"]
         self.headers["X-BRING-COUNTRY"] = locale["country"]
         self.user_locale = f'{locale["language"]}-{locale["country"]}'
 
@@ -996,8 +996,8 @@ class Bring:
             return self.userlistsettings[list_uuid]["listArticleLanguage"]
         return self.user_locale
 
-    async def sync_current_user(self) -> BringSyncCurrentUserResponse:
-        """Sync current user.
+    async def get_user_account(self) -> BringSyncCurrentUserResponse:
+        """Get current user account.
 
         Returns
         -------
