@@ -65,12 +65,14 @@ class Bring:
 
         self.__translations: dict[str, dict[str, str]] = {}
         self.uuid = ""
-        self.refresh_token = ""
+
         self.url = API_BASE_URL
-        self.__expires_in: int
+
         self.headers = DEFAULT_HEADERS
+
         self.loop = asyncio.get_running_loop()
         self.refresh_token = ""
+        self.__expires_in: int
 
     @property
     def expires_in(self) -> int:
@@ -80,8 +82,6 @@ class Bring:
     @expires_in.setter
     def expires_in(self, expires_in: int | str) -> None:
         self.__expires_in = int(time.time()) + int(expires_in)
-
-        self.loop = asyncio.get_running_loop()
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
