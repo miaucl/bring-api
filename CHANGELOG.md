@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.4.1
+
+* instead of downloading all translation tables, required locales are determined from the user list settings and the user locale. ([tr4nt0r](https://github.com/tr4nt0r))
+* variable `userlistsettings` renamed to snake_cae `user_list_settings`. ([tr4nt0r](https://github.com/tr4nt0r))
+
 ## 0.4.0
 
 * **Localization support:** catalog items are now automatically translated based on the shopping lists language if configured, otherwise the users default language is used ([tr4nt0r](https://github.com/tr4nt0r))
