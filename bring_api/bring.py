@@ -52,7 +52,7 @@ class Bring:
         self.password = password
 
         self.public_uuid = ""
-        self.userlistsettings: dict[str, dict[str, str]] = {}
+        self.user_list_settings: dict[str, dict[str, str]] = {}
         self.user_locale = BRING_DEFAULT_LOCALE
 
         self.__translations: dict[str, dict[str, str]] = {}
@@ -152,11 +152,9 @@ class Bring:
         self.headers["X-BRING-COUNTRY"] = locale["country"]
         self.user_locale = f'{locale["language"]}-{locale["country"]}'
 
-        if len(self.__translations) == 0:
-            await self.__load_article_translations()
+        self.user_list_settings = await self.__load_user_list_settings()
 
-        if len(self.userlistsettings) == 0:
-            await self.__load_user_list_settings()
+        self.__translations = await self.__load_article_translations()
 
         return data
 
@@ -740,17 +738,40 @@ class Bring:
 
         return True
 
-    async def __load_article_translations(self) -> None:
-        """Load all translation dictionaries into memory.
+    async def __load_article_translations(self) -> dict[str, dict[str, str]]:
+        """Load all required translation dictionaries into memory.
+
+        Parameters
+        ----------
+        locales_required : list[str]
+            A list of locales to download.
 
         Raises
         ------
         BringRequestException
             If the request fails.
 
-        """
+        Returns
+        -------
+        dict
+            dict of downloaded dictionaries
 
-        for locale in BRING_SUPPORTED_LOCALES:
+        """
+        dictionaries: dict[str, dict[str, str]] = {}
+
+        locales_required = list(
+            dict.fromkeys(
+                [
+                    list_setting["listArticleLanguage"]
+                    for list_setting in self.user_list_settings.values()
+                ]
+                + [self.user_locale]
+            )
+        )
+
+        for locale in locales_required or BRING_SUPPORTED_LOCALES:
+            if locale == BRING_DEFAULT_LOCALE:
+                continue
             try:
                 url = f"{LOCALES_BASE_URL}articles.{locale}.json"
                 async with self._session.get(url) as r:
@@ -758,7 +779,7 @@ class Bring:
                     r.raise_for_status()
 
                     try:
-                        self.__translations[locale] = await r.json()
+                        dictionaries[locale] = await r.json()
                     except JSONDecodeError as e:
                         _LOGGER.error(
                             "Exception: Cannot load articles.%s.json:\n%s",
@@ -790,6 +811,8 @@ class Bring:
                     f"Loading article translations for locale {locale}"
                     "failed due to request exception."
                 ) from e
+
+        return dictionaries
 
     def __translate(
         self,
@@ -850,17 +873,22 @@ class Bring:
                 "Translation failed due to error loading translation dictionary."
             ) from e
 
-    async def __load_user_list_settings(self) -> None:
+    async def __load_user_list_settings(self) -> dict[str, dict[str, str]]:
         """Load user list settings into memory.
 
         Raises
         ------
         BringTranslationException
-            If the userlistsettings coould not be loaded.
+            If the user list settings could not be loaded.
+
+        Returns
+        -------
+         dict[str, dict[str, str]]
+            A dict of settings of the users lists
 
         """
         try:
-            self.userlistsettings = {
+            return {
                 user_list_setting["listUuid"]: {
                     user_setting["key"]: user_setting["value"]
                     for user_setting in user_list_setting["usersettings"]
@@ -869,13 +897,14 @@ class Bring:
                     "userlistsettings"
                 ]
             }
+
         except Exception as e:
             _LOGGER.error(
-                "Exception: Cannot load userlistsettings:\n%s",
+                "Exception: Cannot load user list settings:\n%s",
                 traceback.format_exc(),
             )
             raise BringTranslationException(
-                "Translation failed due to error loading userlistsettings."
+                "Translation failed due to error loading user list settings."
             ) from e
 
     async def get_all_user_settings(self) -> BringUserSettingsResponse:
@@ -992,8 +1021,8 @@ class Bring:
             If list locale could not be determined from the userlistsettings or user.
 
         """
-        if list_uuid in self.userlistsettings:
-            return self.userlistsettings[list_uuid]["listArticleLanguage"]
+        if list_uuid in self.user_list_settings:
+            return self.user_list_settings[list_uuid]["listArticleLanguage"]
         return self.user_locale
 
     async def get_user_account(self) -> BringSyncCurrentUserResponse:
