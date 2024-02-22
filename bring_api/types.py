@@ -121,3 +121,12 @@ class BringSyncCurrentUserResponse(TypedDict):
     publicUuid: str
     userLocale: dict[str, str]
     userUuid: str
+
+
+class BringAuthTokenRespone(TypedDict):
+    """A refresh token response class."""
+
+    access_token: str
+    refresh_token: str
+    token_type: str
+    expires_in: int
