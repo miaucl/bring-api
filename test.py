@@ -83,7 +83,7 @@ async def test_translation(bring: Bring, lst: BringList):
     locale_to = "de-DE"
     locale_from = "de-CH"
 
-    locale_org = bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"]
+    locale_org = bring.user_list_settings[lst["listUuid"]]["listArticleLanguage"]
 
     test_items = {
         "Pouletbrüstli": "Hähnchenbrust",
@@ -96,11 +96,11 @@ async def test_translation(bring: Bring, lst: BringList):
     }
     for k, v in test_items.items():
         # Save an item an item to
-        bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"] = locale_to
+        bring.user_list_settings[lst["listUuid"]]["listArticleLanguage"] = locale_to
         await bring.save_item(lst["listUuid"], v)
 
         # Get all the pending items of a list
-        bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"] = locale_from
+        bring.user_list_settings[lst["listUuid"]]["listArticleLanguage"] = locale_from
         items = await bring.get_list(lst["listUuid"])
         item = next(ii["itemId"] for ii in items["purchase"] if ii["itemId"] == k)
         assert item == k
@@ -109,7 +109,7 @@ async def test_translation(bring: Bring, lst: BringList):
         await bring.remove_item(lst["listUuid"], k)
 
     # reset locale to original value for other tests
-    bring.userlistsettings[lst["listUuid"]]["listArticleLanguage"] = locale_org
+    bring.user_list_settings[lst["listUuid"]]["listArticleLanguage"] = locale_org
 
 
 async def test_batch_list_operations(bring: Bring, lst: BringList):
