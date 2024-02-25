@@ -292,7 +292,7 @@ class Bring:
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            A list uuid returned by load_lists()
 
         Returns
         -------
@@ -359,18 +359,25 @@ class Bring:
             ) from e
 
     async def save_item(
-        self, list_uuid: str, item_name: str, specification: str = ""
+        self,
+        list_uuid: str,
+        item_name: str,
+        specification: str = "",
+        item_uuid: str = "",
     ) -> aiohttp.ClientResponse:
         """Save an item to a shopping list.
 
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            A list uuid returned by load_lists()
         item_name : str
             The name of the item you want to save.
         specification : str, optional
             The details you want to add to the item.
+        item_uuid : str, optional
+            The uuid for the item to add (usage of uuid4 recommended).
+
 
         Returns
         -------
@@ -383,19 +390,13 @@ class Bring:
             If the request fails.
 
         """
-        data = {
-            "purchase": self.__translate(
-                item_name,
-                from_locale=self.__locale(list_uuid),
-            ),
-            "specification": specification,
-        }
+        data = BringItem(
+            itemId=item_name,
+            spec=specification,
+            uuid=item_uuid,
+        )
         try:
-            url = f"{self.url}v2/bringlists/{list_uuid}"
-            async with self._session.put(url, headers=self.headers, data=data) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
-                r.raise_for_status()
-                return r
+            return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot save item %s (%s) to list %s:\n%s",
@@ -422,18 +423,29 @@ class Bring:
             ) from e
 
     async def update_item(
-        self, list_uuid: str, item_name: str, specification: str = ""
+        self,
+        list_uuid: str,
+        item_name: str,
+        specification: str = "",
+        item_uuid: str = "",
     ) -> aiohttp.ClientResponse:
         """Update an existing list item.
+
+        Caution: Do not update `item_name`. Providing `item_uuid` makes it
+        possible to update a specific item in case there are multiple
+        items with the same name. If uuid is not specified, the newest
+        item with the given `item_name` will be updated.
 
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            A list uuid returned by load_lists()
         item_name : str
             The name of the item you want to update.
         specification : str, optional
             The details you want to update on the item.
+        item_uuid : str, optional
+            The uuid of the item to update.
 
         Returns
         -------
@@ -446,19 +458,13 @@ class Bring:
             If the request fails.
 
         """
-        data = {
-            "purchase": self.__translate(
-                item_name,
-                from_locale=self.__locale(list_uuid),
-            ),
-            "specification": specification,
-        }
+        data = BringItem(
+            itemId=item_name,
+            spec=specification,
+            uuid=item_uuid,
+        )
         try:
-            url = f"{self.url}v2/bringlists/{list_uuid}"
-            async with self._session.put(url, headers=self.headers, data=data) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
-                r.raise_for_status()
-                return r
+            return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot update item %s (%s) to list %s:\n%s",
@@ -485,16 +491,18 @@ class Bring:
             ) from e
 
     async def remove_item(
-        self, list_uuid: str, item_name: str
+        self, list_uuid: str, item_name: str, item_uuid: str = ""
     ) -> aiohttp.ClientResponse:
         """Remove an item from a shopping list.
 
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            A list uuid returned by load_lists()
         item_name : str
             The name of the item you want to remove.
+        item_uuid : str, optional
+            The uuid of the item you want to remove.
 
         Returns
         -------
@@ -507,18 +515,15 @@ class Bring:
             If the request fails.
 
         """
-        data = {
-            "remove": self.__translate(
-                item_name,
-                from_locale=self.__locale(list_uuid),
-            ),
-        }
+        data = BringItem(
+            itemId=item_name,
+            spec="",
+            uuid=item_uuid,
+        )
         try:
-            url = f"{self.url}v2/bringlists/{list_uuid}"
-            async with self._session.put(url, headers=self.headers, data=data) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
-                r.raise_for_status()
-                return r
+            return await self.batch_update_list(
+                list_uuid, data, BringItemOperation.REMOVE
+            )
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot delete item %s from list %s:\n%s",
@@ -543,7 +548,11 @@ class Bring:
             ) from e
 
     async def complete_item(
-        self, list_uuid: str, item_name: str
+        self,
+        list_uuid: str,
+        item_name: str,
+        specification: str = "",
+        item_uuid: str = "",
     ) -> aiohttp.ClientResponse:
         """Complete an item from a shopping list. This will add it to recent items.
 
@@ -552,9 +561,13 @@ class Bring:
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            A list uuid returned by load_lists()
         item_name : str
             The name of the item you want to complete.
+        specification : str, optional
+            The details you want to update on the item.
+        item_uuid : str, optional
+            The uuid of the item you want to complete.
 
         Returns
         -------
@@ -567,18 +580,15 @@ class Bring:
             If the request fails.
 
         """
-        data = {
-            "recently": self.__translate(
-                item_name,
-                from_locale=self.__locale(list_uuid),
-            )
-        }
+        data = BringItem(
+            itemId=item_name,
+            spec=specification,
+            uuid=item_uuid,
+        )
         try:
-            url = f"{self.url}v2/bringlists/{list_uuid}"
-            async with self._session.put(url, headers=self.headers, data=data) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
-                r.raise_for_status()
-                return r
+            return await self.batch_update_list(
+                list_uuid, data, BringItemOperation.COMPLETE
+            )
         except asyncio.TimeoutError as e:
             _LOGGER.error(
                 "Exception: Cannot complete item %s in list %s:\n%s",
@@ -1099,8 +1109,9 @@ class Bring:
             Item(s) to add, complete or remove from the list
         operation : BringItemOperation, optional
             The Operation (ADD, COMPLETE, REMOVE) to perform for the supplied items on the list.
-            Parameter can be ommited, and the BringItem key 'operation' can be set to TO_PURCHASE, TO_RECENTLY or REMOVE.
-            Defaults to BringItemOperation.ADD if operation is neither passed as parameter nor is set in the BringItem.
+            Parameter can be ommited, and the BringItem key 'operation' can be set to TO_PURCHASE,
+            TO_RECENTLY or REMOVE. Defaults to BringItemOperation.ADD if operation is neither
+            passed as parameter nor is set in the BringItem.
 
         Returns
         -------
