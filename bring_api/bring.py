@@ -741,11 +741,6 @@ class Bring:
     async def __load_article_translations(self) -> dict[str, dict[str, str]]:
         """Load all required translation dictionaries into memory.
 
-        Parameters
-        ----------
-        locales_required : list[str]
-            A list of locales to download.
-
         Raises
         ------
         BringRequestException
