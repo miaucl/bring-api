@@ -121,3 +121,19 @@ class BringSyncCurrentUserResponse(TypedDict):
     publicUuid: str
     userLocale: dict[str, str]
     userUuid: str
+
+
+class BringItem(TypedDict):
+    """A BringItem."""
+
+    itemId: str
+    spec: str
+    uuid: str
+
+
+class BringItemOperation(Enum):
+    """Operation to be be executed on list items."""
+
+    ADD = "TO_PURCHASE"
+    COMPLETE = "TO_RECENTLY"
+    REMOVE = "REMOVE"

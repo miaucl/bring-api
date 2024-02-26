@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from bring_api.bring import Bring
 from bring_api.exceptions import BringEMailInvalidException, BringUserUnknownException
-from bring_api.types import BringList, BringNotificationType
+from bring_api.types import BringItemOperation, BringList, BringNotificationType
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -112,6 +112,96 @@ async def test_translation(bring: Bring, lst: BringList):
     bring.user_list_settings[lst["listUuid"]]["listArticleLanguage"] = locale_org
 
 
+async def test_batch_list_operations(bring: Bring, lst: BringList):
+    """Test batch list operations."""
+
+    # Add items with same name but different specifications
+    add_items = [
+        {
+            "itemId": "Cilantro",
+            "spec": "100g, dried",
+            "uuid": str(uuid.uuid4()),
+        },
+        {
+            "itemId": "Cilantro",
+            "spec": "fresh",
+            "uuid": str(uuid.uuid4()),
+        },
+    ]
+
+    await bring.batch_update_list(lst["listUuid"], add_items, BringItemOperation.ADD)
+    logging.info("Add %s items to list %s", len(add_items), os.environ["LIST"])
+
+    # Get all the pending items of a list
+    items = await bring.get_list(lst["listUuid"])
+    logging.info("List purchase items: %s", items["purchase"])
+
+    # Complete items on the list
+    await bring.batch_update_list(
+        lst["listUuid"], add_items, BringItemOperation.COMPLETE
+    )
+    logging.info("Complete %s items on the list %s", len(add_items), os.environ["LIST"])
+
+    # Get all the recent items of a list
+    items = await bring.get_list(lst["listUuid"])
+    logging.info("List recently items: %s", items["recently"])
+
+    # Remove items on the list
+    await bring.batch_update_list(lst["listUuid"], add_items, BringItemOperation.REMOVE)
+    logging.info("Remove items from the list %s: %s", os.environ["LIST"], add_items)
+
+    # Get all the items of a list
+    items = await bring.get_list(lst["listUuid"])
+    logging.info("List all items: %s / %s", items["purchase"], items["recently"])
+
+    # Batch update list with add, complete and remove operations
+    item1_uuid = str(uuid.uuid4())
+    item2_uuid = str(uuid.uuid4())
+    add_complete_delete_items = [
+        {
+            "itemId": "Hähnchen",
+            "spec": "gegrillt",
+            "uuid": item1_uuid,
+            "operation": "TO_PURCHASE",
+        },
+        {
+            "itemId": "Hähnchenbrust",
+            "spec": "gebraten",
+            "uuid": item2_uuid,
+            "operation": "TO_PURCHASE",
+        },
+        {
+            "itemId": "Hähnchen",
+            "spec": "",
+            "uuid": item1_uuid,
+            "operation": "TO_RECENTLY",
+        },
+        {
+            "itemId": "Hähnchenbrust",
+            "spec": "",
+            "uuid": item2_uuid,
+            "operation": "TO_RECENTLY",
+        },
+        {
+            "itemId": "Hähnchen",
+            "spec": "",
+            "uuid": item1_uuid,
+            "operation": "REMOVE",
+        },
+        {
+            "itemId": "Hähnchenbrust",
+            "spec": "",
+            "uuid": item2_uuid,
+            "operation": "REMOVE",
+        },
+    ]
+    await bring.batch_update_list(lst["listUuid"], add_complete_delete_items)
+    logging.info(
+        "Submit batch update with ADD, COMPLETE, REMOVE operations to list %s",
+        os.environ["LIST"],
+    )
+
+
 async def main():
     """Test Bring API."""
     async with aiohttp.ClientSession() as session:
@@ -134,6 +224,8 @@ async def main():
         await test_push_notifications(bring, lst)
 
         await test_translation(bring, lst)
+
+        await test_batch_list_operations(bring, lst)
 
 
 asyncio.run(main())

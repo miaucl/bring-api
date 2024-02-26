@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.5.0
+
+* **New API method:** `batch_update_list`. Uses the same API endpoint as the mobile app to add, complete and remove items from shopping lists and has support for uuid as unique identifier for list items.  
+* `save_item`, `update_item`, `complete_item` and `remove_item` are now wrapper methods for `batch_update_list` and have the additional parameter item_uuid.
+
 ## 0.4.1
 
 * instead of downloading all translation tables, required locales are determined from the user list settings and the user locale. ([tr4nt0r](https://github.com/tr4nt0r))
@@ -8,8 +13,8 @@
 ## 0.4.0
 
 * **Localization support:** catalog items are now automatically translated based on the shopping lists language if configured, otherwise the users default language is used ([tr4nt0r](https://github.com/tr4nt0r))
-* **New API method:** get_user_account. Retrieves information about the current user like email, name and language ([tr4nt0r](https://github.com/tr4nt0r))
-* **New API method:** get_all_user_settings. Retrieves user settings like default list and individual list settings for section order and language ([tr4nt0r](https://github.com/tr4nt0r))
+* **New API method:** `get_user_account`. Retrieves information about the current user like email, name and language ([tr4nt0r](https://github.com/tr4nt0r))
+* **New API method:** `get_all_user_settings`. Retrieves user settings like default list and individual list settings for section order and language ([tr4nt0r](https://github.com/tr4nt0r))
 
 ## 0.3.1
 
