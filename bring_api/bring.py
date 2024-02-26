@@ -1,7 +1,9 @@
 """Bring api implementation."""
 import asyncio
+import json
 from json import JSONDecodeError
 import logging
+import os
 import traceback
 from typing import Any, List, Optional, cast
 
@@ -779,6 +781,18 @@ class Bring:
         for locale in locales_required or BRING_SUPPORTED_LOCALES:
             if locale == BRING_DEFAULT_LOCALE:
                 continue
+
+            try:
+                path = f"{os.path.dirname(os.path.abspath(__file__))}{os.sep}locales{os.sep}articles.{locale}.json"
+                with open(path, encoding="UTF-8") as f:
+                    dictionaries[locale] = json.load(f)
+                continue
+            except FileNotFoundError:
+                _LOGGER.debug(
+                    "Locale file %s not found. Will continue trying to download locale.",
+                    path,
+                )
+
             try:
                 url = f"{LOCALES_BASE_URL}articles.{locale}.json"
                 async with self._session.get(url) as r:

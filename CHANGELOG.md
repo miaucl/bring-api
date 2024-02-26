@@ -1,9 +1,14 @@
 # CHANGELOG
 
+## 0.5.1
+
+* Add article translation tables to package. Translation tables are now loaded from file as data from web app is outdated.
+
 ## 0.5.0
 
 * **New API method:** `batch_update_list`. Uses the same API endpoint as the mobile app to add, complete and remove items from shopping lists and has support for uuid as unique identifier for list items.  
 * `save_item`, `update_item`, `complete_item` and `remove_item` are now wrapper methods for `batch_update_list` and have the additional parameter item_uuid.
+
 
 ## 0.4.1
 

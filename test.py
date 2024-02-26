@@ -93,6 +93,7 @@ async def test_translation(bring: Bring, lst: BringList):
         "Pelati": "Dosentomaten",
         "Fischstäbli": "Fischstäbchen",
         "Guetzli": "Plätzchen",
+        "Paprika": "Paprika",
     }
     for k, v in test_items.items():
         # Save an item an item to

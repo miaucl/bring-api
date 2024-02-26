@@ -1,5 +1,6 @@
 dist/
 bring_api.egg-info/
+catalog/
 test/
 .venv
 __pycache__
