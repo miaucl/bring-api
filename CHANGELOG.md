@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.5.2
+
+* Fixed build script to add locales explicitly.
+
 ## 0.5.1
 
 * Add article translation tables to package. Translation tables are now loaded from file as data from web app is outdated.
