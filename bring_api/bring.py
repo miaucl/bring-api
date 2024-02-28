@@ -66,6 +66,8 @@ class Bring:
 
         self.headers = DEFAULT_HEADERS
 
+        self.loop = asyncio.get_running_loop()
+
     async def login(self) -> BringAuthResponse:
         """Try to login.
 
@@ -754,6 +756,19 @@ class Bring:
 
         return True
 
+    def __load_article_translations_from_file(self, locale: str) -> dict[str, str]:
+        dictionary_from_file: dict[str, str]
+
+        path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "locales",
+            f"articles.{locale}.json",
+        )
+        with open(path, encoding="UTF-8") as f:
+            dictionary_from_file = json.load(f)
+
+        return dictionary_from_file
+
     async def __load_article_translations(self) -> dict[str, dict[str, str]]:
         """Load all required translation dictionaries into memory.
 
@@ -785,14 +800,15 @@ class Bring:
                 continue
 
             try:
-                path = f"{os.path.dirname(os.path.abspath(__file__))}{os.sep}locales{os.sep}articles.{locale}.json"
-                with open(path, encoding="UTF-8") as f:
-                    dictionaries[locale] = json.load(f)
+                dictionaries[locale] = await self.loop.run_in_executor(
+                    None, self.__load_article_translations_from_file, locale
+                )
                 continue
-            except FileNotFoundError:
-                _LOGGER.debug(
-                    "Locale file %s not found. Will continue trying to download locale.",
-                    path,
+            except OSError:
+                _LOGGER.warning(
+                    "Locale file articles.%s.json could not be loaded from filesystem. "
+                    "Will continue trying to download locale.",
+                    locale,
                 )
 
             try:

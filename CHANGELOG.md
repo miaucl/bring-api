@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.5.4
+
+* Load article translations from file in executor instead of event loop.
+
 ## 0.5.3
 
 * Improve mypy type checking.
