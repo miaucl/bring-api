@@ -1,6 +1,6 @@
 """Bring API types."""
 from enum import Enum
-from typing import List, TypedDict
+from typing import List, NotRequired, TypedDict
 
 
 class BringList(TypedDict):
@@ -123,17 +123,18 @@ class BringSyncCurrentUserResponse(TypedDict):
     userUuid: str
 
 
-class BringItem(TypedDict):
-    """A BringItem."""
-
-    itemId: str
-    spec: str
-    uuid: str
-
-
 class BringItemOperation(Enum):
     """Operation to be be executed on list items."""
 
     ADD = "TO_PURCHASE"
     COMPLETE = "TO_RECENTLY"
     REMOVE = "REMOVE"
+
+
+class BringItem(TypedDict):
+    """A BringItem."""
+
+    itemId: str
+    spec: str
+    uuid: str
+    operation: NotRequired[BringItemOperation]

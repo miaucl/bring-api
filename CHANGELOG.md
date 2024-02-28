@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.5.3
+
+* Improve mypy type checking.
+  
 ## 0.5.2
 
 * Fixed build script to add locales explicitly.

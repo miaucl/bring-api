@@ -642,7 +642,7 @@ class Bring:
             If the request fails.
 
         """
-        json = BringNotificationsConfigType(
+        json_data = BringNotificationsConfigType(
             arguments=[],
             listNotificationType=notification_type.value,
             senderPublicUserUuid=self.public_uuid,
@@ -663,10 +663,12 @@ class Bring:
                     "notificationType is URGENT_MESSAGE but argument itemName missing."
                 )
 
-            json["arguments"] = [item_name]
+            json_data["arguments"] = [item_name]
         try:
             url = f"{self.url}v2/bringnotifications/lists/{list_uuid}"
-            async with self._session.post(url, headers=self.headers, json=json) as r:
+            async with self._session.post(
+                url, headers=self.headers, json=json_data
+            ) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
                 return r
@@ -1144,7 +1146,7 @@ class Bring:
         }
         if isinstance(items, dict):
             items = [items]
-        json = {
+        json_data = {
             "changes": [
                 {
                     **_base_params,
@@ -1162,7 +1164,9 @@ class Bring:
 
         try:
             url = f"{self.url}v2/bringlists/{list_uuid}/items"
-            async with self._session.put(url, headers=self.headers, json=json) as r:
+            async with self._session.put(
+                url, headers=self.headers, json=json_data
+            ) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
                 r.raise_for_status()
                 return r
