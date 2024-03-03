@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.5.5
+
+* Fix KeyError when listArticleLanguage is not set.
+  
 ## 0.5.4
 
 * Load article translations from file in executor instead of event loop.
