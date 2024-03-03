@@ -788,7 +788,7 @@ class Bring:
         locales_required = list(
             dict.fromkeys(
                 [
-                    list_setting["listArticleLanguage"]
+                    list_setting.get("listArticleLanguage", self.user_locale)
                     for list_setting in self.user_list_settings.values()
                 ]
                 + [self.user_locale]
@@ -1061,7 +1061,9 @@ class Bring:
 
         """
         if list_uuid in self.user_list_settings:
-            return self.user_list_settings[list_uuid]["listArticleLanguage"]
+            return self.user_list_settings[list_uuid].get(
+                "listArticleLanguage", self.user_locale
+            )
         return self.user_locale
 
     async def get_user_account(self) -> BringSyncCurrentUserResponse:

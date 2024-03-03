@@ -83,7 +83,9 @@ async def test_translation(bring: Bring, lst: BringList):
     locale_to = "de-DE"
     locale_from = "de-CH"
 
-    locale_org = bring.user_list_settings[lst["listUuid"]]["listArticleLanguage"]
+    locale_org = bring.user_list_settings[lst["listUuid"]].get(
+        "listArticleLanguage", bring.user_locale
+    )
 
     test_items = {
         "Pouletbrüstli": "Hähnchenbrust",
