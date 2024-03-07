@@ -795,8 +795,8 @@ class Bring:
             )
         )
 
-        for locale in locales_required or BRING_SUPPORTED_LOCALES:
-            if locale == BRING_DEFAULT_LOCALE:
+        for locale in locales_required:
+            if locale == BRING_DEFAULT_LOCALE or locale not in BRING_SUPPORTED_LOCALES:
                 continue
 
             try:
@@ -826,7 +826,7 @@ class Bring:
                             traceback.format_exc(),
                         )
                         raise BringParseException(
-                            f"Loading article translations for locale {locale}"
+                            f"Loading article translations for locale {locale} "
                             "failed during parsing of request response."
                         ) from e
             except asyncio.TimeoutError as e:
@@ -836,7 +836,7 @@ class Bring:
                     traceback.format_exc(),
                 )
                 raise BringRequestException(
-                    f"Loading article translations for locale {locale}"
+                    f"Loading article translations for locale {locale} "
                     "failed due to connection timeout."
                 ) from e
 
@@ -847,7 +847,7 @@ class Bring:
                     traceback.format_exc(),
                 )
                 raise BringRequestException(
-                    f"Loading article translations for locale {locale}"
+                    f"Loading article translations for locale {locale} "
                     "failed due to request exception."
                 ) from e
 
