@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.5.6
+
+* fix incorrect filtering of locales against supported locales list
+
 ## 0.5.5
 
 * Fix KeyError when listArticleLanguage is not set.
