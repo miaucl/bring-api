@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.5.7
+
+* map user language to a default locale if not a supported locale.
+
 ## 0.5.6
 
 * fix incorrect filtering of locales against supported locales list
