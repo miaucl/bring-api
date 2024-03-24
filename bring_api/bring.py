@@ -15,6 +15,7 @@ from .const import (
     BRING_SUPPORTED_LOCALES,
     DEFAULT_HEADERS,
     LOCALES_BASE_URL,
+    MAP_LANG_TO_LOCALE,
 )
 from .exceptions import (
     BringAuthException,
@@ -156,7 +157,7 @@ class Bring:
 
         locale = (await self.get_user_account())["userLocale"]
         self.headers["X-BRING-COUNTRY"] = locale["country"]
-        self.user_locale = f'{locale["language"]}-{locale["country"]}'
+        self.user_locale = self.map_user_language_to_locale(locale)
 
         self.user_list_settings = await self.__load_user_list_settings()
 
@@ -1065,6 +1066,37 @@ class Bring:
                 "listArticleLanguage", self.user_locale
             )
         return self.user_locale
+
+    def map_user_language_to_locale(self, user_locale: dict[str, str]) -> str:
+        """Map user language to a supported locale.
+
+        The userLocale returned from the user account settings is not necessarily one of the 20
+        locales used by the Bring App but rather what the user has set as language on their phone
+        and the country where they are located. Usually the locale for the lists is always returned
+        from the bringusersettings API endpoint. One exception exists, when user onboarding happens
+        through the webApp, then the locale for the automatically created initial list is not set.
+        For other lists this does not happen, as it is not possible to create more lists in the
+        webApp, only in the mobile apps.
+
+        Parameters
+        ----------
+        user_locale : dict
+            user locale as a dict containing `language` and `country`.
+
+        Returns
+        -------
+        str
+            The locale corresponding to the users language.
+
+        """
+        locale = f'{user_locale["language"]}-{user_locale["country"]}'
+        # if locale is a valid and supported locale we can use it.
+        if locale in BRING_SUPPORTED_LOCALES:
+            return locale
+
+        # if language and country are not valid locales, we use only the language part and
+        # map it to a corresponding locale or the most common for that language.
+        return MAP_LANG_TO_LOCALE.get(user_locale["language"], BRING_DEFAULT_LOCALE)
 
     async def get_user_account(self) -> BringSyncCurrentUserResponse:
         """Get current user account.
