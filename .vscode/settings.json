@@ -13,7 +13,6 @@
     }
   },
   "python.testing.pytestArgs": [
-    "-n 4",
     "-v",
     "--color=yes"
   ],

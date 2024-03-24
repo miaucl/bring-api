@@ -1,19 +1,28 @@
 """Unit tests for bring-api."""
-import enum
-import os
-import secrets
-import uuid
 
+import asyncio
+import enum
+from unittest.mock import patch
+
+import aiohttp
 from dotenv import load_dotenv
 import pytest
 
-from bring_api.bring import Bring
 from bring_api.exceptions import (
     BringAuthException,
     BringEMailInvalidException,
+    BringRequestException,
     BringUserUnknownException,
 )
 from bring_api.types import BringNotificationType
+
+from .conftest import (
+    BRING_GET_LISTS_RESPONSE,
+    BRING_LOGIN_RESPONSE,
+    BRING_USER_ACCOUNT_RESPONSE,
+    BRING_USER_SETTINGS_RESPONSE,
+    UUID,
+)
 
 load_dotenv()
 
@@ -21,75 +30,114 @@ load_dotenv()
 class TestDoesUserExist:
     """Tests for does_user_exist method."""
 
-    async def test_mail_invalid(self, bring):
+    async def test_mail_invalid(self, mocked, bring):
         """Test does_user_exist for invalid e-mail."""
+        mocked.get("https://api.getbring.com/rest/bringusers?email=EMAIL", status=400)
         with pytest.raises(BringEMailInvalidException):
-            rnd = secrets.token_urlsafe(48)
-            await bring.does_user_exist(f"{rnd}@gmail")
+            await bring.does_user_exist("EMAIL")
 
-    async def test_unknown_user(self, bring):
+    async def test_unknown_user(self, mocked, bring):
         """Test does_user_exist for unknown user."""
+        mocked.get("https://api.getbring.com/rest/bringusers?email=EMAIL", status=404)
         with pytest.raises(BringUserUnknownException):
-            rnd = secrets.token_urlsafe(48)
-            await bring.does_user_exist(f"{rnd}@gmail.com")
+            await bring.does_user_exist("EMAIL")
 
-    async def test_user_exist_with_parameter(self, bring):
+    async def test_user_exist_with_parameter(self, mocked, bring):
         """Test does_user_exist for known user."""
-        assert await bring.does_user_exist(os.environ["EMAIL"]) is True
+        mocked.get("https://api.getbring.com/rest/bringusers?email=EMAIL", status=200)
+        assert await bring.does_user_exist("EMAIL") is True
 
-    async def test_user_exist_without_parameter(self, bring):
-        """Test does_user_exist for known user ."""
+    async def test_user_exist_without_parameter(self, mocked, bring):
+        """Test does_user_exist for known user."""
+        mocked.get(
+            "https://api.getbring.com/rest/bringusers?email=EMAIL",
+            status=200,
+        )
         assert await bring.does_user_exist() is True
 
 
 class TestLogin:
     """Tests for login method."""
 
-    async def test_mail_invalid(self, session):
+    async def test_mail_invalid(self, mocked, bring):
         """Test login with invalid e-mail."""
-        rnd = secrets.token_urlsafe(48)
-        __bring = Bring(session, f"{rnd}@gmail", "")
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth",
+            status=400,
+        )
         with pytest.raises(
             BringAuthException,
             match="Login failed due to bad request, please check your email.",
         ):
-            await __bring.login()
+            await bring.login()
 
-    async def test_unauthorized(self, session):
+    async def test_unauthorized(self, mocked, bring):
         """Test login with unauthorized user."""
-        rnd = secrets.token_urlsafe(48)
-        __bring = Bring(session, f"{rnd}@gmail.com", rnd)
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth",
+            status=401,
+            payload={"message": ""},
+        )
         with pytest.raises(
             BringAuthException,
             match="Login failed due to authorization failure, "
             "please check your email and password.",
         ):
-            await __bring.login()
+            await bring.login()
 
-    async def test_successfull_login(self, bring):
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_exceptions(self, mocked, bring, exception):
+        """Test exceptions."""
+        mocked.post("https://api.getbring.com/rest/v2/bringauth", exception=exception)
+        with pytest.raises(BringRequestException):
+            await bring.login()
+
+    async def test_successfull_login(self, mocked, bring):
         """Test login with valid user."""
-        data = await bring.login()
-        assert "access_token" in data
-        assert "uuid" in data
-        assert str(uuid.UUID(data["uuid"])) == data["uuid"], "uuid invalid"
-        assert "publicUuid" in data
-        assert str(uuid.UUID(data["publicUuid"])) == data["publicUuid"], "uuid invalid"
+
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth",
+            status=200,
+            payload=BRING_LOGIN_RESPONSE,
+        )
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringusers/{UUID}",
+            status=200,
+            payload=BRING_USER_ACCOUNT_RESPONSE,
+        )
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}",
+            status=200,
+            payload=BRING_USER_SETTINGS_RESPONSE,
+        )
+
+        await bring.login()
+
+        assert bring.headers["Authorization"] == "Bearer ACCESS_TOKEN"
+        assert bring.uuid == UUID
+        assert bring.public_uuid == UUID
+        assert bring.user_locale == "de-DE"
+        assert bring.user_list_settings[UUID]["listArticleLanguage"] == "de-DE"
 
 
-async def test_load_lists(bring):
+async def test_load_lists(bring, mocked):
     """Test load_lists."""
-    await bring.login()
-    lists = await bring.load_lists()
-    assert isinstance(lists, dict) is True, "load_lists must return a TypedDict"
-    assert len(lists["lists"]) > 0, "lists count is 0"
-    assert next(
-        (lst for lst in lists["lists"] if lst["name"] == os.environ["LIST"]), False
-    ), f"Test List '{os.environ["LIST"]}' not found"
-    for lst in lists["lists"]:
-        assert (
-            str(uuid.UUID(lst["listUuid"])) == lst["listUuid"]
-        ), f"not a valid uuid {lst["listUuid"]}"
-        assert len(lst["name"]) > 0, "name cannot be empty"
+
+    mocked.get(
+        f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
+        status=200,
+        payload=BRING_GET_LISTS_RESPONSE,
+    )
+    with patch.object(bring, "uuid", UUID):
+        lists = await bring.load_lists()
+        assert isinstance(lists, dict) is True, "load_lists must return a TypedDict"
+        assert len(lists["lists"]) > 0, "lists count is 0"
 
 
 class TestNotifications:
@@ -109,41 +157,38 @@ class TestNotifications:
         bring,
         notification_type: BringNotificationType,
         item_name: str,
+        mocked,
     ):
         """Test GOING_SHOPPING notification."""
 
-        await bring.login()
-        lists = (await bring.load_lists())["lists"]
-        lst = next(lst for lst in lists if lst["name"] == os.environ["LIST"])
-        resp = await bring.notify(lst["listUuid"], notification_type, item_name)
+        mocked.post(
+            f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+            status=200,
+        )
+        resp = await bring.notify(UUID, notification_type, item_name)
         assert resp.status == 200
 
-    async def test_notify_urgent_message_item_name_missing(self, bring):
+    async def test_notify_urgent_message_item_name_missing(self, bring, mocked):
         """Test URGENT_MESSAGE notification."""
-
-        await bring.login()
-        lists = (await bring.load_lists())["lists"]
-        lst = next(lst for lst in lists if lst["name"] == os.environ["LIST"])
+        mocked.post(
+            f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+            status=200,
+        )
         with pytest.raises(
             ValueError,
             match="notificationType is URGENT_MESSAGE but argument itemName missing.",
         ):
-            await bring.notify(
-                lst["listUuid"], BringNotificationType.URGENT_MESSAGE, ""
-            )
+            await bring.notify(UUID, BringNotificationType.URGENT_MESSAGE, "")
 
-    async def test_notify_notification_type_raise_attribute_error(self, bring):
+    async def test_notify_notification_type_raise_attribute_error(self, bring, mocked):
         """Test URGENT_MESSAGE notification."""
 
-        await bring.login()
-        lists = (await bring.load_lists())["lists"]
-        lst = next(lst for lst in lists if lst["name"] == os.environ["LIST"])
         with pytest.raises(
             AttributeError,
         ):
-            await bring.notify(lst["listUuid"], "STRING", "")
+            await bring.notify(UUID, "STRING", "")
 
-    async def test_notify_notification_type_raise_type_error(self, bring):
+    async def test_notify_notification_type_raise_type_error(self, bring, mocked):
         """Test URGENT_MESSAGE notification."""
 
         class WrongEnum(enum.Enum):
@@ -151,12 +196,9 @@ class TestNotifications:
 
             UNKNOWN = "UNKNOWN"
 
-        await bring.login()
-        lists = (await bring.load_lists())["lists"]
-        lst = next(lst for lst in lists if lst["name"] == os.environ["LIST"])
         with pytest.raises(
             TypeError,
             match="notificationType WrongEnum.UNKNOWN not supported,"
             "must be of type BringNotificationType.",
         ):
-            await bring.notify(lst["listUuid"], WrongEnum.UNKNOWN, "")
+            await bring.notify(UUID, WrongEnum.UNKNOWN, "")
