@@ -24,19 +24,19 @@ jobs:
           echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
           echo "Job originally triggered by ${{ github.actor }}"
           exit 1
-      - name: Check out code from Github
-        uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v4.1.1
         with:
             ref: ${{ github.event.pull_request.head.sha }}
-      - name: Set up Python ${{ env.DEFAULT_PYTHON }}
-        uses: actions/setup-python@v5.0.0
+      - uses: actions/setup-python@v5.0.0
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
           check-latest: true
-      - name: Check for environment variables and secrets
+      - name: Run tests
         run: |
-          if [[ "x${{ secrets.PASSWORD }}" == "x" ]]; then
-            echo "PASSWORD secret is not set"
+          if [[ "x${{ secrets.PASSWORD }}" != "x" ]]; then
+            echo "Access to secrets"
+          else
+            echo "No access to secrets"
             exit 1
           fi
       - run: pip install -r requirements.txt
