@@ -2,26 +2,29 @@
 
 import asyncio
 import enum
-from unittest.mock import patch
 
 import aiohttp
 from dotenv import load_dotenv
 import pytest
 
+from bring_api.bring import Bring
 from bring_api.exceptions import (
     BringAuthException,
     BringEMailInvalidException,
+    BringParseException,
     BringRequestException,
     BringUserUnknownException,
 )
 from bring_api.types import BringNotificationType
 
 from .conftest import (
-    BRING_GET_LISTS_RESPONSE,
+    BRING_GET_LIST_RESPONSE,
+    BRING_LOAD_LISTS_RESPONSE,
     BRING_LOGIN_RESPONSE,
-    BRING_USER_ACCOUNT_RESPONSE,
-    BRING_USER_SETTINGS_RESPONSE,
     UUID,
+    mocked__load_article_translations,
+    mocked__load_user_list_settings,
+    mocked_get_user_account,
 )
 
 load_dotenv()
@@ -55,6 +58,24 @@ class TestDoesUserExist:
         )
         assert await bring.does_user_exist() is True
 
+    @pytest.mark.parametrize(
+        ("exception", "expected"),
+        [
+            (asyncio.TimeoutError, BringRequestException),
+            (aiohttp.ClientError, BringEMailInvalidException),
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception, expected):
+        """Test request exceptions."""
+
+        mocked.get(
+            "https://api.getbring.com/rest/bringusers?email=EMAIL",
+            exception=exception,
+        )
+
+        with pytest.raises(expected):
+            await bring.does_user_exist("EMAIL")
+
 
 class TestLogin:
     """Tests for login method."""
@@ -65,10 +86,8 @@ class TestLogin:
             "https://api.getbring.com/rest/v2/bringauth",
             status=400,
         )
-        with pytest.raises(
-            BringAuthException,
-            match="Login failed due to bad request, please check your email.",
-        ):
+        expected = "Login failed due to bad request, please check your email."
+        with pytest.raises(BringAuthException, match=expected):
             await bring.login()
 
     async def test_unauthorized(self, mocked, bring):
@@ -78,11 +97,20 @@ class TestLogin:
             status=401,
             payload={"message": ""},
         )
-        with pytest.raises(
-            BringAuthException,
-            match="Login failed due to authorization failure, "
-            "please check your email and password.",
-        ):
+        expected = "Login failed due to authorization failure, please check your email and password."
+        with pytest.raises(BringAuthException, match=expected):
+            await bring.login()
+
+    async def test_parse_exception(self, mocked, bring):
+        """Test parse exceptions."""
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth",
+            status=200,
+            body="not json",
+            headers={"content-type": "application/json"},
+        )
+
+        with pytest.raises(BringParseException):
             await bring.login()
 
     @pytest.mark.parametrize(
@@ -92,13 +120,13 @@ class TestLogin:
             aiohttp.ClientError,
         ],
     )
-    async def test_exceptions(self, mocked, bring, exception):
+    async def test_request_exceptions(self, mocked, bring, exception):
         """Test exceptions."""
         mocked.post("https://api.getbring.com/rest/v2/bringauth", exception=exception)
         with pytest.raises(BringRequestException):
             await bring.login()
 
-    async def test_successfull_login(self, mocked, bring):
+    async def test_login(self, mocked, bring, monkeypatch):
         """Test login with valid user."""
 
         mocked.post(
@@ -106,38 +134,73 @@ class TestLogin:
             status=200,
             payload=BRING_LOGIN_RESPONSE,
         )
-        mocked.get(
-            f"https://api.getbring.com/rest/v2/bringusers/{UUID}",
-            status=200,
-            payload=BRING_USER_ACCOUNT_RESPONSE,
+
+        monkeypatch.setattr(Bring, "get_user_account", mocked_get_user_account)
+        monkeypatch.setattr(
+            Bring, "_Bring__load_user_list_settings", mocked__load_user_list_settings
         )
-        mocked.get(
-            f"https://api.getbring.com/rest/bringusersettings/{UUID}",
-            status=200,
-            payload=BRING_USER_SETTINGS_RESPONSE,
+        monkeypatch.setattr(
+            Bring,
+            "_Bring__load_article_translations",
+            mocked__load_article_translations,
         )
 
-        await bring.login()
-
+        data = await bring.login()
+        assert data == BRING_LOGIN_RESPONSE
         assert bring.headers["Authorization"] == "Bearer ACCESS_TOKEN"
+        assert bring.headers["X-BRING-COUNTRY"] == "DE"
         assert bring.uuid == UUID
         assert bring.public_uuid == UUID
         assert bring.user_locale == "de-DE"
-        assert bring.user_list_settings[UUID]["listArticleLanguage"] == "de-DE"
 
 
-async def test_load_lists(bring, mocked):
-    """Test load_lists."""
+class TestLoadLists:
+    """Tests for load_lists method."""
 
-    mocked.get(
-        f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
-        status=200,
-        payload=BRING_GET_LISTS_RESPONSE,
-    )
-    with patch.object(bring, "uuid", UUID):
+    async def test_load_lists(self, bring, mocked, monkeypatch):
+        """Test load_lists."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
+            status=200,
+            payload=BRING_LOAD_LISTS_RESPONSE,
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
         lists = await bring.load_lists()
-        assert isinstance(lists, dict) is True, "load_lists must return a TypedDict"
-        assert len(lists["lists"]) > 0, "lists count is 0"
+
+        assert lists == BRING_LOAD_LISTS_RESPONSE
+
+    async def test_parse_exception(self, mocked, bring, monkeypatch):
+        """Test parse exceptions."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
+            status=200,
+            body="not json",
+            headers={"content-type": "application/json"},
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        with pytest.raises(BringParseException):
+            await bring.load_lists()
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception, monkeypatch):
+        """Test request exceptions."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
+            exception=exception,
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        with pytest.raises(BringRequestException):
+            await bring.load_lists()
 
 
 class TestNotifications:
@@ -202,3 +265,78 @@ class TestNotifications:
             "must be of type BringNotificationType.",
         ):
             await bring.notify(UUID, WrongEnum.UNKNOWN, "")
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception):
+        """Test request exceptions."""
+
+        mocked.post(
+            f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)
+
+
+class TestGetList:
+    """Tests for get_list method."""
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.get_list(UUID)
+
+    async def test_parse_exception(self, mocked, bring, monkeypatch):
+        """Test parse exceptions."""
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
+            status=200,
+            body="not json",
+            headers={"content-type": "application/json"},
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        with pytest.raises(BringParseException):
+            await bring.get_list(UUID)
+
+    async def test_get_list(self, mocked, bring, monkeypatch):
+        """Test get list."""
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
+            status=200,
+            payload=BRING_GET_LIST_RESPONSE,
+        )
+
+        def mocked_locale(*args, **kwargs) -> str:
+            return "de-CH"
+
+        monkeypatch.setattr(Bring, "_Bring__locale", mocked_locale)
+
+        def mocked_translate(bring: Bring, item_id: str, *args, **kwargs) -> str:
+            return item_id
+
+        monkeypatch.setattr(Bring, "_Bring__translate", mocked_translate)
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        data = await bring.get_list(UUID)
+        assert data == BRING_GET_LIST_RESPONSE["items"]
