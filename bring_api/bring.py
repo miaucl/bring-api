@@ -1,4 +1,5 @@
 """Bring api implementation."""
+
 import asyncio
 import json
 from json import JSONDecodeError
@@ -142,13 +143,6 @@ class Bring:
             raise BringRequestException(
                 "Authentication failed due to request exception."
             ) from e
-
-        if "uuid" not in data or "access_token" not in data:
-            _LOGGER.error("Exception: Cannot login: Data missing in API response.")
-            raise BringAuthException(
-                "Login failed due to missing data in the API response,"
-                "please check your email and password."
-            )
 
         self.uuid = data["uuid"]
         self.public_uuid = data.get("publicUuid", "")
