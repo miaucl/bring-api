@@ -1,4 +1,5 @@
 """Bring api implementation."""
+
 import asyncio
 import json
 from json import JSONDecodeError
@@ -332,7 +333,7 @@ class Bring:
                                 if key in BringListItemDetails.__annotations__
                             },
                         )
-                        for item in (await r.json())["items"]
+                        for item in await r.json()
                     ]
                     return cast(BringListItemsDetailsResponse, data)
                 except JSONDecodeError as e:
