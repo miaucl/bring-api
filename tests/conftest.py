@@ -75,6 +75,27 @@ BRING_GET_LIST_RESPONSE = {
     },
 }
 
+BRING_GET_ALL_ITEM_DETAILS_RESPONSE = [
+    {
+        "uuid": "bfb5634c-d219-4d66-b68e-1388e54f0bb0",
+        "itemId": "Milchreis",
+        "listUuid": UUID,
+        "userIconItemId": "Reis",
+        "userSectionId": "Getreideprodukte",
+        "assignedTo": "",
+        "imageUrl": "",
+    },
+    {
+        "uuid": "0056b23c-7fc3-44da-8c34-426f8b632220",
+        "itemId": "Zitronensaft",
+        "listUuid": UUID,
+        "userIconItemId": "Zitrone",
+        "userSectionId": "Zutaten & Gewürze",
+        "assignedTo": "",
+        "imageUrl": "",
+    },
+]
+
 
 @pytest.fixture(name="session")
 async def aiohttp_client_session():
@@ -98,12 +119,15 @@ def aioclient_mock():
 
 
 async def mocked_get_user_account(*args, **kwargs):
+    """Mock __get_user_account."""
     return {"userLocale": {"language": "de", "country": "DE"}}
 
 
 async def mocked__load_user_list_settings(*args, **kwargs):
+    """Mock __load_user_list_settings."""
     return {UUID: {"listArticleLanguage": "de-DE"}}
 
 
 async def mocked__load_article_translations(*args, **kwargs):
+    """Mock __load_article_translations."""
     return {}

@@ -18,6 +18,7 @@ from bring_api.exceptions import (
 from bring_api.types import BringNotificationType
 
 from .conftest import (
+    BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
     BRING_GET_LIST_RESPONSE,
     BRING_LOAD_LISTS_RESPONSE,
     BRING_LOGIN_RESPONSE,
@@ -107,7 +108,7 @@ class TestLogin:
             "https://api.getbring.com/rest/v2/bringauth",
             status=200,
             body="not json",
-            headers={"content-type": "application/json"},
+            content_type="application/json",
         )
 
         with pytest.raises(BringParseException):
@@ -177,7 +178,7 @@ class TestLoadLists:
             f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
             status=200,
             body="not json",
-            headers={"content-type": "application/json"},
+            content_type="application/json",
         )
         monkeypatch.setattr(bring, "uuid", UUID)
 
@@ -312,7 +313,7 @@ class TestGetList:
             f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
             status=200,
             body="not json",
-            headers={"content-type": "application/json"},
+            content_type="application/json",
         )
         monkeypatch.setattr(bring, "uuid", UUID)
 
@@ -340,3 +341,59 @@ class TestGetList:
 
         data = await bring.get_list(UUID)
         assert data == BRING_GET_LIST_RESPONSE["items"]
+
+
+class TestGetAllItemDetails:
+    """Test for get_all_item_details method."""
+
+    async def test_get_all_item_details(self, mocked, bring):
+        """Test get_all_item_details."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringlists/{UUID}/details",
+            status=200,
+            payload=BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
+        )
+
+        data = await bring.get_all_item_details(UUID)
+        assert data == BRING_GET_ALL_ITEM_DETAILS_RESPONSE
+
+    async def test_list_not_found(self, mocked, bring):
+        """Test get_all_item_details."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringlists/{UUID}/details",
+            status=404,
+            reason=f"List with uuid '{UUID}' not found",
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.get_all_item_details(UUID)
+
+    async def test_parse_exception(self, mocked, bring):
+        """Test parse exceptions."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringlists/{UUID}/details",
+            status=200,
+            body="not json",
+            content_type="application/json",
+        )
+
+        with pytest.raises(BringParseException):
+            await bring.get_all_item_details(UUID)
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.get_all_item_details(UUID)
