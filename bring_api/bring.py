@@ -328,7 +328,7 @@ class Bring:
                                 if key in BringListItemDetails.__annotations__
                             },
                         )
-                        for item in (await r.json())["items"]
+                        for item in await r.json()
                     ]
                     return cast(BringListItemsDetailsResponse, data)
                 except JSONDecodeError as e:
