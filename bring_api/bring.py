@@ -1,4 +1,5 @@
 """Bring api implementation."""
+
 import asyncio
 import json
 from json import JSONDecodeError
@@ -98,13 +99,15 @@ class Bring:
                 if r.status == 401:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError:
+                    except JSONDecodeError as e:
                         _LOGGER.error(
                             "Exception: Cannot parse login request response:\n %s",
                             traceback.format_exc(),
                         )
-                    else:
-                        _LOGGER.error("Exception: Cannot login: %s", errmsg["message"])
+                        raise BringParseException(
+                            "Login failed due to authorization failure but error response could not be parsed."
+                        ) from e
+                    _LOGGER.error("Exception: Cannot login: %s", errmsg["message"])
                     raise BringAuthException(
                         "Login failed due to authorization failure, "
                         "please check your email and password."
