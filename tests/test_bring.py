@@ -135,7 +135,7 @@ class TestLogin:
         )
 
         async def mocked_get_user_account(*args, **kwargs):
-            """Mock __get_user_account."""
+            """Mock get_user_account."""
             return {"userLocale": {"language": "de", "country": "DE"}}
 
         async def mocked__load_user_list_settings(*args, **kwargs):
