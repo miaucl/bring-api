@@ -116,18 +116,3 @@ def aioclient_mock():
     """Mock Aiohttp client requests."""
     with aioresponses() as m:
         yield m
-
-
-async def mocked_get_user_account(*args, **kwargs):
-    """Mock __get_user_account."""
-    return {"userLocale": {"language": "de", "country": "DE"}}
-
-
-async def mocked__load_user_list_settings(*args, **kwargs):
-    """Mock __load_user_list_settings."""
-    return {UUID: {"listArticleLanguage": "de-DE"}}
-
-
-async def mocked__load_article_translations(*args, **kwargs):
-    """Mock __load_article_translations."""
-    return {}
