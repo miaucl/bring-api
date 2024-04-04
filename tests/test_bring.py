@@ -15,7 +15,7 @@ from bring_api.exceptions import (
     BringRequestException,
     BringUserUnknownException,
 )
-from bring_api.types import BringNotificationType
+from bring_api.types import BringItem, BringItemOperation, BringNotificationType
 
 from .conftest import (
     BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
@@ -102,11 +102,12 @@ class TestLogin:
         with pytest.raises(BringAuthException, match=expected):
             await bring.login()
 
-    async def test_parse_exception(self, mocked, bring):
+    @pytest.mark.parametrize("status", [200, 401])
+    async def test_parse_exception(self, mocked, bring, status):
         """Test parse exceptions."""
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth",
-            status=200,
+            status=status,
             body="not json",
             content_type="application/json",
         )
@@ -391,9 +392,66 @@ class TestGetAllItemDetails:
         """Test request exceptions."""
 
         mocked.get(
-            f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
+            f"https://api.getbring.com/rest/bringlists/{UUID}/details",
             exception=exception,
         )
 
         with pytest.raises(BringRequestException):
             await bring.get_all_item_details(UUID)
+
+
+class TestSaveItem:
+    """Test for save_item method."""
+
+    @pytest.mark.parametrize(
+        ("item_name", "specification", "item_uuid"),
+        [
+            ("item name", None, None),
+            ("item name", "specification", None),
+            ("item name", None, UUID),
+        ],
+    )
+    async def test_save_item(
+        self, bring, monkeypatch, item_name, specification, item_uuid
+    ):
+        """Test save_item."""
+
+        async def mocked_batch_update_list(
+            bring: Bring,
+            list_uuid: str,
+            items: BringItem,
+            operation: BringItemOperation,
+        ):
+            return (list_uuid, items, operation)
+
+        monkeypatch.setattr(Bring, "batch_update_list", mocked_batch_update_list)
+
+        list_uuid, items, operation = await bring.save_item(
+            UUID, item_name, specification, item_uuid
+        )
+        assert list_uuid == UUID
+        expected = {"itemId": item_name, "spec": specification, "uuid": item_uuid}
+        assert expected == items
+        assert operation == BringItemOperation.ADD
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception):
+        """Test request exceptions."""
+
+        mocked.put(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException) as exc:
+            await bring.save_item(UUID, "item_name", "specification")
+        assert (
+            exc.value.args[0] == f"Saving item item_name (specification) to list {UUID}"
+            "failed due to request exception."
+        )
