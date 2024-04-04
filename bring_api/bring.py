@@ -398,7 +398,7 @@ class Bring:
         )
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
-        except asyncio.TimeoutError as e:
+        except BringRequestException as e:
             _LOGGER.error(
                 "Exception: Cannot save item %s (%s) to list %s:\n%s",
                 item_name,
@@ -407,19 +407,7 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Saving item {item_name} ({specification}) to list {list_uuid}"
-                "failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.error(
-                "Exception: Cannot save item %s (%s) to list %s:\n%s",
-                item_name,
-                specification,
-                list_uuid,
-                traceback.format_exc(),
-            )
-            raise BringRequestException(
-                f"Saving item {item_name} ({specification}) to list {list_uuid}"
+                f"Saving item {item_name} ({specification}) to list {list_uuid} "
                 "failed due to request exception."
             ) from e
 
@@ -466,7 +454,7 @@ class Bring:
         )
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
-        except asyncio.TimeoutError as e:
+        except BringRequestException as e:
             _LOGGER.error(
                 "Exception: Cannot update item %s (%s) to list %s:\n%s",
                 item_name,
@@ -475,19 +463,7 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Updating item {item_name} ({specification}) in list {list_uuid}"
-                "failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.error(
-                "Exception: Cannot update item %s (%s) to list %s:\n%s",
-                item_name,
-                specification,
-                list_uuid,
-                traceback.format_exc(),
-            )
-            raise BringRequestException(
-                f"Updating item {item_name} ({specification}) in list {list_uuid}"
+                f"Updating item {item_name} ({specification}) in list {list_uuid} "
                 "failed due to request exception."
             ) from e
 
@@ -525,7 +501,7 @@ class Bring:
             return await self.batch_update_list(
                 list_uuid, data, BringItemOperation.REMOVE
             )
-        except asyncio.TimeoutError as e:
+        except BringRequestException as e:
             _LOGGER.error(
                 "Exception: Cannot delete item %s from list %s:\n%s",
                 item_name,
@@ -533,18 +509,7 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Removing item {item_name} from list {list_uuid}"
-                "failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.error(
-                "Exception: Cannot delete item %s from list %s:\n%s",
-                item_name,
-                list_uuid,
-                traceback.format_exc(),
-            )
-            raise BringRequestException(
-                f"Removing item {item_name} from list {list_uuid}"
+                f"Removing item {item_name} from list {list_uuid} "
                 "failed due to request exception."
             ) from e
 
@@ -590,7 +555,7 @@ class Bring:
             return await self.batch_update_list(
                 list_uuid, data, BringItemOperation.COMPLETE
             )
-        except asyncio.TimeoutError as e:
+        except BringRequestException as e:
             _LOGGER.error(
                 "Exception: Cannot complete item %s in list %s:\n%s",
                 item_name,
@@ -598,18 +563,7 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Completing item {item_name} from list {list_uuid}"
-                "failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.error(
-                "Exception: Cannot complete item %s in list %s:\n%s",
-                item_name,
-                list_uuid,
-                traceback.format_exc(),
-            )
-            raise BringRequestException(
-                f"Completing item {item_name} from list {list_uuid}"
+                f"Completing item {item_name} from list {list_uuid} "
                 "failed due to request exception."
             ) from e
 
@@ -1218,13 +1172,12 @@ class Bring:
                 return r
         except asyncio.TimeoutError as e:
             _LOGGER.error(
-                "Exception: Cannot execute batch operation %s for list %s:\n%s",
-                operation.name,
+                "Exception: Cannot execute batch operations for list %s:\n%s",
                 list_uuid,
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Operation {operation.name} for list {list_uuid} failed due to connection timeout."
+                f"Batch operation for list {list_uuid} failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error(
@@ -1233,5 +1186,5 @@ class Bring:
                 traceback.format_exc(),
             )
             raise BringRequestException(
-                f"Operation {operation.name} for list {list_uuid} failed due to request exception."
+                f"Batch operation for list {list_uuid} failed due to request exception."
             ) from e
