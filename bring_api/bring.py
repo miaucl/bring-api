@@ -1155,7 +1155,7 @@ class Bring:
                         item["itemId"],
                         from_locale=self.__locale(list_uuid),
                     ),
-                    "operation": item.get("operation", operation.value),
+                    "operation": str(item.get("operation", operation)),
                 }
                 for item in items
             ],
