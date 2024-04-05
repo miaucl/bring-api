@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import pytest
 
 from bring_api.bring import Bring
-from bring_api.const import BRING_SUPPORTED_LOCALES
+from bring_api.const import BRING_SUPPORTED_LOCALES, DEFAULT_HEADERS
 from bring_api.exceptions import (
     BringAuthException,
     BringEMailInvalidException,
@@ -32,6 +32,11 @@ from .conftest import (
 load_dotenv()
 
 
+def mocked_translate(bring: Bring, item_id: str, *args, **kwargs) -> str:
+    """Mock __translate method."""
+    return item_id
+
+
 class TestDoesUserExist:
     """Tests for does_user_exist method."""
 
@@ -46,6 +51,14 @@ class TestDoesUserExist:
         mocked.get("https://api.getbring.com/rest/bringusers?email=EMAIL", status=404)
         with pytest.raises(BringUserUnknownException):
             await bring.does_user_exist("EMAIL")
+
+    async def test_mail_value_error(self, mocked, bring, monkeypatch):
+        """Test does_user_exist for unknown user."""
+        mocked.get("https://api.getbring.com/rest/bringusers?email=", status=200)
+        monkeypatch.setattr(bring, "mail", None)
+
+        with pytest.raises(ValueError, match="Argument mail missing."):
+            await bring.does_user_exist()
 
     async def test_user_exist_with_parameter(self, mocked, bring):
         """Test does_user_exist for known user."""
@@ -342,14 +355,7 @@ class TestGetList:
             payload=BRING_GET_LIST_RESPONSE,
         )
 
-        def mocked_locale(*args, **kwargs) -> str:
-            return "de-CH"
-
-        monkeypatch.setattr(Bring, "_Bring__locale", mocked_locale)
-
-        def mocked_translate(bring: Bring, item_id: str, *args, **kwargs) -> str:
-            return item_id
-
+        monkeypatch.setattr(Bring, "_Bring__locale", lambda _, x: "de-DE")
         monkeypatch.setattr(Bring, "_Bring__translate", mocked_translate)
         monkeypatch.setattr(bring, "uuid", UUID)
 
@@ -953,3 +959,258 @@ class TestTranslate:
         """Test __translate BringTranslationException."""
         with pytest.raises(BringTranslationException):
             bring._Bring__translate("item_name", from_locale="de-DE")
+
+
+class TestBatchUpdateList:
+    """Tests for batch_update_list."""
+
+    @pytest.mark.parametrize(
+        ("item", "operation"),
+        [
+            (BringItem(itemId="item0", spec="spec", uuid=""), BringItemOperation.ADD),
+            (
+                BringItem(itemId="item1", spec="spec", uuid="uuid"),
+                BringItemOperation.COMPLETE,
+            ),
+            (
+                BringItem(itemId="item2", spec="spec", uuid="uuid"),
+                BringItemOperation.REMOVE,
+            ),
+            (
+                BringItem(
+                    itemId="item3",
+                    spec="spec",
+                    uuid="uuid",
+                    operation=BringItemOperation.ADD,
+                ),
+                None,
+            ),
+            (
+                BringItem(
+                    itemId="item4",
+                    spec="spec",
+                    uuid="uuid",
+                    operation=BringItemOperation.COMPLETE,
+                ),
+                None,
+            ),
+            (
+                BringItem(
+                    itemId="item5",
+                    spec="spec",
+                    uuid="uuid",
+                    operation=BringItemOperation.REMOVE,
+                ),
+                None,
+            ),
+            (
+                BringItem(
+                    itemId="item6",
+                    spec="spec",
+                    uuid="uuid",
+                    operation="TO_PURCHASE",
+                ),
+                None,
+            ),
+            (
+                BringItem(
+                    itemId="item7",
+                    spec="spec",
+                    uuid="uuid",
+                    operation="TO_RECENTLY",
+                ),
+                None,
+            ),
+            (
+                BringItem(
+                    itemId="item8",
+                    spec="spec",
+                    uuid="uuid",
+                    operation="REMOVE",
+                ),
+                None,
+            ),
+            (
+                BringItem(
+                    itemId="item9",
+                    spec="spec",
+                    uuid="uuid",
+                ),
+                None,
+            ),
+            (
+                BringItem(
+                    itemId="item10",
+                    spec="spec",
+                    uuid="uuid",
+                    operation=BringItemOperation.COMPLETE,
+                ),
+                BringItemOperation.ADD,
+            ),
+            (
+                BringItem(
+                    itemId="item11",
+                    spec="spec",
+                    uuid="uuid",
+                    operation=BringItemOperation.REMOVE,
+                ),
+                BringItemOperation.ADD,
+            ),
+            (
+                BringItem(itemId="item12", spec="", uuid=""),
+                BringItemOperation.ADD,
+            ),
+            (
+                BringItem(itemId="item13", spec="", uuid="uuid"),
+                BringItemOperation.ADD,
+            ),
+            (
+                BringItem(itemId="item14", spec="spec", uuid=""),
+                BringItemOperation.ADD,
+            ),
+            (
+                BringItem(itemId="item15", spec="spec", uuid="uuid"),
+                BringItemOperation.ADD,
+            ),
+            (
+                {"itemId": "item16", "spec": "spec", "uuid": "uuid"},
+                BringItemOperation.ADD,
+            ),
+        ],
+    )
+    async def test_batch_update_list_single_item(
+        self, bring, mocked, monkeypatch, item, operation
+    ):
+        """Test batch_update_list."""
+        expected = {
+            "changes": [
+                {
+                    "accuracy": "0.0",
+                    "altitude": "0.0",
+                    "latitude": "0.0",
+                    "longitude": "0.0",
+                    "itemId": item["itemId"],
+                    "spec": item["spec"],
+                    "uuid": item["uuid"],
+                    "operation": str(
+                        item.get("operation", operation or BringItemOperation.ADD)
+                    ),
+                }
+            ],
+            "sender": "",
+        }
+        mocked.put(
+            url := f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
+            status=200,
+        )
+        monkeypatch.setattr(Bring, "_Bring__locale", lambda _, x: "de-DE")
+        monkeypatch.setattr(Bring, "_Bring__translate", mocked_translate)
+
+        if operation:
+            r = await bring.batch_update_list(UUID, item, operation)
+        else:
+            r = await bring.batch_update_list(UUID, item)
+        assert r.status == 200
+        mocked.assert_called_with(
+            url,
+            method="PUT",
+            headers=DEFAULT_HEADERS,
+            data=None,
+            json=expected,
+        )
+
+    async def test_batch_update_list_multiple_items(self, bring, mocked, monkeypatch):
+        """Test batch_update_list."""
+        test_items = [
+            BringItem(
+                itemId="item1",
+                spec="spec1",
+                uuid="uuid1",
+                operation=BringItemOperation.ADD,
+            ),
+            BringItem(
+                itemId="item2",
+                spec="spec2",
+                uuid="uuid2",
+                operation=BringItemOperation.COMPLETE,
+            ),
+            BringItem(
+                itemId="item3",
+                spec="spec3",
+                uuid="uuid3",
+                operation=BringItemOperation.REMOVE,
+            ),
+        ]
+
+        expected = {
+            "changes": [
+                {
+                    "accuracy": "0.0",
+                    "altitude": "0.0",
+                    "latitude": "0.0",
+                    "longitude": "0.0",
+                    "itemId": "item1",
+                    "spec": "spec1",
+                    "uuid": "uuid1",
+                    "operation": "TO_PURCHASE",
+                },
+                {
+                    "accuracy": "0.0",
+                    "altitude": "0.0",
+                    "latitude": "0.0",
+                    "longitude": "0.0",
+                    "itemId": "item2",
+                    "spec": "spec2",
+                    "uuid": "uuid2",
+                    "operation": "TO_RECENTLY",
+                },
+                {
+                    "accuracy": "0.0",
+                    "altitude": "0.0",
+                    "latitude": "0.0",
+                    "longitude": "0.0",
+                    "itemId": "item3",
+                    "spec": "spec3",
+                    "uuid": "uuid3",
+                    "operation": "REMOVE",
+                },
+            ],
+            "sender": "",
+        }
+        mocked.put(
+            url := f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
+            status=200,
+        )
+        monkeypatch.setattr(Bring, "_Bring__locale", lambda _, x: "de-DE")
+        monkeypatch.setattr(Bring, "_Bring__translate", mocked_translate)
+
+        r = await bring.batch_update_list(UUID, test_items)
+
+        assert r.status == 200
+        mocked.assert_called_with(
+            url,
+            method="PUT",
+            headers=DEFAULT_HEADERS,
+            data=None,
+            json=expected,
+        )
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception):
+        """Test request exceptions."""
+
+        mocked.put(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.batch_update_list(
+                UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
+            )
