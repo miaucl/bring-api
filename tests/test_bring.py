@@ -14,6 +14,7 @@ from bring_api.exceptions import (
     BringEMailInvalidException,
     BringParseException,
     BringRequestException,
+    BringTranslationException,
     BringUserUnknownException,
 )
 from bring_api.types import BringItem, BringItemOperation, BringNotificationType
@@ -617,7 +618,7 @@ class TestCompleteItem:
         )
 
 
-class TestLoadArticleTranslations:
+class TestArticleTranslations:
     """Test loading of article translation tables."""
 
     def mocked__load_article_translations_from_file(self, locale):
@@ -676,6 +677,37 @@ class TestLoadArticleTranslations:
         locale = bring.map_user_language_to_locale(user_locale)
 
         assert expected_locale == locale
+
+    def test_get_locale_from_list(self, bring, monkeypatch):
+        """Test get locale from list."""
+
+        monkeypatch.setattr(
+            bring, "user_list_settings", {UUID: {"listArticleLanguage": "de-DE"}}
+        )
+        monkeypatch.setattr(bring, "user_locale", "es-ES")
+        locale = bring._Bring__locale(UUID)
+
+        assert locale == "de-DE"
+
+    def test_get_locale_from_user(self, bring, monkeypatch):
+        """Test get locale from user_locale."""
+
+        monkeypatch.setattr(
+            bring, "user_list_settings", {UUID: {"listArticleLanguage": "de-DE"}}
+        )
+        monkeypatch.setattr(bring, "user_locale", "es-ES")
+        locale = bring._Bring__locale("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx")
+
+        assert locale == "es-ES"
+
+    def test_get_locale_from_list_fallback(self, bring, monkeypatch):
+        """Test get locale from list and fallback to user_locale."""
+
+        monkeypatch.setattr(bring, "user_list_settings", {UUID: {}})
+        monkeypatch.setattr(bring, "user_locale", "es-ES")
+        locale = bring._Bring__locale(UUID)
+
+        assert locale == "es-ES"
 
     async def test_load_all_locales(self, bring, monkeypatch):
         """Test loading all locales."""
@@ -850,3 +882,74 @@ class TestGetAllUserSettings:
 
         with pytest.raises(BringParseException):
             await bring.get_all_user_settings()
+
+    async def test_load_user_list_settings(self, bring, monkeypatch):
+        """Test __load_user_list_settings."""
+
+        async def mocked_get_all_user_settings(self):
+            return BRING_USER_SETTINGS_RESPONSE
+
+        monkeypatch.setattr(
+            Bring, "get_all_user_settings", mocked_get_all_user_settings
+        )
+        data = await bring._Bring__load_user_list_settings()
+
+        assert data[UUID]["listArticleLanguage"] == "de-DE"
+
+    async def test_load_user_list_settings_exception(self, bring, monkeypatch):
+        """Test __load_user_list_settings."""
+
+        async def mocked_get_all_user_settings(self):
+            raise BringRequestException
+
+        monkeypatch.setattr(
+            Bring, "get_all_user_settings", mocked_get_all_user_settings
+        )
+
+        with pytest.raises(BringTranslationException):
+            await bring._Bring__load_user_list_settings()
+
+
+class TestTranslate:
+    """Test for __translate method."""
+
+    def test_translate_to_locale(self, bring, monkeypatch):
+        """Test __translate with to_locale."""
+        monkeypatch.setattr(
+            bring, "_Bring__translations", {"de-DE": {"Pouletbrüstli": "Hähnchenbrust"}}
+        )
+
+        item = bring._Bring__translate("Pouletbrüstli", to_locale="de-DE")
+
+        assert item == "Hähnchenbrust"
+
+    def test_translate_from_locale(self, bring, monkeypatch):
+        """Test __translate with from_locale."""
+        monkeypatch.setattr(
+            bring, "_Bring__translations", {"de-DE": {"Pouletbrüstli": "Hähnchenbrust"}}
+        )
+
+        item = bring._Bring__translate("Hähnchenbrust", from_locale="de-DE")
+
+        assert item == "Pouletbrüstli"
+
+    def test_translate_value_error_no_locale(self, bring):
+        """Test __translate with missing locale argument."""
+        with pytest.raises(
+            ValueError,
+            match="One of the arguments from_locale or to_locale required.",
+        ):
+            bring._Bring__translate("item_name")
+
+    def test_translate_value_error_unsupported_locale(self, bring):
+        """Test __translate with unsupported locale."""
+        locale = "en-ES"
+        with pytest.raises(
+            ValueError, match=f"Locale {locale} not supported by Bring."
+        ):
+            bring._Bring__translate("item_name", from_locale=locale)
+
+    def test_translate_exception(self, bring):
+        """Test __translate BringTranslationException."""
+        with pytest.raises(BringTranslationException):
+            bring._Bring__translate("item_name", from_locale="de-DE")
