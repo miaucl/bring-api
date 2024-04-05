@@ -1,4 +1,5 @@
 """Bring API types."""
+
 from enum import Enum
 from typing import List, NotRequired, TypedDict
 
@@ -118,7 +119,7 @@ class BringSyncCurrentUserResponse(TypedDict):
 
     email: str
     name: str
-    publicUuid: str
+    publicUserUuid: str
     userLocale: dict[str, str]
     userUuid: str
 
