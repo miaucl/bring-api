@@ -23,7 +23,24 @@ BRING_LOGIN_RESPONSE = {
     "expires_in": 604799,
 }
 
-BRING_USER_ACCOUNT_RESPONSE = {"userLocale": {"language": "de", "country": "DE"}}
+# BRING_USER_ACCOUNT_RESPONSE = {"userLocale": {"language": "de", "country": "DE"}}
+BRING_USER_ACCOUNT_RESPONSE = {
+    "userUuid": "{user_uuid}",
+    "publicUserUuid": "{public_uuid}",
+    "email": "{email}",
+    "emailVerified": True,
+    "name": "{user_name}",
+    "photoPath": "bring/user/portrait/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx",
+    "userLocale": {"language": "de", "country": "DE"},
+    "premiumConfiguration": {
+        "hasPremium": False,
+        "hideSponsoredProducts": False,
+        "hideSponsoredTemplates": False,
+        "hideSponsoredPosts": False,
+        "hideSponsoredCategories": False,
+        "hideOffersOnMain": False,
+    },
+}
 
 BRING_USER_SETTINGS_RESPONSE = {
     "usersettings": [],
