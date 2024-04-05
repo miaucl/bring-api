@@ -24,6 +24,7 @@ from .conftest import (
     BRING_LOAD_LISTS_RESPONSE,
     BRING_LOGIN_RESPONSE,
     BRING_USER_ACCOUNT_RESPONSE,
+    BRING_USER_SETTINGS_RESPONSE,
     UUID,
 )
 
@@ -799,3 +800,53 @@ class TestGetUserAccount:
 
         with pytest.raises(BringParseException):
             await bring.get_user_account()
+
+
+class TestGetAllUserSettings:
+    """Tests for get_all_user_settings method."""
+
+    async def test_get_all_user_settings(self, bring, mocked, monkeypatch):
+        """Test for get_user_account."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}",
+            payload=BRING_USER_SETTINGS_RESPONSE,
+            status=200,
+        )
+
+        monkeypatch.setattr(bring, "uuid", UUID)
+        data = await bring.get_all_user_settings()
+
+        assert data == BRING_USER_SETTINGS_RESPONSE
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception, monkeypatch):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}",
+            exception=exception,
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        with pytest.raises(BringRequestException):
+            await bring.get_all_user_settings()
+
+    async def test_parse_exception(self, mocked, bring, monkeypatch):
+        """Test parse exceptions."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}",
+            status=200,
+            body="not json",
+            content_type="application/json",
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        with pytest.raises(BringParseException):
+            await bring.get_all_user_settings()

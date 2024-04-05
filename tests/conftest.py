@@ -43,11 +43,27 @@ BRING_USER_ACCOUNT_RESPONSE = {
 }
 
 BRING_USER_SETTINGS_RESPONSE = {
-    "usersettings": [],
+    "usersettings": [
+        {"key": "autoPush", "value": "ON"},
+        {"key": "purchaseStyle", "value": "grouped"},
+        {"key": "premiumHideSponsoredCategories", "value": "OFF"},
+        {"key": "premiumHideInspirationsBadge", "value": "OFF"},
+        {"key": "premiumHideOffersBadge", "value": "OFF"},
+        {"key": "premiumHideOffersOnMain", "value": "OFF"},
+        {"key": "defaultListUUID", "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
+        {"key": "discountActivatorOnMainEnabled", "value": "OFF"},
+        {"key": "onboardClient", "value": "android"},
+    ],
     "userlistsettings": [
         {
             "listUuid": UUID,
-            "usersettings": [{"key": "listArticleLanguage", "value": "de-DE"}],
+            "usersettings": [
+                {
+                    "key": "listSectionOrder",
+                    "value": '["Früchte & Gemüse","Brot & Gebäck","Milch & Käse","Fleisch & Fisch","Zutaten & Gewürze","Fertig- & Tiefkühlprodukte","Getreideprodukte","Snacks & Süsswaren","Getränke & Tabak","Haushalt & Gesundheit","Pflege & Gesundheit","Tierbedarf","Baumarkt & Garten","Eigene Artikel"]',
+                },
+                {"key": "listArticleLanguage", "value": "de-DE"},
+            ],
         }
     ],
 }
