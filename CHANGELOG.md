@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.6.0
+
+* **Pytest unit testing:** added pytest with full code coverage ([tr4nt0r](https://github.com/tr4nt0r))
+* **Github workflow for pytest:** added workflow for running pytests with Python 3.11 & 3.12 on Ubuntu, Windows and macOS ([tr4nt0r](https://github.com/tr4nt0r))
+* Update Python requirement to >=3.11
+* Change from implicit to explicit string conversion of `BringItemOperation` in JSON request payload ([tr4nt0r](https://github.com/tr4nt0r))
+* Change Type of `BringItemOperation` to `StrEnum` ([tr4nt0r](https://github.com/tr4nt0r))
+* `BringItem::operation` now also accepts string literals `TO_PURCHASE`, `TO_RECENTLY` & `REMOVE` ([tr4nt0r](https://github.com/tr4nt0r))
+* fix wrong variable name in `BringSyncCurrentUserResponse` class and add additional variables from JSON response ([tr4nt0r](https://github.com/tr4nt0r))
+* Improve exceptions for `save/update/remove/complete_item` and `batch_update_list` methods ([tr4nt0r](https://github.com/tr4nt0r))
+* Fix bug in `get_all_item_details` method ([tr4nt0r](https://github.com/tr4nt0r))
+* Parsing error when parsing unauthorized response now raises `BringParseException` ([tr4nt0r](https://github.com/tr4nt0r))
+* Cleanup legacy code ([tr4nt0r](https://github.com/tr4nt0r))
+
 ## 0.5.7
 
 * **map user language to locales**: Bring sometimes stores non-standard locales in the user settings. In case the Bring API returns an invalid/unsupported locale, the user language is now mapped to a supported locale. 
