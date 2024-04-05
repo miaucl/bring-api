@@ -23,7 +23,6 @@ BRING_LOGIN_RESPONSE = {
     "expires_in": 604799,
 }
 
-# BRING_USER_ACCOUNT_RESPONSE = {"userLocale": {"language": "de", "country": "DE"}}
 BRING_USER_ACCOUNT_RESPONSE = {
     "userUuid": "{user_uuid}",
     "publicUserUuid": "{public_uuid}",
