@@ -118,7 +118,10 @@ class BringSyncCurrentUserResponse(TypedDict):
     """A sync current user response class."""
 
     email: str
+    emailVerified: bool
     name: str
+    photoPath: str
+    premiumConfiguration: dict[str, bool]
     publicUserUuid: str
     userLocale: dict[str, str]
     userUuid: str
