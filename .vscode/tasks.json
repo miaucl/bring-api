@@ -10,6 +10,23 @@
       "problemMatcher": [],
       "group": {
         "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "focus": true,
+        "reveal": "always"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Pytest",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pytest tests/ --cov=bring_api -v --color=yes",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
         "isDefault": true
       },
       "presentation": {

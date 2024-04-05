@@ -141,3 +141,10 @@ split-on-trailing-comma = false
 
 [tool.ruff.lint.mccabe]
 max-complexity = 25
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = [
+    
+    "tests",
+]

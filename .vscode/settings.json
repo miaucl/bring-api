@@ -12,5 +12,11 @@
       "source.fixAll": "explicit"
     }
   },
+  "python.testing.pytestArgs": [
+    "-v",
+    "--color=yes"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
   "python.analysis.typeCheckingMode": "basic"
 }
