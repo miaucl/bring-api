@@ -2,6 +2,7 @@
 
 import asyncio
 import enum
+import time
 
 import aiohttp
 from dotenv import load_dotenv
@@ -24,6 +25,7 @@ from .conftest import (
     BRING_GET_LIST_RESPONSE,
     BRING_LOAD_LISTS_RESPONSE,
     BRING_LOGIN_RESPONSE,
+    BRING_TOKEN_RESPONSE,
     BRING_USER_ACCOUNT_RESPONSE,
     BRING_USER_SETTINGS_RESPONSE,
     UUID,
@@ -1214,3 +1216,66 @@ class TestBatchUpdateList:
             await bring.batch_update_list(
                 UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
             )
+
+
+class TestRetrieveNewAccessToken:
+    """Test for retrieve_new_access_token method."""
+
+    async def test_retrieve_new_access_token(self, mocked, bring, monkeypatch):
+        """Test retrieve_new_access_token."""
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth/token",
+            status=200,
+            payload=BRING_TOKEN_RESPONSE,
+        )
+        monkeypatch.setattr(bring, "refresh_token", "test_refresh_token")
+        monkeypatch.setattr(time, "time", lambda: 0)
+        data = await bring.retrieve_new_access_token()
+
+        assert data == BRING_TOKEN_RESPONSE
+        assert bring.headers["Authorization"] == "Bearer {access_token}"
+        assert bring.expires_in == BRING_TOKEN_RESPONSE["expires_in"]
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception):
+        """Test request exceptions."""
+
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth/token",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.retrieve_new_access_token()
+
+    async def test_auth_exception(self, mocked, bring):
+        """Test request exceptions."""
+
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth/token",
+            status=401,
+            payload={"message": ""},
+        )
+
+        with pytest.raises(BringAuthException):
+            await bring.retrieve_new_access_token()
+
+    @pytest.mark.parametrize("status", [200, 401])
+    async def test_parse_exception(self, mocked, bring, status):
+        """Test request exceptions."""
+
+        mocked.post(
+            "https://api.getbring.com/rest/v2/bringauth/token",
+            status=status,
+            body="not json",
+            content_type="application/json",
+        )
+
+        with pytest.raises(BringParseException):
+            await bring.retrieve_new_access_token()

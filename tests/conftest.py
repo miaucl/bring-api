@@ -128,6 +128,13 @@ BRING_GET_ALL_ITEM_DETAILS_RESPONSE = [
     },
 ]
 
+BRING_TOKEN_RESPONSE = {
+    "access_token": "{access_token}",
+    "refresh_token": "{refresh_token}",
+    "token_type": "Bearer",
+    "expires_in": 604799,
+}
+
 
 @pytest.fixture(name="session")
 async def aiohttp_client_session():

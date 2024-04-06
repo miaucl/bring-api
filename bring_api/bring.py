@@ -68,7 +68,7 @@ class Bring:
 
         self.url = API_BASE_URL
 
-        self.headers = DEFAULT_HEADERS
+        self.headers = DEFAULT_HEADERS.copy()
 
         self.loop = asyncio.get_running_loop()
         self.refresh_token = ""
@@ -118,7 +118,8 @@ class Bring:
                             traceback.format_exc(),
                         )
                         raise BringParseException(
-                            "Login failed due to authorization failure but error response could not be parsed."
+                            "Login failed due to authorization failure "
+                            "but error response could not be parsed."
                         ) from e
                     _LOGGER.error("Exception: Cannot login: %s", errmsg["message"])
                     raise BringAuthException(
@@ -1207,8 +1208,24 @@ class Bring:
     async def retrieve_new_access_token(
         self, refresh_token: str | None = None
     ) -> BringAuthTokenRespone:
-        """Refresh the access token."""
+        """Refresh the access token.
 
+        Parameters
+        ----------
+        refresh_token : str, optional
+            The refresh token to use to retrieve a new access token
+
+        Returns
+        -------
+        dict
+            The JSON response as a dict.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+
+        """
         refresh_token = refresh_token or self.refresh_token
 
         user_data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
@@ -1218,6 +1235,27 @@ class Bring:
                 url, headers=self.headers, data=user_data
             ) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+                if r.status == 401:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse token request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Retrieve new access token failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot retrieve new access token: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Retrieve new access token failed due to authorization failure, "
+                        "the refresh token is invalid or expired."
+                    )
+
                 r.raise_for_status()
 
                 try:
@@ -1231,20 +1269,21 @@ class Bring:
                     )
                 except JSONDecodeError as e:
                     _LOGGER.error(
-                        "Exception: Cannot login:\n %s", traceback.format_exc()
+                        "Exception: Cannot retrieve new access token:\n %s",
+                        traceback.format_exc(),
                     )
                     raise BringParseException(
-                        "Cannot parse login request response."
+                        "Cannot parse token request response."
                     ) from e
         except asyncio.TimeoutError as e:
             _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
-                "Authentication failed due to connection timeout."
+                "Retrieve new access token failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
-                "Authentication failed due to request exception."
+                "Retrieve new access token failed due to request exception."
             ) from e
 
         self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
