@@ -5,6 +5,7 @@ import json
 from json import JSONDecodeError
 import logging
 import os
+import time
 import traceback
 from typing import Any, List, Optional, cast
 
@@ -28,6 +29,7 @@ from .exceptions import (
 )
 from .types import (
     BringAuthResponse,
+    BringAuthTokenRespone,
     BringItem,
     BringItemOperation,
     BringItemsResponse,
@@ -66,9 +68,20 @@ class Bring:
 
         self.url = API_BASE_URL
 
-        self.headers = DEFAULT_HEADERS
+        self.headers = DEFAULT_HEADERS.copy()
 
         self.loop = asyncio.get_running_loop()
+        self.refresh_token = ""
+        self.__expires_in: int
+
+    @property
+    def expires_in(self) -> int:
+        """Refresh token expiration."""
+        return max(0, self.__expires_in - int(time.time()))
+
+    @expires_in.setter
+    def expires_in(self, expires_in: int | str) -> None:
+        self.__expires_in = int(time.time()) + int(expires_in)
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
@@ -105,7 +118,8 @@ class Bring:
                             traceback.format_exc(),
                         )
                         raise BringParseException(
-                            "Login failed due to authorization failure but error response could not be parsed."
+                            "Login failed due to authorization failure "
+                            "but error response could not be parsed."
                         ) from e
                     _LOGGER.error("Exception: Cannot login: %s", errmsg["message"])
                     raise BringAuthException(
@@ -149,7 +163,9 @@ class Bring:
         self.uuid = data["uuid"]
         self.public_uuid = data.get("publicUuid", "")
         self.headers["X-BRING-USER-UUID"] = self.uuid
-        self.headers["Authorization"] = f'Bearer {data["access_token"]}'
+        self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
+        self.refresh_token = data["refresh_token"]
+        self.expires_in = data["expires_in"]
 
         locale = (await self.get_user_account())["userLocale"]
         self.headers["X-BRING-COUNTRY"] = locale["country"]
@@ -1188,3 +1204,89 @@ class Bring:
             raise BringRequestException(
                 f"Batch operation for list {list_uuid} failed due to request exception."
             ) from e
+
+    async def retrieve_new_access_token(
+        self, refresh_token: str | None = None
+    ) -> BringAuthTokenRespone:
+        """Refresh the access token.
+
+        Parameters
+        ----------
+        refresh_token : str, optional
+            The refresh token to use to retrieve a new access token
+
+        Returns
+        -------
+        dict
+            The JSON response as a dict.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+
+        """
+        refresh_token = refresh_token or self.refresh_token
+
+        user_data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+        try:
+            url = f"{self.url}v2/bringauth/token"
+            async with self._session.post(
+                url, headers=self.headers, data=user_data
+            ) as r:
+                _LOGGER.debug("Response from %s: %s", url, r.status)
+                if r.status == 401:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse token request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Retrieve new access token failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot retrieve new access token: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Retrieve new access token failed due to authorization failure, "
+                        "the refresh token is invalid or expired."
+                    )
+
+                r.raise_for_status()
+
+                try:
+                    data = cast(
+                        BringAuthTokenRespone,
+                        {
+                            key: val
+                            for key, val in (await r.json()).items()
+                            if key in BringAuthTokenRespone.__annotations__
+                        },
+                    )
+                except JSONDecodeError as e:
+                    _LOGGER.error(
+                        "Exception: Cannot retrieve new access token:\n %s",
+                        traceback.format_exc(),
+                    )
+                    raise BringParseException(
+                        "Cannot parse token request response."
+                    ) from e
+        except asyncio.TimeoutError as e:
+            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            raise BringRequestException(
+                "Retrieve new access token failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            raise BringRequestException(
+                "Retrieve new access token failed due to request exception."
+            ) from e
+
+        self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
+        self.expires_in = data["expires_in"]
+
+        return data

@@ -144,3 +144,12 @@ class BringItem(TypedDict):
     operation: NotRequired[
         BringItemOperation | Literal["TO_PURCHASE", "TO_RECENTLY", "REMOVE"]
     ]
+
+
+class BringAuthTokenRespone(TypedDict):
+    """A refresh token response class."""
+
+    access_token: str
+    refresh_token: str
+    token_type: str
+    expires_in: int
