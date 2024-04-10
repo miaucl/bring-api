@@ -2,6 +2,7 @@
 
 import asyncio
 import enum
+from http import HTTPStatus
 import time
 
 import aiohttp
@@ -56,7 +57,9 @@ class TestDoesUserExist:
 
     async def test_mail_value_error(self, mocked, bring, monkeypatch):
         """Test does_user_exist for unknown user."""
-        mocked.get("https://api.getbring.com/rest/bringusers?email=", status=200)
+        mocked.get(
+            "https://api.getbring.com/rest/bringusers?email=", status=HTTPStatus.OK
+        )
         monkeypatch.setattr(bring, "mail", None)
 
         with pytest.raises(ValueError, match="Argument mail missing."):
@@ -64,14 +67,16 @@ class TestDoesUserExist:
 
     async def test_user_exist_with_parameter(self, mocked, bring):
         """Test does_user_exist for known user."""
-        mocked.get("https://api.getbring.com/rest/bringusers?email=EMAIL", status=200)
+        mocked.get(
+            "https://api.getbring.com/rest/bringusers?email=EMAIL", status=HTTPStatus.OK
+        )
         assert await bring.does_user_exist("EMAIL") is True
 
     async def test_user_exist_without_parameter(self, mocked, bring):
         """Test does_user_exist for known user."""
         mocked.get(
             "https://api.getbring.com/rest/bringusers?email=EMAIL",
-            status=200,
+            status=HTTPStatus.OK,
         )
         assert await bring.does_user_exist() is True
 
@@ -111,14 +116,14 @@ class TestLogin:
         """Test login with unauthorized user."""
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth",
-            status=401,
+            status=HTTPStatus.UNAUTHORIZED,
             payload={"message": ""},
         )
         expected = "Login failed due to authorization failure, please check your email and password."
         with pytest.raises(BringAuthException, match=expected):
             await bring.login()
 
-    @pytest.mark.parametrize("status", [200, 401])
+    @pytest.mark.parametrize("status", [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED])
     async def test_parse_exception(self, mocked, bring, status):
         """Test parse exceptions."""
         mocked.post(
@@ -149,7 +154,7 @@ class TestLogin:
 
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth",
-            status=200,
+            status=HTTPStatus.OK,
             payload=BRING_LOGIN_RESPONSE,
         )
 
@@ -192,7 +197,7 @@ class TestLoadLists:
 
         mocked.get(
             f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
-            status=200,
+            status=HTTPStatus.OK,
             payload=BRING_LOAD_LISTS_RESPONSE,
         )
         monkeypatch.setattr(bring, "uuid", UUID)
@@ -201,17 +206,29 @@ class TestLoadLists:
 
         assert lists == BRING_LOAD_LISTS_RESPONSE
 
-    async def test_parse_exception(self, mocked, bring, monkeypatch):
+    @pytest.mark.parametrize("status", [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED])
+    async def test_parse_exception(self, mocked, bring, monkeypatch, status):
         """Test parse exceptions."""
         mocked.get(
             f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
-            status=200,
+            status=status,
             body="not json",
             content_type="application/json",
         )
         monkeypatch.setattr(bring, "uuid", UUID)
 
         with pytest.raises(BringParseException):
+            await bring.load_lists()
+
+    async def test_unauthorized(self, mocked, bring, monkeypatch):
+        """Test unauthorized exception."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+        with pytest.raises(BringAuthException):
             await bring.load_lists()
 
     @pytest.mark.parametrize(
@@ -256,16 +273,16 @@ class TestNotifications:
 
         mocked.post(
             f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
-            status=200,
+            status=HTTPStatus.OK,
         )
         resp = await bring.notify(UUID, notification_type, item_name)
-        assert resp.status == 200
+        assert resp.status == HTTPStatus.OK
 
     async def test_notify_urgent_message_item_name_missing(self, bring, mocked):
         """Test URGENT_MESSAGE notification."""
         mocked.post(
             f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
-            status=200,
+            status=HTTPStatus.OK,
         )
         with pytest.raises(
             ValueError,
@@ -314,6 +331,28 @@ class TestNotifications:
         with pytest.raises(BringRequestException):
             await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)
 
+    async def test_unauthorized(self, mocked, bring):
+        """Test unauthorized exception."""
+        mocked.post(
+            f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+        with pytest.raises(BringAuthException):
+            await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)
+
+    async def test_parse_exception(self, mocked, bring):
+        """Test parse exceptions."""
+        mocked.post(
+            f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+            status=HTTPStatus.UNAUTHORIZED,
+            body="not json",
+            content_type="application/json",
+        )
+
+        with pytest.raises(BringParseException):
+            await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)
+
 
 class TestGetList:
     """Tests for get_list method."""
@@ -336,11 +375,22 @@ class TestGetList:
         with pytest.raises(BringRequestException):
             await bring.get_list(UUID)
 
-    async def test_parse_exception(self, mocked, bring, monkeypatch):
+    async def test_unauthorized(self, mocked, bring):
+        """Test unauthorized exception."""
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+        with pytest.raises(BringAuthException):
+            await bring.get_list(UUID)
+
+    @pytest.mark.parametrize("status", [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED])
+    async def test_parse_exception(self, mocked, bring, monkeypatch, status):
         """Test parse exceptions."""
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
-            status=200,
+            status=status,
             body="not json",
             content_type="application/json",
         )
@@ -353,7 +403,7 @@ class TestGetList:
         """Test get list."""
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
-            status=200,
+            status=HTTPStatus.OK,
             payload=BRING_GET_LIST_RESPONSE,
         )
 
@@ -372,7 +422,7 @@ class TestGetAllItemDetails:
         """Test get_all_item_details."""
         mocked.get(
             f"https://api.getbring.com/rest/bringlists/{UUID}/details",
-            status=200,
+            status=HTTPStatus.OK,
             payload=BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
         )
 
@@ -390,11 +440,22 @@ class TestGetAllItemDetails:
         with pytest.raises(BringRequestException):
             await bring.get_all_item_details(UUID)
 
-    async def test_parse_exception(self, mocked, bring):
+    async def test_unauthorized(self, mocked, bring):
+        """Test unauthorized exception."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringlists/{UUID}/details",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+        with pytest.raises(BringAuthException):
+            await bring.get_all_item_details(UUID)
+
+    @pytest.mark.parametrize("status", [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED])
+    async def test_parse_exception(self, mocked, bring, status):
         """Test parse exceptions."""
         mocked.get(
             f"https://api.getbring.com/rest/bringlists/{UUID}/details",
-            status=200,
+            status=status,
             body="not json",
             content_type="application/json",
         )
@@ -734,7 +795,7 @@ class TestArticleTranslations:
         mocked.get(
             "https://web.getbring.com/locale/articles.de-DE.json",
             payload={"test": "test"},
-            status=200,
+            status=HTTPStatus.OK,
         )
 
         monkeypatch.setattr(bring, "user_locale", "de-DE")
@@ -776,7 +837,7 @@ class TestArticleTranslations:
         """Test loading json and fallback to download from web."""
         mocked.get(
             "https://web.getbring.com/locale/articles.de-DE.json",
-            status=200,
+            status=HTTPStatus.OK,
             body="not json",
             content_type="application/json",
         )
@@ -801,7 +862,7 @@ class TestGetUserAccount:
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringusers/{UUID}",
             payload=BRING_USER_ACCOUNT_RESPONSE,
-            status=200,
+            status=HTTPStatus.OK,
         )
 
         monkeypatch.setattr(bring, "uuid", UUID)
@@ -828,11 +889,23 @@ class TestGetUserAccount:
         with pytest.raises(BringRequestException):
             await bring.get_user_account()
 
-    async def test_parse_exception(self, mocked, bring, monkeypatch):
+    async def test_unauthorized(self, mocked, bring, monkeypatch):
+        """Test unauthorized exception."""
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringusers/{UUID}",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+        with pytest.raises(BringAuthException):
+            await bring.get_user_account()
+
+    @pytest.mark.parametrize("status", [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED])
+    async def test_parse_exception(self, mocked, bring, monkeypatch, status):
         """Test parse exceptions."""
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringusers/{UUID}",
-            status=200,
+            status=status,
             body="not json",
             content_type="application/json",
         )
@@ -851,7 +924,7 @@ class TestGetAllUserSettings:
         mocked.get(
             f"https://api.getbring.com/rest/bringusersettings/{UUID}",
             payload=BRING_USER_SETTINGS_RESPONSE,
-            status=200,
+            status=HTTPStatus.OK,
         )
 
         monkeypatch.setattr(bring, "uuid", UUID)
@@ -878,11 +951,23 @@ class TestGetAllUserSettings:
         with pytest.raises(BringRequestException):
             await bring.get_all_user_settings()
 
-    async def test_parse_exception(self, mocked, bring, monkeypatch):
+    async def test_unauthorized(self, mocked, bring, monkeypatch):
+        """Test unauthorized exception."""
+        mocked.get(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+        with pytest.raises(BringAuthException):
+            await bring.get_all_user_settings()
+
+    @pytest.mark.parametrize("status", [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED])
+    async def test_parse_exception(self, mocked, bring, monkeypatch, status):
         """Test parse exceptions."""
         mocked.get(
             f"https://api.getbring.com/rest/bringusersettings/{UUID}",
-            status=200,
+            status=status,
             body="not json",
             content_type="application/json",
         )
@@ -1103,7 +1188,7 @@ class TestBatchUpdateList:
         }
         mocked.put(
             url := f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
-            status=200,
+            status=HTTPStatus.OK,
         )
         monkeypatch.setattr(Bring, "_Bring__locale", lambda _, x: "de-DE")
         monkeypatch.setattr(Bring, "_Bring__translate", mocked_translate)
@@ -1112,7 +1197,7 @@ class TestBatchUpdateList:
             r = await bring.batch_update_list(UUID, item, operation)
         else:
             r = await bring.batch_update_list(UUID, item)
-        assert r.status == 200
+        assert r.status == HTTPStatus.OK
         mocked.assert_called_with(
             url,
             method="PUT",
@@ -1181,14 +1266,14 @@ class TestBatchUpdateList:
         }
         mocked.put(
             url := f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
-            status=200,
+            status=HTTPStatus.OK,
         )
         monkeypatch.setattr(Bring, "_Bring__locale", lambda _, x: "de-DE")
         monkeypatch.setattr(Bring, "_Bring__translate", mocked_translate)
 
         r = await bring.batch_update_list(UUID, test_items)
 
-        assert r.status == 200
+        assert r.status == HTTPStatus.OK
         mocked.assert_called_with(
             url,
             method="PUT",
@@ -1217,6 +1302,33 @@ class TestBatchUpdateList:
                 UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
             )
 
+    async def test_unauthorized(self, mocked, bring, monkeypatch):
+        """Test unauthorized exception."""
+        mocked.put(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+
+        with pytest.raises(BringAuthException):
+            await bring.batch_update_list(
+                UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
+            )
+
+    async def test_parse_exception(self, mocked, bring, monkeypatch):
+        """Test parse exceptions."""
+        mocked.put(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
+            status=HTTPStatus.UNAUTHORIZED,
+            body="not json",
+            content_type="application/json",
+        )
+
+        with pytest.raises(BringParseException):
+            await bring.batch_update_list(
+                UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
+            )
+
 
 class TestRetrieveNewAccessToken:
     """Test for retrieve_new_access_token method."""
@@ -1225,7 +1337,7 @@ class TestRetrieveNewAccessToken:
         """Test retrieve_new_access_token."""
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth/token",
-            status=200,
+            status=HTTPStatus.OK,
             payload=BRING_TOKEN_RESPONSE,
         )
         monkeypatch.setattr(bring, "refresh_token", "test_refresh_token")
@@ -1259,14 +1371,14 @@ class TestRetrieveNewAccessToken:
 
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth/token",
-            status=401,
+            status=HTTPStatus.UNAUTHORIZED,
             payload={"message": ""},
         )
 
         with pytest.raises(BringAuthException):
             await bring.retrieve_new_access_token()
 
-    @pytest.mark.parametrize("status", [200, 401])
+    @pytest.mark.parametrize("status", [HTTPStatus.OK, HTTPStatus.UNAUTHORIZED])
     async def test_parse_exception(self, mocked, bring, status):
         """Test request exceptions."""
 

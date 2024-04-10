@@ -1,6 +1,7 @@
 """Bring api implementation."""
 
 import asyncio
+from http import HTTPStatus
 import json
 from json import JSONDecodeError
 import logging
@@ -109,7 +110,7 @@ class Bring:
             async with self._session.post(url, data=user_data) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
 
-                if r.status == 401:
+                if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
@@ -126,7 +127,7 @@ class Bring:
                         "Login failed due to authorization failure, "
                         "please check your email and password."
                     )
-                if r.status == 400:
+                if r.status == HTTPStatus.BAD_REQUEST:
                     _LOGGER.error("Exception: Cannot login: %s", await r.text())
                     raise BringAuthException(
                         "Login failed due to bad request, please check your email."
@@ -198,6 +199,28 @@ class Bring:
             url = f"{self.url}bringusers/{self.uuid}/lists"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Loading lists failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot get lists: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Loading lists failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
                 r.raise_for_status()
 
                 try:
@@ -253,6 +276,28 @@ class Bring:
             url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Loading list items failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot get list items: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Loading list items failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
                 r.raise_for_status()
 
                 try:
@@ -332,6 +377,28 @@ class Bring:
             url = f"{self.url}bringlists/{list_uuid}/details"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Loading list details failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot get list details: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Loading list details failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
                 r.raise_for_status()
 
                 try:
@@ -639,6 +706,28 @@ class Bring:
                 url, headers=self.headers, json=json_data
             ) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Sending notification failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot send notification: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Sending notification failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
                 r.raise_for_status()
                 return r
         except asyncio.TimeoutError as e:
@@ -699,7 +788,7 @@ class Bring:
             async with self._session.get(url, headers=self.headers, params=params) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
 
-                if r.status == 404:
+                if r.status == HTTPStatus.NOT_FOUND:
                     _LOGGER.error("Exception: User %s does not exist.", mail)
                     raise BringUserUnknownException(f"User {mail} does not exist.")
 
@@ -934,6 +1023,28 @@ class Bring:
             url = f"{self.url}bringusersettings/{self.uuid}"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Loading user settings failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot get user settings: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Loading user settings failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
                 r.raise_for_status()
 
                 try:
@@ -1085,6 +1196,28 @@ class Bring:
             url = f"{self.url}v2/bringusers/{self.uuid}"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Loading current user settings failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot get current user settings: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Loading current user settings failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
                 r.raise_for_status()
 
                 try:
@@ -1184,6 +1317,28 @@ class Bring:
                 url, headers=self.headers, json=json_data
             ) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except JSONDecodeError as e:
+                        _LOGGER.error(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                        raise BringParseException(
+                            "Batch operation failed due to authorization failure but "
+                            "error response could not be parsed."
+                        ) from e
+                    _LOGGER.error(
+                        "Exception: Cannot get execute batch operation: %s",
+                        errmsg["message"],
+                    )
+                    raise BringAuthException(
+                        "Batch operation failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
                 r.raise_for_status()
                 return r
         except asyncio.TimeoutError as e:
@@ -1235,7 +1390,7 @@ class Bring:
                 url, headers=self.headers, data=user_data
             ) as r:
                 _LOGGER.debug("Response from %s: %s", url, r.status)
-                if r.status == 401:
+                if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
