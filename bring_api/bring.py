@@ -99,7 +99,7 @@ class Bring:
         BringParseException
             If the parsing of the request response fails.
         BringAuthException
-            If the login fails due to missing data in the API response.
+            If the login fails due invalid credentials.
             You should check your email and password.
 
         """
@@ -183,9 +183,8 @@ class Bring:
 
         Returns
         -------
-        dict
-
-        The JSON response as a dict.
+        BringListResponse
+            The JSON response.
 
         Raises
         ------
@@ -193,6 +192,8 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
@@ -257,12 +258,12 @@ class Bring:
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            A list uuid returned by load_lists()
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringItemsResponse
+            The JSON response.
 
         Raises
         ------
@@ -270,6 +271,8 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
@@ -358,10 +361,10 @@ class Bring:
 
         Returns
         -------
-        list
-            The JSON response as a list. A list of item details.
+        BringListItemsDetailsResponse
+            The JSON response. A list of item details.
             Caution: This is NOT a list of the items currently marked as 'to buy'.
-            See getItems() for that.
+            See get_list() for that.
             This contains the items that where customized by changing
             their default icon, category or uploading an image.
 
@@ -371,6 +374,8 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
@@ -460,7 +465,8 @@ class Bring:
         specification : str, optional
             The details you want to add to the item.
         item_uuid : str, optional
-            The uuid for the item to add (usage of uuid4 recommended).
+            The uuid for the item to add. If a unique identifier is
+            required it is recommended to generate a random uuid4.
 
 
         Returns
@@ -562,7 +568,8 @@ class Bring:
         item_name : str
             The name of the item you want to remove.
         item_uuid : str, optional
-            The uuid of the item you want to remove.
+            The uuid of the item you want to remove. The item to remove can be remove by only
+            referencing its uuid and setting item_name to any nonempty string.
 
         Returns
         -------
@@ -665,7 +672,8 @@ class Bring:
         notification_type : BringNotificationType
             The type of notification to be sent
         item_name : str, optional
-            The text that **must** be included in the URGENT_MESSAGE BringNotificationType.
+            The item_name **must** be included when notication_type
+            is BringNotificationType.URGENT_MESSAGE
 
         Returns
         -------
@@ -676,6 +684,12 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+        TypeError
+            if the notification_type parameter is invalid.
+        ValueError
+            If the value for item_name is invalid.
 
         """
         json_data = BringNotificationsConfigType(
@@ -813,6 +827,19 @@ class Bring:
         return True
 
     def __load_article_translations_from_file(self, locale: str) -> dict[str, str]:
+        """Read localization ressource files from disk.
+
+        Parameters
+        ----------
+        locale : str
+            A locale string
+
+        Returns
+        -------
+            dict[str, str]:
+                A translation table as a dict
+
+        """
         dictionary_from_file: dict[str, str]
 
         path = os.path.join(
@@ -832,6 +859,8 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
 
         Returns
         -------
@@ -1007,8 +1036,8 @@ class Bring:
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringUserSettingsResponse
+            The JSON response.
 
 
         Raises
@@ -1017,6 +1046,8 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
@@ -1180,8 +1211,8 @@ class Bring:
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringSyncCurrentUserResponse
+            The JSON response.
 
 
         Raises
@@ -1190,6 +1221,8 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
@@ -1282,6 +1315,10 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         if operation is None:
@@ -1372,13 +1409,15 @@ class Bring:
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringAuthTokenRespone
+            The JSON response.
 
         Raises
         ------
         BringRequestException
             If the request fails.
+        BringAuthException
+            If the request fails due to invalid or expired refresh token.
 
         """
         refresh_token = refresh_token or self.refresh_token
