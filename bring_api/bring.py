@@ -869,7 +869,7 @@ class Bring:
             try:
                 url = f"{LOCALES_BASE_URL}articles.{locale}.json"
                 async with self._session.get(url) as r:
-                    _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                    _LOGGER.debug("Response from %s [%s]", url, r.status)
                     r.raise_for_status()
 
                     try:
