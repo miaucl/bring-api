@@ -2,8 +2,10 @@
 
 # 0.7.1
 
+* Fix get_list method not returning uuid and status from JSON response
 * Log to debug instead of error where exceptions are already raised.
 * Add raw server response to debug log messages.
+* Update docstrings
 
 # 0.7.0
 
