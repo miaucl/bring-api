@@ -412,7 +412,11 @@ class TestGetList:
         monkeypatch.setattr(bring, "uuid", UUID)
 
         data = await bring.get_list(UUID)
-        assert data == BRING_GET_LIST_RESPONSE["items"]
+        assert data == {
+            "uuid": BRING_GET_LIST_RESPONSE["uuid"],
+            "status": BRING_GET_LIST_RESPONSE["status"],
+            **BRING_GET_LIST_RESPONSE["items"],
+        }
 
 
 class TestGetAllItemDetails:

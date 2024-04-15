@@ -8,7 +8,7 @@ import logging
 import os
 import time
 import traceback
-from typing import Any, List, Optional, cast
+from typing import List, Optional, cast
 
 import aiohttp
 
@@ -304,24 +304,22 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = cast(
-                        BringItemsResponse,
-                        {
-                            key: val
-                            for key, val in (await r.json())["items"].items()
-                            if key in BringItemsResponse.__annotations__
-                        },
-                    )
+                    data = await r.json()
 
-                    for lst in data.values():
-                        for item in cast(dict[Any, Any], lst):
+                    for lst in data["items"].values():
+                        for item in lst:
                             item["itemId"] = self.__translate(
                                 item["itemId"],
                                 to_locale=self.__locale(list_uuid),
                             )
 
-                    return data
-                except JSONDecodeError as e:
+                    return BringItemsResponse(
+                        uuid=data["uuid"],
+                        status=data["status"],
+                        purchase=data["items"]["purchase"],
+                        recently=data["items"]["recently"],
+                    )
+                except (JSONDecodeError, KeyError) as e:
                     _LOGGER.debug(
                         "Exception: Cannot get items for list %s:\n%s",
                         list_uuid,
