@@ -92,6 +92,8 @@ BRING_GET_LIST_RESPONSE = {
                 "specification": "gelb",
                 "itemId": "Zucchetti",
             },
+        ],
+        "recently": [
             {
                 "uuid": "5681ed79-c8e4-4c8b-95ec-112999d016c0",
                 "specification": "rot",
@@ -103,7 +105,6 @@ BRING_GET_LIST_RESPONSE = {
                 "itemId": "Pouletbrüstli",
             },
         ],
-        "recently": [],
     },
 }
 
