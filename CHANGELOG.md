@@ -1,5 +1,9 @@
 # CHANGELOG
 
+# 0.7.2
+
+* fix bug in debug log message.
+
 # 0.7.1
 
 * Fix get_list method not returning uuid and status from JSON response

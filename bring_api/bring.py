@@ -108,7 +108,14 @@ class Bring:
         try:
             url = f"{self.url}v2/bringauth"
             async with self._session.post(url, data=user_data) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s",
+                    url,
+                    r.status,
+                    await r.text()
+                    if r.status != 200
+                    else "",  # do not log response on success, as it contains sensible data
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -199,7 +206,9 @@ class Bring:
         try:
             url = f"{self.url}bringusers/{self.uuid}/lists"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -278,7 +287,9 @@ class Bring:
         try:
             url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -379,7 +390,9 @@ class Bring:
         try:
             url = f"{self.url}bringlists/{list_uuid}/details"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -721,7 +734,9 @@ class Bring:
             async with self._session.post(
                 url, headers=self.headers, json=json_data
             ) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -802,7 +817,9 @@ class Bring:
         try:
             url = f"{self.url}bringusers"
             async with self._session.get(url, headers=self.headers, params=params) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.NOT_FOUND:
                     raise BringUserUnknownException(f"User {mail} does not exist.")
@@ -1050,7 +1067,9 @@ class Bring:
         try:
             url = f"{self.url}bringusersettings/{self.uuid}"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -1225,7 +1244,9 @@ class Bring:
         try:
             url = f"{self.url}v2/bringusers/{self.uuid}"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -1350,7 +1371,9 @@ class Bring:
             async with self._session.put(
                 url, headers=self.headers, json=json_data
             ) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
@@ -1425,7 +1448,14 @@ class Bring:
             async with self._session.post(
                 url, headers=self.headers, data=user_data
             ) as r:
-                _LOGGER.debug("Response from %s [%s]: %s", url, r.status, r.text)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s",
+                    url,
+                    r.status,
+                    await r.text()
+                    if r.status != 200
+                    else "",  # do not log response on success, as it contains sensible data
+                )
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
