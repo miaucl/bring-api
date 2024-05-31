@@ -8,7 +8,7 @@ import logging
 import os
 import time
 import traceback
-from typing import Any, List, Optional, cast
+from typing import List, Optional, cast
 
 import aiohttp
 
@@ -99,7 +99,7 @@ class Bring:
         BringParseException
             If the parsing of the request response fails.
         BringAuthException
-            If the login fails due to missing data in the API response.
+            If the login fails due invalid credentials.
             You should check your email and password.
 
         """
@@ -108,13 +108,20 @@ class Bring:
         try:
             url = f"{self.url}v2/bringauth"
             async with self._session.post(url, data=user_data) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s",
+                    url,
+                    r.status,
+                    await r.text()
+                    if r.status != 200
+                    else "",  # do not log response on success, as it contains sensible data
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse login request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -122,13 +129,13 @@ class Bring:
                             "Login failed due to authorization failure "
                             "but error response could not be parsed."
                         ) from e
-                    _LOGGER.error("Exception: Cannot login: %s", errmsg["message"])
+                    _LOGGER.debug("Exception: Cannot login: %s", errmsg["message"])
                     raise BringAuthException(
                         "Login failed due to authorization failure, "
                         "please check your email and password."
                     )
                 if r.status == HTTPStatus.BAD_REQUEST:
-                    _LOGGER.error("Exception: Cannot login: %s", await r.text())
+                    _LOGGER.debug("Exception: Cannot login: %s", await r.text())
                     raise BringAuthException(
                         "Login failed due to bad request, please check your email."
                     )
@@ -144,19 +151,19 @@ class Bring:
                         },
                     )
                 except JSONDecodeError as e:
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot login:\n %s", traceback.format_exc()
                     )
                     raise BringParseException(
                         "Cannot parse login request response."
                     ) from e
         except asyncio.TimeoutError as e:
-            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Authentication failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Authentication failed due to request exception."
             ) from e
@@ -183,9 +190,8 @@ class Bring:
 
         Returns
         -------
-        dict
-
-        The JSON response as a dict.
+        BringListResponse
+            The JSON response.
 
         Raises
         ------
@@ -193,18 +199,22 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
             url = f"{self.url}bringusers/{self.uuid}/lists"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -212,7 +222,7 @@ class Bring:
                             "Loading lists failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get lists: %s",
                         errmsg["message"],
                     )
@@ -234,19 +244,19 @@ class Bring:
                     )
                     return data
                 except JSONDecodeError as e:
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
                     )
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
         except asyncio.TimeoutError as e:
-            _LOGGER.error("Exception: Cannot get lists:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot get lists:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Loading list failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error("Exception: Cannot get lists:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot get lists:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Loading lists failed due to request exception."
             ) from e
@@ -257,12 +267,12 @@ class Bring:
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            A list uuid returned by load_lists()
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringItemsResponse
+            The JSON response.
 
         Raises
         ------
@@ -270,18 +280,22 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
             url = f"{self.url}v2/bringlists/{list_uuid}"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -289,7 +303,7 @@ class Bring:
                             "Loading list items failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get list items: %s",
                         errmsg["message"],
                     )
@@ -301,25 +315,23 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = cast(
-                        BringItemsResponse,
-                        {
-                            key: val
-                            for key, val in (await r.json())["items"].items()
-                            if key in BringItemsResponse.__annotations__
-                        },
-                    )
+                    data = await r.json()
 
-                    for lst in data.values():
-                        for item in cast(dict[Any, Any], lst):
+                    for lst in data["items"].values():
+                        for item in lst:
                             item["itemId"] = self.__translate(
                                 item["itemId"],
                                 to_locale=self.__locale(list_uuid),
                             )
 
-                    return data
-                except JSONDecodeError as e:
-                    _LOGGER.error(
+                    return BringItemsResponse(
+                        uuid=data["uuid"],
+                        status=data["status"],
+                        purchase=data["items"]["purchase"],
+                        recently=data["items"]["recently"],
+                    )
+                except (JSONDecodeError, KeyError) as e:
+                    _LOGGER.debug(
                         "Exception: Cannot get items for list %s:\n%s",
                         list_uuid,
                         traceback.format_exc(),
@@ -328,7 +340,7 @@ class Bring:
                         "Loading list items failed during parsing of request response."
                     ) from e
         except asyncio.TimeoutError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get items for list %s:\n%s",
                 list_uuid,
                 traceback.format_exc(),
@@ -337,7 +349,7 @@ class Bring:
                 "Loading list items failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get items for list %s:\n%s",
                 list_uuid,
                 traceback.format_exc(),
@@ -358,10 +370,10 @@ class Bring:
 
         Returns
         -------
-        list
-            The JSON response as a list. A list of item details.
+        BringListItemsDetailsResponse
+            The JSON response. A list of item details.
             Caution: This is NOT a list of the items currently marked as 'to buy'.
-            See getItems() for that.
+            See get_list() for that.
             This contains the items that where customized by changing
             their default icon, category or uploading an image.
 
@@ -371,18 +383,22 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
             url = f"{self.url}bringlists/{list_uuid}/details"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -390,7 +406,7 @@ class Bring:
                             "Loading list details failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get list details: %s",
                         errmsg["message"],
                     )
@@ -415,7 +431,7 @@ class Bring:
                     ]
                     return cast(BringListItemsDetailsResponse, data)
                 except JSONDecodeError as e:
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get item details for list %s:\n%s",
                         list_uuid,
                         traceback.format_exc(),
@@ -424,7 +440,7 @@ class Bring:
                         "Loading list details failed during parsing of request response."
                     ) from e
         except asyncio.TimeoutError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get item details for list %s:\n%s",
                 list_uuid,
                 traceback.format_exc(),
@@ -433,7 +449,7 @@ class Bring:
                 "Loading list details failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get item details for list %s:\n%s",
                 list_uuid,
                 traceback.format_exc(),
@@ -460,7 +476,8 @@ class Bring:
         specification : str, optional
             The details you want to add to the item.
         item_uuid : str, optional
-            The uuid for the item to add (usage of uuid4 recommended).
+            The uuid for the item to add. If a unique identifier is
+            required it is recommended to generate a random uuid4.
 
 
         Returns
@@ -482,7 +499,7 @@ class Bring:
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except BringRequestException as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot save item %s (%s) to list %s:\n%s",
                 item_name,
                 specification,
@@ -538,7 +555,7 @@ class Bring:
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except BringRequestException as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot update item %s (%s) to list %s:\n%s",
                 item_name,
                 specification,
@@ -562,7 +579,8 @@ class Bring:
         item_name : str
             The name of the item you want to remove.
         item_uuid : str, optional
-            The uuid of the item you want to remove.
+            The uuid of the item you want to remove. The item to remove can be remove by only
+            referencing its uuid and setting item_name to any nonempty string.
 
         Returns
         -------
@@ -585,7 +603,7 @@ class Bring:
                 list_uuid, data, BringItemOperation.REMOVE
             )
         except BringRequestException as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot delete item %s from list %s:\n%s",
                 item_name,
                 list_uuid,
@@ -639,7 +657,7 @@ class Bring:
                 list_uuid, data, BringItemOperation.COMPLETE
             )
         except BringRequestException as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot complete item %s in list %s:\n%s",
                 item_name,
                 list_uuid,
@@ -665,7 +683,8 @@ class Bring:
         notification_type : BringNotificationType
             The type of notification to be sent
         item_name : str, optional
-            The text that **must** be included in the URGENT_MESSAGE BringNotificationType.
+            The item_name **must** be included when notication_type
+            is BringNotificationType.URGENT_MESSAGE
 
         Returns
         -------
@@ -676,6 +695,12 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+        TypeError
+            if the notification_type parameter is invalid.
+        ValueError
+            If the value for item_name is invalid.
 
         """
         json_data = BringNotificationsConfigType(
@@ -685,8 +710,10 @@ class Bring:
         )
 
         if not isinstance(notification_type, BringNotificationType):
-            _LOGGER.error(
-                "Exception: notificationType %s not supported.", notification_type
+            _LOGGER.debug(
+                "Exception: notificationType %s not supported. \n%s",
+                notification_type,
+                traceback.format_exc(),
             )
             raise TypeError(
                 f"notificationType {notification_type} not supported,"
@@ -694,7 +721,9 @@ class Bring:
             )
         if notification_type is BringNotificationType.URGENT_MESSAGE:
             if not item_name or len(item_name) == 0:
-                _LOGGER.error("Exception: Argument itemName missing.")
+                _LOGGER.debug(
+                    "Exception: Argument itemName missing:\n%s", traceback.format_exc()
+                )
                 raise ValueError(
                     "notificationType is URGENT_MESSAGE but argument itemName missing."
                 )
@@ -705,13 +734,15 @@ class Bring:
             async with self._session.post(
                 url, headers=self.headers, json=json_data
             ) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -719,7 +750,7 @@ class Bring:
                             "Sending notification failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot send notification: %s",
                         errmsg["message"],
                     )
@@ -731,7 +762,7 @@ class Bring:
                 r.raise_for_status()
                 return r
         except asyncio.TimeoutError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot send notification %s for list %s:\n%s",
                 notification_type,
                 list_uuid,
@@ -742,7 +773,7 @@ class Bring:
                 "failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot send notification %s for list %s:\n%s",
                 notification_type,
                 list_uuid,
@@ -786,16 +817,17 @@ class Bring:
         try:
             url = f"{self.url}bringusers"
             async with self._session.get(url, headers=self.headers, params=params) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.NOT_FOUND:
-                    _LOGGER.error("Exception: User %s does not exist.", mail)
                     raise BringUserUnknownException(f"User {mail} does not exist.")
 
                 r.raise_for_status()
 
         except asyncio.TimeoutError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get verification for %s:\n%s",
                 mail,
                 traceback.format_exc(),
@@ -804,15 +836,24 @@ class Bring:
                 "Verifying email failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error(
-                "Exception: E-mail %s is invalid.",
-                mail,
-            )
             raise BringEMailInvalidException(f"E-mail {mail} is invalid.") from e
 
         return True
 
     def __load_article_translations_from_file(self, locale: str) -> dict[str, str]:
+        """Read localization ressource files from disk.
+
+        Parameters
+        ----------
+        locale : str
+            A locale string
+
+        Returns
+        -------
+            dict[str, str]:
+                A translation table as a dict
+
+        """
         dictionary_from_file: dict[str, str]
 
         path = os.path.join(
@@ -832,6 +873,8 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
 
         Returns
         -------
@@ -870,13 +913,13 @@ class Bring:
             try:
                 url = f"{LOCALES_BASE_URL}articles.{locale}.json"
                 async with self._session.get(url) as r:
-                    _LOGGER.debug("Response from %s: %s", url, r.status)
+                    _LOGGER.debug("Response from %s [%s]", url, r.status)
                     r.raise_for_status()
 
                     try:
                         dictionaries[locale] = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot load articles.%s.json:\n%s",
                             locale,
                             traceback.format_exc(),
@@ -886,7 +929,7 @@ class Bring:
                             "failed during parsing of request response."
                         ) from e
             except asyncio.TimeoutError as e:
-                _LOGGER.error(
+                _LOGGER.debug(
                     "Exception: Cannot load articles.%s.json::\n%s",
                     locale,
                     traceback.format_exc(),
@@ -897,7 +940,7 @@ class Bring:
                 ) from e
 
             except aiohttp.ClientError as e:
-                _LOGGER.error(
+                _LOGGER.debug(
                     "Exception: Cannot load articles.%s.json:\n%s",
                     locale,
                     traceback.format_exc(),
@@ -960,7 +1003,7 @@ class Bring:
             )
 
         except Exception as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot load translation dictionary:\n%s",
                 traceback.format_exc(),
             )
@@ -994,7 +1037,7 @@ class Bring:
             }
 
         except Exception as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot load user list settings:\n%s",
                 traceback.format_exc(),
             )
@@ -1007,8 +1050,8 @@ class Bring:
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringUserSettingsResponse
+            The JSON response.
 
 
         Raises
@@ -1017,18 +1060,22 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
             url = f"{self.url}bringusersettings/{self.uuid}"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -1036,7 +1083,7 @@ class Bring:
                             "Loading user settings failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get user settings: %s",
                         errmsg["message"],
                     )
@@ -1097,7 +1144,7 @@ class Bring:
                     return data
 
                 except JSONDecodeError as e:
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get user settings for uuid %s:\n%s",
                         self.uuid,
                         traceback.format_exc(),
@@ -1106,7 +1153,7 @@ class Bring:
                         "Loading user settings failed during parsing of request response."
                     ) from e
         except asyncio.TimeoutError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get user settings for uuid %s:\n%s",
                 self.uuid,
                 traceback.format_exc(),
@@ -1115,7 +1162,7 @@ class Bring:
                 "Loading user settings failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get user settings for uuid %s:\n%s",
                 self.uuid,
                 traceback.format_exc(),
@@ -1180,8 +1227,8 @@ class Bring:
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringSyncCurrentUserResponse
+            The JSON response.
 
 
         Raises
@@ -1190,18 +1237,22 @@ class Bring:
             If the request fails.
         BringParseException
             If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         try:
             url = f"{self.url}v2/bringusers/{self.uuid}"
             async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -1209,7 +1260,7 @@ class Bring:
                             "Loading current user settings failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get current user settings: %s",
                         errmsg["message"],
                     )
@@ -1231,14 +1282,14 @@ class Bring:
                     )
                     return data
                 except JSONDecodeError as e:
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
                     )
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
         except asyncio.TimeoutError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot get current user settings:\n %s",
                 traceback.format_exc(),
             )
@@ -1246,7 +1297,7 @@ class Bring:
                 "Loading current user settings failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot  current user settings:\n %s", traceback.format_exc()
             )
             raise BringRequestException(
@@ -1282,6 +1333,10 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
 
         """
         if operation is None:
@@ -1316,13 +1371,15 @@ class Bring:
             async with self._session.put(
                 url, headers=self.headers, json=json_data
             ) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -1330,7 +1387,7 @@ class Bring:
                             "Batch operation failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot get execute batch operation: %s",
                         errmsg["message"],
                     )
@@ -1342,7 +1399,7 @@ class Bring:
                 r.raise_for_status()
                 return r
         except asyncio.TimeoutError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot execute batch operations for list %s:\n%s",
                 list_uuid,
                 traceback.format_exc(),
@@ -1351,7 +1408,7 @@ class Bring:
                 f"Batch operation for list {list_uuid} failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error(
+            _LOGGER.debug(
                 "Exception: Cannot execute batch operations for %s:\n%s",
                 list_uuid,
                 traceback.format_exc(),
@@ -1372,13 +1429,15 @@ class Bring:
 
         Returns
         -------
-        dict
-            The JSON response as a dict.
+        BringAuthTokenRespone
+            The JSON response.
 
         Raises
         ------
         BringRequestException
             If the request fails.
+        BringAuthException
+            If the request fails due to invalid or expired refresh token.
 
         """
         refresh_token = refresh_token or self.refresh_token
@@ -1389,12 +1448,19 @@ class Bring:
             async with self._session.post(
                 url, headers=self.headers, data=user_data
             ) as r:
-                _LOGGER.debug("Response from %s: %s", url, r.status)
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s",
+                    url,
+                    r.status,
+                    await r.text()
+                    if r.status != 200
+                    else "",  # do not log response on success, as it contains sensible data
+                )
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
                     except JSONDecodeError as e:
-                        _LOGGER.error(
+                        _LOGGER.debug(
                             "Exception: Cannot parse token request response:\n %s",
                             traceback.format_exc(),
                         )
@@ -1402,7 +1468,7 @@ class Bring:
                             "Retrieve new access token failed due to authorization failure but "
                             "error response could not be parsed."
                         ) from e
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot retrieve new access token: %s",
                         errmsg["message"],
                     )
@@ -1423,7 +1489,7 @@ class Bring:
                         },
                     )
                 except JSONDecodeError as e:
-                    _LOGGER.error(
+                    _LOGGER.debug(
                         "Exception: Cannot retrieve new access token:\n %s",
                         traceback.format_exc(),
                     )
@@ -1431,12 +1497,12 @@ class Bring:
                         "Cannot parse token request response."
                     ) from e
         except asyncio.TimeoutError as e:
-            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Retrieve new access token failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.error("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Retrieve new access token failed due to request exception."
             ) from e
