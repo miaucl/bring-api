@@ -24,7 +24,7 @@ jobs:
           echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
           echo "Job originally triggered by ${{ github.actor }}"
           exit 1
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v4
         with:
             ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-python@v5
