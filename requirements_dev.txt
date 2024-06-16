@@ -3,6 +3,7 @@ mypy>=1.8.0
 pre-commit>=3.6.1
 python-dotenv>=1.0.1
 ruff~=0.4
-
+mkdocs-material==9.5.26
+mkdocstrings[python]==0.25.1
 
 
