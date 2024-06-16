@@ -30,7 +30,7 @@ import asyncio
 import logging
 import sys
 
-from bring_api.bring import Bring
+from bring_api import Bring
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
