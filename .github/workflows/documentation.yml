@@ -37,7 +37,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements_dev.txt
     - name: Build
-      run: mkdocs gh-deploy
+      run: mkdocs build
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
