@@ -1,5 +1,10 @@
 # CHANGELOG
 
+# 0.7.3
+
+* Change `name` and `photoPath` in type definitions for `BringSyncCurrentUserResponse` and `BringAuthResponse` to optional parameters
+* Add py.typed file so that type checkers can use type annotations
+
 # 0.7.2
 
 * fix bug in debug log message.
