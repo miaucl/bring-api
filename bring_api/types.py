@@ -42,8 +42,8 @@ class BringAuthResponse(TypedDict):
     uuid: str
     publicUuid: str
     email: str
-    name: str
-    photoPath: str
+    name: NotRequired[str]
+    photoPath: NotRequired[str]
     bringListUUID: str
     access_token: str
     refresh_token: str
@@ -119,8 +119,8 @@ class BringSyncCurrentUserResponse(TypedDict):
 
     email: str
     emailVerified: bool
-    name: str
-    photoPath: str
+    name: NotRequired[str]
+    photoPath: NotRequired[str]
     premiumConfiguration: dict[str, bool]
     publicUserUuid: str
     userLocale: dict[str, str]
