@@ -1395,3 +1395,63 @@ class TestRetrieveNewAccessToken:
 
         with pytest.raises(BringParseException):
             await bring.retrieve_new_access_token()
+
+
+class TestSetListArticleLanguage:
+    """Tests for set_list_article_language method."""
+
+    async def test_set_list_article_language(self, mocked, bring, monkeypatch):
+        """Test set list article language."""
+        mocked.post(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}/{UUID}/listArticleLanguage",
+            status=HTTPStatus.OK,
+        )
+
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        async def mocked__load_user_list_settings(*args, **kwargs):
+            """Mock __load_user_list_settings."""
+            return {UUID: {"listArticleLanguage": "de-DE"}}
+
+        monkeypatch.setattr(
+            Bring, "_Bring__load_user_list_settings", mocked__load_user_list_settings
+        )
+
+        resp = await bring.set_list_article_language(UUID, "de-DE")
+        assert resp.status == HTTPStatus.OK
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, monkeypatch, exception):
+        """Test request exceptions."""
+
+        mocked.post(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}/{UUID}/listArticleLanguage",
+            exception=exception,
+        )
+
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        with pytest.raises(BringRequestException):
+            await bring.set_list_article_language(UUID, "de-DE")
+
+    async def test_unauthorized(self, mocked, bring, monkeypatch):
+        """Test unauthorized exception."""
+        mocked.post(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}/{UUID}/listArticleLanguage",
+            status=HTTPStatus.UNAUTHORIZED,
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+        with pytest.raises(BringAuthException):
+            await bring.set_list_article_language(UUID, "de-DE")
+
+    async def test_value_error(self, bring):
+        """Test ValueError exception."""
+
+        with pytest.raises(ValueError):
+            await bring.set_list_article_language(UUID, "es-CO")

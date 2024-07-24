@@ -1,5 +1,9 @@
 # CHANGELOG
 
+# 0.8.0
+
+* **New API method:** `set_list_article_language` sets the article language for a specified shopping list.
+
 # 0.7.3
 
 * Change `name` and `photoPath` in type definitions for `BringSyncCurrentUserResponse` and `BringAuthResponse` to optional parameters
