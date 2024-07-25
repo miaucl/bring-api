@@ -1,4 +1,5 @@
 """Test script for Bring API."""
+
 import asyncio
 import logging
 import os
@@ -229,6 +230,8 @@ async def main():
         await test_translation(bring, lst)
 
         await test_batch_list_operations(bring, lst)
+
+        await bring.set_list_article_language(lst["listUuid"], "de-DE")
 
 
 asyncio.run(main())

@@ -1511,3 +1511,70 @@ class Bring:
         self.expires_in = data["expires_in"]
 
         return data
+
+    async def set_list_article_language(
+        self, list_uuid: str, language: str
+    ) -> aiohttp.ClientResponse:
+        """Set the article language for a specified list.
+
+        Parameters
+        ----------
+        list_uuid : str
+            The unique identifier for the list.
+        language : str
+            The language to set for the list articles.
+
+        Returns
+        -------
+        aiohttp.ClientResponse
+            The server response object.
+
+        Raises
+        ------
+        ValueError
+            If the specified language is not supported.
+        BringRequestException
+            If the request fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+        if language not in BRING_SUPPORTED_LOCALES:
+            raise ValueError(f"Language {language} not supported.")
+
+        url = f"{self.url}bringusersettings/{self.uuid}/{list_uuid}/listArticleLanguage"
+
+        data = {"value": language}
+        try:
+            async with self._session.post(url, headers=self.headers, data=data) as r:
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    raise BringAuthException(
+                        "Set list article language failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+                r.raise_for_status()
+                self.user_list_settings = await self.__load_user_list_settings()
+                return r
+        except asyncio.TimeoutError as e:
+            _LOGGER.debug(
+                "Exception: Cannot set article language to %s for list %s:\n%s",
+                language,
+                list_uuid,
+                traceback.format_exc(),
+            )
+            raise BringRequestException(
+                "Set list article language failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.debug(
+                "Exception: Cannot set article language to %s for list %s:\n%s",
+                language,
+                list_uuid,
+                traceback.format_exc(),
+            )
+            raise BringRequestException(
+                "Set list article language failed due to request exception."
+            ) from e
