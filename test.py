@@ -231,6 +231,8 @@ async def main():
 
         await test_batch_list_operations(bring, lst)
 
+        await bring.set_list_article_language(lst["listUuid"], "es-ES")
+        await bring.get_list(lst["listUuid"])
         await bring.set_list_article_language(lst["listUuid"], "de-DE")
 
 

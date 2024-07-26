@@ -1,5 +1,9 @@
 # CHANGELOG
 
+# 0.8.1
+
+* Reload locales after setting list language to ensure all required article translations are available
+
 # 0.8.0
 
 * **New API method:** `set_list_article_language` sets the article language for a specified shopping list.
