@@ -1557,6 +1557,7 @@ class Bring:
                     )
                 r.raise_for_status()
                 self.user_list_settings = await self.__load_user_list_settings()
+                self.__translations = await self.__load_article_translations()
                 return r
         except asyncio.TimeoutError as e:
             _LOGGER.debug(
