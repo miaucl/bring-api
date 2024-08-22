@@ -125,7 +125,7 @@ await bring.batch_update_list(
   BringItemOperation.ADD)
 ```
 
-### Add multiple items with the same name but different specifications.
+### Add multiple items with the same name but different specifications
 
 When adding items with the same name the parameter `uuid` is required, otherwise the previous item will be matched by `itemId` and it's specification will be overwritten
 
@@ -186,8 +186,6 @@ await bring.batch_update_list(
   item,
   BringItemOperation.ADD)  
 ```
-
-
 
 ## Exceptions
 
