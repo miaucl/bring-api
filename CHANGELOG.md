@@ -1,30 +1,30 @@
 # CHANGELOG
 
-# 0.8.1
+## 0.8.1
 
 * Reload locales after setting list language to ensure all required article translations are available
 
-# 0.8.0
+## 0.8.0
 
 * **New API method:** `set_list_article_language` sets the article language for a specified shopping list.
 
-# 0.7.3
+## 0.7.3
 
 * Change `name` and `photoPath` in type definitions for `BringSyncCurrentUserResponse` and `BringAuthResponse` to optional parameters
 * Add py.typed file so that type checkers can use type annotations
 
-# 0.7.2
+## 0.7.2
 
 * fix bug in debug log message.
 
-# 0.7.1
+## 0.7.1
 
 * Fix get_list method not returning uuid and status from JSON response
 * Log to debug instead of error where exceptions are already raised.
 * Add raw server response to debug log messages.
 * Update docstrings
 
-# 0.7.0
+## 0.7.0
 
 * **New API method:** `retrieve_new_access_token` retrieves a new access token and updates authorization headers. Time till expiration of the access token is stored in the property `expires_in` . ([tr4nt0r](https://github.com/tr4nt0r))
 * All API methods that require authentication now raise `BringAuthException` for 401 Unauthorized status ([tr4nt0r](https://github.com/tr4nt0r))
@@ -75,7 +75,6 @@
 
 * **New API method:** `batch_update_list`. Uses the same API endpoint as the mobile app to add, complete and remove items from shopping lists and has support for uuid as unique identifier for list items.  
 * `save_item`, `update_item`, `complete_item` and `remove_item` are now wrapper methods for `batch_update_list` and have the additional parameter item_uuid.
-
 
 ## 0.4.1
 

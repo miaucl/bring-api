@@ -251,3 +251,4 @@ Following VSCode integrations may be helpful:
 
 - [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
 - [mypy](https://marketplace.visualstudio.com/items?itemName=matangover.mypy)
+- [markdownlint](https://marketplace.visualstudio.com/items?itemName=DavidAnson.vscode-markdownlint)
