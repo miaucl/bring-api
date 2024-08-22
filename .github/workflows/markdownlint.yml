@@ -14,3 +14,6 @@ jobs:
             README.md
             CHANGELOG.md
             docs/*.md
+            !docs/changelog.md
+            !docs/index.md
+            !docs/license.md
