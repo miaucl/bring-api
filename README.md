@@ -66,13 +66,15 @@ asyncio.run(main())
 ## Manipulating lists with `batch_update_list`
 
 This method uses the newer API endpoint for adding, completing and removing items from a list, which is also used in the Bring App. The items can be identified by their uuid and therefore some things are possible that are not possible with the legacy endpoints like:
+
 - Add/complete/remove multiple items at once
 - Adding multiple items with the same Name but different specifications
 - You can work with a unique identifier for an item even before adding it to a list, just use uuid4 to generate a random uuid!
 
 Usage examples:
 
-### Add an item 
+### Add an item
+
 When adding an item, the `itemId` is required, `spec` and `uuid` are optional. If you need a unique identifier before adding an item, you can just generate a uuid4.
 
 ```python
@@ -86,6 +88,7 @@ await bring.batch_update_list(
   item,
   BringItemOperation.ADD)
 ```
+
 ### Updating an items specification
 
 When updating an item, use ADD operation again. The `itemId` is required and the item `spec` will be added/updated on the existing item on the list. For better matching an existing item (if there is more than one item with the same `itemId`), you can use it's unique identifier `uuid`.
@@ -191,7 +194,8 @@ await bring.batch_update_list(
 In case something goes wrong during a request, several exceptions can be thrown.
 They will either be BringRequestException, BringParseException, or BringAuthException, depending on the context. All inherit from BringException.
 
-### Another asyncio event loop is 
+### Another asyncio event loop is
+
 With the async calls, you might encounter an error that another asyncio event loop is already running on the same thread. This is expected behavior according to the asyncio.run() [documentation](https://docs.python.org/3/library/asyncio-runner.html#asyncio.run). You cannot use more than one aiohttp session per thread, reuse the existing one!
 
 ### Exception ignored: RuntimeError: Event loop is closed
@@ -245,5 +249,5 @@ python test.py
 
 Following VSCode integrations may be helpful:
 
-* [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
-* [mypy](https://marketplace.visualstudio.com/items?itemName=matangover.mypy)
+- [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+- [mypy](https://marketplace.visualstudio.com/items?itemName=matangover.mypy)
