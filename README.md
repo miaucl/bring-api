@@ -1,6 +1,6 @@
 # Bring! Shopping Lists API
 
-[![PyPI version](https://badge.fury.io/py/bring-api.svg)](https://badge.fury.io/py/bring-api)
+[![PyPI version](https://badge.fury.io/py/bring-api.svg)](https://pypi.org/p/bring-api)
 
 An unofficial python package to access the Bring! shopping lists API.
 
