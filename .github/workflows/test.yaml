@@ -13,7 +13,7 @@ jobs:
         id: checkAccess
         uses: actions-cool/check-user-permission@v2
         with:
-          require: write
+          require: read
           username: ${{ github.triggering_actor }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
