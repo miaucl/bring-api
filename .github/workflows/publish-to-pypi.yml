@@ -49,6 +49,15 @@ jobs:
           TAG_VERSION=${GITHUB_REF#refs/tags/}
           echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
 
+      - name: Check tag in package
+        run: |
+          if ! grep -q "__VERSION__ = \"$TAG_VERSION\"" ./bring_api/__init__.py; then
+            echo "Error: Tag version $TAG_VERSION not found in the package."
+            exit 1
+          else
+            echo "Success: Tag version $TAG_VERSION found in package."
+          fi
+
       - name: Check tag in setup.cfg
         run: |
           if ! grep -q "version = $TAG_VERSION" setup.cfg; then
