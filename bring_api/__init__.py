@@ -11,7 +11,7 @@ from .exceptions import (
 )
 from .types import (
     BringAuthResponse,
-    BringAuthTokenRespone,
+    BringAuthTokenResponse,
     BringItem,
     BringItemOperation,
     BringItemsResponse,
@@ -30,7 +30,7 @@ __all__ = [
     "Bring",
     "BringAuthException",
     "BringAuthResponse",
-    "BringAuthTokenRespone",
+    "BringAuthTokenResponse",
     "BringEMailInvalidException",
     "BringItem",
     "BringItemOperation",
