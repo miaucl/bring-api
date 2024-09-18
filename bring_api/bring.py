@@ -30,7 +30,7 @@ from .exceptions import (
 )
 from .types import (
     BringAuthResponse,
-    BringAuthTokenRespone,
+    BringAuthTokenResponse,
     BringItem,
     BringItemOperation,
     BringItemsResponse,
@@ -1419,7 +1419,7 @@ class Bring:
 
     async def retrieve_new_access_token(
         self, refresh_token: str | None = None
-    ) -> BringAuthTokenRespone:
+    ) -> BringAuthTokenResponse:
         """Refresh the access token.
 
         Parameters
@@ -1481,11 +1481,11 @@ class Bring:
 
                 try:
                     data = cast(
-                        BringAuthTokenRespone,
+                        BringAuthTokenResponse,
                         {
                             key: val
                             for key, val in (await r.json()).items()
-                            if key in BringAuthTokenRespone.__annotations__
+                            if key in BringAuthTokenResponse.__annotations__
                         },
                     )
                 except JSONDecodeError as e:

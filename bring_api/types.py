@@ -146,7 +146,7 @@ class BringItem(TypedDict):
     ]
 
 
-class BringAuthTokenRespone(TypedDict):
+class BringAuthTokenResponse(TypedDict):
     """A refresh token response class."""
 
     access_token: str
