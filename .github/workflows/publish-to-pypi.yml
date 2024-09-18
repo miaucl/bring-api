@@ -51,7 +51,7 @@ jobs:
 
       - name: Check tag in package
         run: |
-          if ! grep -q "__VERSION__ = \"$TAG_VERSION\"" ./bring_api/__init__.py; then
+          if ! grep -q "__version__ = \"$TAG_VERSION\"" ./bring_api/__init__.py; then
             echo "Error: Tag version $TAG_VERSION not found in the package."
             exit 1
           else
