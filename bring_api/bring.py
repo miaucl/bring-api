@@ -8,7 +8,7 @@ import logging
 import os
 import time
 import traceback
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import aiohttp
 
@@ -157,7 +157,7 @@ class Bring:
                     raise BringParseException(
                         "Cannot parse login request response."
                     ) from e
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Authentication failed due to connection timeout."
@@ -250,7 +250,7 @@ class Bring:
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug("Exception: Cannot get lists:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Loading list failed due to connection timeout."
@@ -339,7 +339,7 @@ class Bring:
                     raise BringParseException(
                         "Loading list items failed during parsing of request response."
                     ) from e
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get items for list %s:\n%s",
                 list_uuid,
@@ -439,7 +439,7 @@ class Bring:
                     raise BringParseException(
                         "Loading list details failed during parsing of request response."
                     ) from e
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get item details for list %s:\n%s",
                 list_uuid,
@@ -761,7 +761,7 @@ class Bring:
 
                 r.raise_for_status()
                 return r
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot send notification %s for list %s:\n%s",
                 notification_type,
@@ -826,7 +826,7 @@ class Bring:
 
                 r.raise_for_status()
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get verification for %s:\n%s",
                 mail,
@@ -928,7 +928,7 @@ class Bring:
                             f"Loading article translations for locale {locale} "
                             "failed during parsing of request response."
                         ) from e
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 _LOGGER.debug(
                     "Exception: Cannot load articles.%s.json::\n%s",
                     locale,
@@ -1152,7 +1152,7 @@ class Bring:
                     raise BringParseException(
                         "Loading user settings failed during parsing of request response."
                     ) from e
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get user settings for uuid %s:\n%s",
                 self.uuid,
@@ -1288,7 +1288,7 @@ class Bring:
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get current user settings:\n %s",
                 traceback.format_exc(),
@@ -1307,7 +1307,7 @@ class Bring:
     async def batch_update_list(
         self,
         list_uuid: str,
-        items: BringItem | List[BringItem] | list[dict[str, str]],
+        items: BringItem | list[BringItem] | list[dict[str, str]],
         operation: Optional[BringItemOperation] = None,
     ) -> aiohttp.ClientResponse:
         """Batch update items on a shopping list.
@@ -1398,7 +1398,7 @@ class Bring:
 
                 r.raise_for_status()
                 return r
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot execute batch operations for list %s:\n%s",
                 list_uuid,
@@ -1496,7 +1496,7 @@ class Bring:
                     raise BringParseException(
                         "Cannot parse token request response."
                     ) from e
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
             raise BringRequestException(
                 "Retrieve new access token failed due to connection timeout."
@@ -1559,7 +1559,7 @@ class Bring:
                 self.user_list_settings = await self.__load_user_list_settings()
                 self.__translations = await self.__load_article_translations()
                 return r
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot set article language to %s for list %s:\n%s",
                 language,
