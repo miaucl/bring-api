@@ -1,7 +1,7 @@
 """Bring API types."""
 
 from enum import Enum, StrEnum
-from typing import List, Literal, NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 
 class BringList(TypedDict):
@@ -54,7 +54,7 @@ class BringAuthResponse(TypedDict):
 class BringListResponse(TypedDict):
     """A list response class."""
 
-    lists: List[BringList]
+    lists: list[BringList]
 
 
 class BringItemsResponse(TypedDict):
@@ -62,11 +62,11 @@ class BringItemsResponse(TypedDict):
 
     uuid: str
     status: str
-    purchase: List[BringPurchase]
-    recently: List[BringPurchase]
+    purchase: list[BringPurchase]
+    recently: list[BringPurchase]
 
 
-class BringListItemsDetailsResponse(List[BringListItemDetails]):
+class BringListItemsDetailsResponse(list[BringListItemDetails]):
     """A response class of a list of item details."""
 
 
@@ -88,7 +88,7 @@ class BringNotificationType(Enum):
 class BringNotificationsConfigType(TypedDict):
     """A notification config."""
 
-    arguments: List[str]
+    arguments: list[str]
     listNotificationType: str
     senderPublicUserUuid: str
 
@@ -104,14 +104,14 @@ class BringUserListSettingEntry(TypedDict):
     """A user list settings class. Represents a single list setting."""
 
     listUuid: str
-    usersettings: List[BringUserSettingsEntry]
+    usersettings: list[BringUserSettingsEntry]
 
 
 class BringUserSettingsResponse(TypedDict):
     """A user settings response class."""
 
-    usersettings: List[BringUserSettingsEntry]
-    userlistsettings: List[BringUserListSettingEntry]
+    usersettings: list[BringUserSettingsEntry]
+    userlistsettings: list[BringUserListSettingEntry]
 
 
 class BringSyncCurrentUserResponse(TypedDict):
