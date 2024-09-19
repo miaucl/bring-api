@@ -8,7 +8,7 @@ import logging
 import os
 import time
 import traceback
-from typing import Optional, cast
+from typing import cast
 
 import aiohttp
 
@@ -672,7 +672,7 @@ class Bring:
         self,
         list_uuid: str,
         notification_type: BringNotificationType,
-        item_name: Optional[str] = None,
+        item_name: str | None = None,
     ) -> aiohttp.ClientResponse:
         """Send a push notification to all other members of a shared list.
 
@@ -776,7 +776,7 @@ class Bring:
                 "failed due to request exception."
             ) from e
 
-    async def does_user_exist(self, mail: Optional[str] = None) -> bool:
+    async def does_user_exist(self, mail: str | None = None) -> bool:
         """Check if e-mail is valid and user exists.
 
         Parameters
@@ -948,8 +948,8 @@ class Bring:
         self,
         item_id: str,
         *,
-        to_locale: Optional[str] = None,
-        from_locale: Optional[str] = None,
+        to_locale: str | None = None,
+        from_locale: str | None = None,
     ) -> str:
         """Translate a catalog item from or to a language.
 
@@ -1300,7 +1300,7 @@ class Bring:
         self,
         list_uuid: str,
         items: BringItem | list[BringItem] | list[dict[str, str]],
-        operation: Optional[BringItemOperation] = None,
+        operation: BringItemOperation | None = None,
     ) -> aiohttp.ClientResponse:
         """Batch update items on a shopping list.
 
