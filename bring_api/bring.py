@@ -242,7 +242,6 @@ class Bring:
                             if key in BringListResponse.__annotations__
                         },
                     )
-                    return data
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
@@ -250,6 +249,8 @@ class Bring:
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
+                else:
+                    return data
         except TimeoutError as e:
             _LOGGER.debug("Exception: Cannot get lists:\n %s", traceback.format_exc())
             raise BringRequestException(
@@ -1133,8 +1134,6 @@ class Bring:
                         },
                     )
 
-                    return data
-
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get user settings for uuid %s:\n%s",
@@ -1144,6 +1143,8 @@ class Bring:
                     raise BringParseException(
                         "Loading user settings failed during parsing of request response."
                     ) from e
+                else:
+                    return data
         except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get user settings for uuid %s:\n%s",
@@ -1272,7 +1273,6 @@ class Bring:
                             if key in BringSyncCurrentUserResponse.__annotations__
                         },
                     )
-                    return data
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
@@ -1280,6 +1280,8 @@ class Bring:
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
+                else:
+                    return data
         except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get current user settings:\n %s",
