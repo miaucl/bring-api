@@ -710,20 +710,12 @@ class Bring:
         )
 
         if not isinstance(notification_type, BringNotificationType):
-            _LOGGER.debug(
-                "Exception: notificationType %s not supported. \n%s",
-                notification_type,
-                traceback.format_exc(),
-            )
             raise TypeError(
                 f"notificationType {notification_type} not supported,"
                 "must be of type BringNotificationType."
             )
         if notification_type is BringNotificationType.URGENT_MESSAGE:
             if not item_name or len(item_name) == 0:
-                _LOGGER.debug(
-                    "Exception: Argument itemName missing:\n%s", traceback.format_exc()
-                )
                 raise ValueError(
                     "notificationType is URGENT_MESSAGE but argument itemName missing."
                 )
