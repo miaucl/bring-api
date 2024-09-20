@@ -5,6 +5,42 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "bring-api"
+dynamic = ["version", "readme"]
+description = "Unofficial package to access Bring! shopping lists API."
+authors = [
+  { name = "Cyrill Raccaud", email = "cyrill.raccaud+pypi@gmail.com" },
+  { name = "Manfred Dennerlein Rodelo", email = "manfred@dennerlein.name" }
+]
+dependencies = [
+  "aiohttp"
+]
+requires-python = ">=3.11"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+license = {text = "MIT License"}
+
+[tool.setuptools]
+packages = ["bring_api", "bring_api.locales"]
+
+[tool.setuptools.package-data]
+bring_api = ["py.typed"]
+"bring_api.locales" = ["*.json"]
+
+[tool.setuptools.dynamic]
+version = {attr = "bring_api.__version__"}
+readme = {file = ["README.md", "CHANGELOG.md"], content-type = "text/markdown"}
+
+[project.urls]
+Documentation = "https://miaucl.github.io/bring-api/"
+Source = "https://github.com/miaucl/bring-api"
+Issues = "https://github.com/miaucl/bring-api/issues"
+
 [tool.ruff]
 target-version = "py312"
 
@@ -147,3 +183,27 @@ testpaths = [
     
     "tests",
 ]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = "pydantic.mypy"
+show_error_codes = true
+follow_imports = "normal"
+local_partial_types = true
+strict_equality = true
+no_implicit_optional = true
+warn_incomplete_stub = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+enable_error_code = ["ignore-without-code", "redundant-self", "truthy-iterable"]
+disable_error_code = ["annotation-unchecked", "import-not-found", "import-untyped"]
+extra_checks = false
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+warn_return_any = true
+warn_unreachable = true
