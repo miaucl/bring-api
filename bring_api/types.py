@@ -141,6 +141,7 @@ class BringItemOperation(StrEnum):
     ADD = "TO_PURCHASE"
     COMPLETE = "TO_RECENTLY"
     REMOVE = "REMOVE"
+    ATTRIBUTE_UPDATE = "ATTRIBUTE_UPDATE"
 
 
 class BringItem(TypedDict):
