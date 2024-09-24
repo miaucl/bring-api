@@ -12,12 +12,20 @@ class BringList(TypedDict):
     theme: str
 
 
+class BringAttribute(TypedDict):
+    """An attribute class. Represents a single item attribute."""
+
+    type: str
+    content: dict[str, bool]
+
+
 class BringPurchase(TypedDict):
     """A purchase class. Represents a single item."""
 
     uuid: str
     itemId: str
     specification: str
+    attributes: list[BringAttribute]
 
 
 class BringListItemDetails(TypedDict):
@@ -133,6 +141,7 @@ class BringItemOperation(StrEnum):
     ADD = "TO_PURCHASE"
     COMPLETE = "TO_RECENTLY"
     REMOVE = "REMOVE"
+    ATTRIBUTE_UPDATE = "ATTRIBUTE_UPDATE"
 
 
 class BringItem(TypedDict):
@@ -142,8 +151,15 @@ class BringItem(TypedDict):
     spec: str
     uuid: str
     operation: NotRequired[
-        BringItemOperation | Literal["TO_PURCHASE", "TO_RECENTLY", "REMOVE"]
+        BringItemOperation
+        | Literal[
+            "TO_PURCHASE",
+            "TO_RECENTLY",
+            "REMOVE",
+            "ATTRIBUTE_UPDATE",
+        ]
     ]
+    attribute: NotRequired[BringAttribute]
 
 
 class BringAuthTokenResponse(TypedDict):
