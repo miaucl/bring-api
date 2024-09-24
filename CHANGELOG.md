@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.9.0
+
+* Add type hints for item attributes (purchase conditions)
+* Minor code quality improvements, fix typos and upgrade type annotations
+
 ## 0.8.1
 
 * Reload locales after setting list language to ensure all required article translations are available
