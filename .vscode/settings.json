@@ -2,7 +2,9 @@
   "cSpell.words": [
     "aiohttp",
     "asyncio",
+    "miaucl",
     "mypy",
+    "Pytest",
     "venv"
   ],
   "[python]": {
