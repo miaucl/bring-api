@@ -1,7 +1,16 @@
 name: Test
 
-on: [ push, pull_request_target ]
-
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 12 * * 0' # Run every Sunday at 12:00 PM (noon)
+  workflow_dispatch: # Allows manual triggering
+    
 env:
   DEFAULT_PYTHON: "3.12"
 
