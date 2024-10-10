@@ -1,9 +1,9 @@
-name: Pytest
+name: Unit tests
 
 on: [push]
 
 jobs:
-  build:
+  unit_tests:
 
     runs-on: ${{ matrix.os }}
     strategy:
