@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - smoke-test-pytest
   schedule:
     - cron: '0 23 * * 0' # Run every Sunday at 23:00 PM
   workflow_dispatch: # Allows manual triggering
