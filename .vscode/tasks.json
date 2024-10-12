@@ -21,9 +21,9 @@
       }
     },
     {
-      "label": "Pytest",
+      "label": "Pytest: Unit tests",
       "type": "shell",
-      "command": "${command:python.interpreterPath} -m pytest tests/ --cov=bring_api -v --color=yes",
+      "command": "${command:python.interpreterPath} -m pytest --cov-config=pyproject.toml --cov=bring_api -v --color=yes",
       "problemMatcher": [],
       "group": {
         "kind": "test",
