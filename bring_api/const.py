@@ -1,4 +1,5 @@
 """Constants for bring-api."""
+
 from typing import Final
 
 API_BASE_URL: Final = "https://api.getbring.com/rest/"
@@ -9,6 +10,7 @@ DEFAULT_HEADERS: Final = {
     "X-BRING-APPLICATION": "bring",
     "X-BRING-COUNTRY": "DE",
     "X-BRING-USER-UUID": "",
+    "X-BRING-PUBLIC-USER-UUID": "",
 }
 
 LOCALES_BASE_URL: Final = "https://web.getbring.com/locale/"

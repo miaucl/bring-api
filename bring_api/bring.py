@@ -171,6 +171,7 @@ class Bring:
         self.uuid = data["uuid"]
         self.public_uuid = data.get("publicUuid", "")
         self.headers["X-BRING-USER-UUID"] = self.uuid
+        self.headers["X-BRING-PUBLIC-USER-UUID"] = self.public_uuid
         self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
         self.refresh_token = data["refresh_token"]
         self.expires_in = data["expires_in"]
@@ -179,11 +180,32 @@ class Bring:
         self.headers["X-BRING-COUNTRY"] = locale["country"]
         self.user_locale = self.map_user_language_to_locale(locale)
 
-        self.user_list_settings = await self.__load_user_list_settings()
-
-        self.__translations = await self.__load_article_translations()
+        await self.reload_user_list_settings()
+        await self.reload_article_translations()
 
         return data
+
+    async def reload_user_list_settings(self) -> None:
+        """Reload the user list settings.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+
+        """
+        self.user_list_settings = await self.__load_user_list_settings()
+
+    async def reload_article_translations(self) -> None:
+        """Reload the article translations.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+
+        """
+        self.__translations = await self.__load_article_translations()
 
     async def load_lists(self) -> BringListResponse:
         """Load all shopping lists.

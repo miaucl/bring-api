@@ -137,6 +137,15 @@ BRING_TOKEN_RESPONSE = {
 }
 
 
+@pytest.fixture(name="headers")
+async def headers() -> str:
+    """Load the headers."""
+
+    # Open and read the file
+    with open("tests/test.headers") as file:
+        return file.read()
+
+
 @pytest.fixture(name="session")
 async def aiohttp_client_session():
     """Create  a client session."""
