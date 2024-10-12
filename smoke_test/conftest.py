@@ -18,14 +18,14 @@ _LOGGER = logging.getLogger(__name__)
 
 def save_headers(headers: dict[str, str]) -> None:
     """Save the headers locally."""
-    with open(".headers", "w") as file:
+    with open(".headers", "w", encoding="utf-8") as file:
         file.write(headers_serialize(headers))
 
 
 def load_headers() -> dict[str, str]:
     """Load the headers locally."""
     # Open and read the file
-    with open(".headers") as file:
+    with open(".headers", encoding="utf-8") as file:
         return headers_deserialize(file.read() or "{}")
 
 

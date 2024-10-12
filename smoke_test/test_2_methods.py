@@ -16,7 +16,9 @@ _LOGGER = logging.getLogger(__name__)
 class TestMethods:
     """Test methods."""
 
-    async def test_add_complete_remove(self, bring: Bring, test_list: BringList):
+    async def test_add_complete_remove(
+        self, bring: Bring, test_list: BringList
+    ) -> None:
         """Test add-complete-remove for an item."""
 
         # Save an item with specifications to a certain shopping list
@@ -40,7 +42,7 @@ class TestMethods:
         items = await bring.get_list(test_list["listUuid"])
         _LOGGER.info("List all items: %s / %s", items["purchase"], items["recently"])
 
-    async def test_push_notifications(self, bring: Bring, test_list: BringList):
+    async def test_push_notifications(self, bring: Bring, test_list: BringList) -> None:
         """Test sending push notifications."""
 
         # Send a going shopping notification
@@ -51,7 +53,7 @@ class TestMethods:
             test_list["listUuid"], BringNotificationType.URGENT_MESSAGE, "Pouletbrüstli"
         )
 
-    async def test_translation(self, bring: Bring, test_list: BringList):
+    async def test_translation(self, bring: Bring, test_list: BringList) -> None:
         """Test article translations."""
         # Replace test list locale to get predictable results and
         # read back items with different locale asure catalog items where added correctly.
@@ -95,7 +97,9 @@ class TestMethods:
             "listArticleLanguage"
         ] = locale_org
 
-    async def test_batch_list_operations(self, bring: Bring, test_list: BringList):
+    async def test_batch_list_operations(
+        self, bring: Bring, test_list: BringList
+    ) -> None:
         """Test batch list operations."""
 
         # Add items with same name but different specifications
@@ -190,7 +194,7 @@ class TestMethods:
             test_list["name"],
         )
 
-    async def test_article_language(self, bring: Bring, test_list: BringList):
+    async def test_article_language(self, bring: Bring, test_list: BringList) -> None:
         """Test article language."""
         await bring.set_list_article_language(test_list["listUuid"], "es-ES")
         await bring.get_list(test_list["listUuid"])

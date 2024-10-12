@@ -142,7 +142,7 @@ async def headers() -> str:
     """Load the headers."""
 
     # Open and read the file
-    with open("tests/test.headers") as file:
+    with open("tests/test.headers", encoding="utf-8") as file:
         return file.read()
 
 
@@ -154,7 +154,7 @@ async def aiohttp_client_session():
 
 
 @pytest.fixture(name="bring")
-async def bring_api_client(session):
+async def bring_api_client(session) -> Bring:
     """Create Bring instance."""
     bring = Bring(session, "EMAIL", "PASSWORD")
     return bring

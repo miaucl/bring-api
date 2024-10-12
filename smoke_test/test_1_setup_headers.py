@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 class TestSetupAndLogin:
     """Test setup and login."""
 
-    async def test_does_user_exist(self, bring_no_auth: Bring):
+    async def test_does_user_exist(self, bring_no_auth: Bring) -> None:
         """Test does_user_exist."""
 
         rnd = str(uuid.uuid4())
