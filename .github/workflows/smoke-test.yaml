@@ -1,21 +1,22 @@
-name: Test
+name: Smoke Test
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   schedule:
-    - cron: '0 12 * * 0' # Run every Sunday at 12:00 PM (noon)
+    - cron: '0 23 * * 0' # Run every Sunday at 23:00 PM
   workflow_dispatch: # Allows manual triggering
     
 env:
-  DEFAULT_PYTHON: "3.12"
+  python-version: "3.12"
+
+concurrency: 
+  group: "smoke-test" # Make sure, to not run multiple smoke tests at the same time
+  cancel-in-progress: false
 
 jobs:
-  test:
+  smoke_test:
     runs-on: ubuntu-latest
     steps:
       - name: Get User Permission
@@ -33,14 +34,13 @@ jobs:
           echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
           echo "Job originally triggered by ${{ github.actor }}"
           exit 1
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ env.python-version }}
+        uses: actions/setup-python@v5
         with:
-            ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.DEFAULT_PYTHON }}
-          check-latest: true
-      - name: Run tests
+          python-version: ${{ env.python-version }}
+      - name: Check secret access
         run: |
           if [[ "x${{ secrets.PASSWORD }}" != "x" ]]; then
             echo "Access to secrets"
@@ -48,11 +48,13 @@ jobs:
             echo "No access to secrets"
             exit 1
           fi
-      - run: pip install -r requirements.txt
-      - run: pip install python-dotenv 
-      - run: python test.py
+          - run: pip install -r requirements.txt
+          - run: pip install -r requirements_test.txt
+      - name: Prepare empty headers
+        run: touch .headers
+      - name: Test with pytest
+        run: pytest smoke_test -v -x
         env:
           EMAIL: ${{ vars.EMAIL }}
           PASSWORD: ${{ secrets.PASSWORD }}
           LIST: ${{ vars.LIST }}
-          
