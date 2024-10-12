@@ -137,6 +137,15 @@ BRING_TOKEN_RESPONSE = {
 }
 
 
+@pytest.fixture(name="headers")
+async def headers() -> str:
+    """Load the headers."""
+
+    # Open and read the file
+    with open("tests/test.headers", encoding="utf-8") as file:
+        return file.read()
+
+
 @pytest.fixture(name="session")
 async def aiohttp_client_session():
     """Create  a client session."""
@@ -145,7 +154,7 @@ async def aiohttp_client_session():
 
 
 @pytest.fixture(name="bring")
-async def bring_api_client(session):
+async def bring_api_client(session) -> Bring:
     """Create Bring instance."""
     bring = Bring(session, "EMAIL", "PASSWORD")
     return bring

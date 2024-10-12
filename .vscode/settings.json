@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
+    "aioclient",
     "aiohttp",
+    "aioresponses",
     "asyncio",
     "miaucl",
     "mypy",
