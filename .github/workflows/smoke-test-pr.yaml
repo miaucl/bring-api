@@ -54,7 +54,7 @@ jobs:
       - name: Prepare empty headers
         run: touch .headers
       - name: Prepare headers with pytest
-        run: pytest smoke_test/test_1_setup_cookies.py -v -x
+        run: pytest smoke_test/test_1_setup_headers.py -v -x
         env:
           EMAIL: ${{ vars.EMAIL }}
           PASSWORD: ${{ secrets.PASSWORD }}
