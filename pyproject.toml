@@ -193,6 +193,7 @@ source = ["tests"]
 
 [tool.coverage.report]
 format="text"
+show_missing = true
 
 [tool.mypy]
 python_version = "3.12"
