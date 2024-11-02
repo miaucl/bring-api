@@ -120,16 +120,13 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse login request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Login failed due to authorization failure "
-                            "but error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug("Exception: Cannot login: %s", errmsg["message"])
+                    else:
+                        _LOGGER.debug("Exception: Cannot login: %s", errmsg["message"])
                     raise BringAuthException(
                         "Login failed due to authorization failure, "
                         "please check your email and password."
@@ -235,19 +232,15 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Loading lists failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot get lists: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get lists: %s", errmsg["message"]
+                        )
                     raise BringAuthException(
                         "Loading lists failed due to authorization failure, "
                         "the authorization token is invalid or expired."
@@ -317,19 +310,15 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Loading list items failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot get list items: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get list items: %s", errmsg["message"]
+                        )
                     raise BringAuthException(
                         "Loading list items failed due to authorization failure, "
                         "the authorization token is invalid or expired."
@@ -420,19 +409,15 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Loading list details failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot get list details: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get list details: %s", errmsg["message"]
+                        )
                     raise BringAuthException(
                         "Loading list details failed due to authorization failure, "
                         "the authorization token is invalid or expired."
@@ -756,19 +741,15 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Sending notification failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot send notification: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot send notification: %s", errmsg["message"]
+                        )
                     raise BringAuthException(
                         "Sending notification failed due to authorization failure, "
                         "the authorization token is invalid or expired."
@@ -1089,19 +1070,15 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Loading user settings failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot get user settings: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get user settings: %s", errmsg["message"]
+                        )
                     raise BringAuthException(
                         "Loading user settings failed due to authorization failure, "
                         "the authorization token is invalid or expired."
@@ -1266,19 +1243,16 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Loading current user settings failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot get current user settings: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get current user settings: %s",
+                            errmsg["message"],
+                        )
                     raise BringAuthException(
                         "Loading current user settings failed due to authorization failure, "
                         "the authorization token is invalid or expired."
@@ -1394,19 +1368,16 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Batch operation failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot get execute batch operation: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get execute batch operation: %s",
+                            errmsg["message"],
+                        )
                     raise BringAuthException(
                         "Batch operation failed due to authorization failure, "
                         "the authorization token is invalid or expired."
@@ -1475,19 +1446,16 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = await r.json()
-                    except JSONDecodeError as e:
+                    except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse token request response:\n %s",
                             traceback.format_exc(),
                         )
-                        raise BringParseException(
-                            "Retrieve new access token failed due to authorization failure but "
-                            "error response could not be parsed."
-                        ) from e
-                    _LOGGER.debug(
-                        "Exception: Cannot retrieve new access token: %s",
-                        errmsg["message"],
-                    )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot retrieve new access token: %s",
+                            errmsg["message"],
+                        )
                     raise BringAuthException(
                         "Retrieve new access token failed due to authorization failure, "
                         "the refresh token is invalid or expired."

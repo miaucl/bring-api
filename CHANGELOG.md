@@ -1,109 +1,113 @@
 # CHANGELOG
 
+## 0.9.1
+
+- Don't raise BringParseException on parsing errors for unauthorized request responses
+
 ## 0.9.0
 
-* Add type hints for item attributes (purchase conditions)
-* Minor code quality improvements, fix typos and upgrade type annotations
+- Add type hints for item attributes (purchase conditions)
+- Minor code quality improvements, fix typos and upgrade type annotations
 
 ## 0.8.1
 
-* Reload locales after setting list language to ensure all required article translations are available
+- Reload locales after setting list language to ensure all required article translations are available
 
 ## 0.8.0
 
-* **New API method:** `set_list_article_language` sets the article language for a specified shopping list.
+- **New API method:** `set_list_article_language` sets the article language for a specified shopping list.
 
 ## 0.7.3
 
-* Change `name` and `photoPath` in type definitions for `BringSyncCurrentUserResponse` and `BringAuthResponse` to optional parameters
-* Add py.typed file so that type checkers can use type annotations
+- Change `name` and `photoPath` in type definitions for `BringSyncCurrentUserResponse` and `BringAuthResponse` to optional parameters
+- Add py.typed file so that type checkers can use type annotations
 
 ## 0.7.2
 
-* fix bug in debug log message.
+- fix bug in debug log message.
 
 ## 0.7.1
 
-* Fix get_list method not returning uuid and status from JSON response
-* Log to debug instead of error where exceptions are already raised.
-* Add raw server response to debug log messages.
-* Update docstrings
+- Fix get_list method not returning uuid and status from JSON response
+- Log to debug instead of error where exceptions are already raised.
+- Add raw server response to debug log messages.
+- Update docstrings
 
 ## 0.7.0
 
-* **New API method:** `retrieve_new_access_token` retrieves a new access token and updates authorization headers. Time till expiration of the access token is stored in the property `expires_in` . ([tr4nt0r](https://github.com/tr4nt0r))
-* All API methods that require authentication now raise `BringAuthException` for 401 Unauthorized status ([tr4nt0r](https://github.com/tr4nt0r))
+- **New API method:** `retrieve_new_access_token` retrieves a new access token and updates authorization headers. Time till expiration of the access token is stored in the property `expires_in` . ([tr4nt0r](https://github.com/tr4nt0r))
+- All API methods that require authentication now raise `BringAuthException` for 401 Unauthorized status ([tr4nt0r](https://github.com/tr4nt0r))
 
 ## 0.6.0
 
-* **Pytest unit testing:** added pytest with full code coverage ([tr4nt0r](https://github.com/tr4nt0r))
-* **Github workflow for pytest:** added workflow for running pytests with Python 3.11 & 3.12 on Ubuntu, Windows and macOS ([tr4nt0r](https://github.com/tr4nt0r))
-* Update Python requirement to >=3.11
-* Change from implicit to explicit string conversion of `BringItemOperation` in JSON request payload ([tr4nt0r](https://github.com/tr4nt0r))
-* Change Type of `BringItemOperation` to `StrEnum` ([tr4nt0r](https://github.com/tr4nt0r))
-* `BringItem::operation` now also accepts string literals `TO_PURCHASE`, `TO_RECENTLY` & `REMOVE` ([tr4nt0r](https://github.com/tr4nt0r))
-* fix wrong variable name in `BringSyncCurrentUserResponse` class and add additional variables from JSON response ([tr4nt0r](https://github.com/tr4nt0r))
-* Improve exceptions for `save/update/remove/complete_item` and `batch_update_list` methods ([tr4nt0r](https://github.com/tr4nt0r))
-* Fix bug in `get_all_item_details` method ([tr4nt0r](https://github.com/tr4nt0r))
-* Parsing error when parsing unauthorized response now raises `BringParseException` ([tr4nt0r](https://github.com/tr4nt0r))
-* Cleanup legacy code ([tr4nt0r](https://github.com/tr4nt0r))
+- **Pytest unit testing:** added pytest with full code coverage ([tr4nt0r](https://github.com/tr4nt0r))
+- **Github workflow for pytest:** added workflow for running pytests with Python 3.11 & 3.12 on Ubuntu, Windows and macOS ([tr4nt0r](https://github.com/tr4nt0r))
+- Update Python requirement to >=3.11
+- Change from implicit to explicit string conversion of `BringItemOperation` in JSON request payload ([tr4nt0r](https://github.com/tr4nt0r))
+- Change Type of `BringItemOperation` to `StrEnum` ([tr4nt0r](https://github.com/tr4nt0r))
+- `BringItem::operation` now also accepts string literals `TO_PURCHASE`, `TO_RECENTLY` & `REMOVE` ([tr4nt0r](https://github.com/tr4nt0r))
+- fix wrong variable name in `BringSyncCurrentUserResponse` class and add additional variables from JSON response ([tr4nt0r](https://github.com/tr4nt0r))
+- Improve exceptions for `save/update/remove/complete_item` and `batch_update_list` methods ([tr4nt0r](https://github.com/tr4nt0r))
+- Fix bug in `get_all_item_details` method ([tr4nt0r](https://github.com/tr4nt0r))
+- Parsing error when parsing unauthorized response now raises `BringParseException` ([tr4nt0r](https://github.com/tr4nt0r))
+- Cleanup legacy code ([tr4nt0r](https://github.com/tr4nt0r))
 
 ## 0.5.7
 
-* **map user language to locales**: Bring sometimes stores non-standard locales in the user settings. In case the Bring API returns an invalid/unsupported locale, the user language is now mapped to a supported locale.
+- **map user language to locales**: Bring sometimes stores non-standard locales in the user settings. In case the Bring API returns an invalid/unsupported locale, the user language is now mapped to a supported locale.
 
 ## 0.5.6
 
-* fix incorrect filtering of locales against supported locales list
+- fix incorrect filtering of locales against supported locales list
 
 ## 0.5.5
 
-* Fix KeyError when listArticleLanguage is not set.
+- Fix KeyError when listArticleLanguage is not set.
   
 ## 0.5.4
 
-* Load article translations from file in executor instead of event loop.
+- Load article translations from file in executor instead of event loop.
 
 ## 0.5.3
 
-* Improve mypy type checking.
+- Improve mypy type checking.
   
 ## 0.5.2
 
-* Fixed build script to add locales explicitly.
+- Fixed build script to add locales explicitly.
 
 ## 0.5.1
 
-* Add article translation tables to package. Translation tables are now loaded from file as data from web app is outdated.
+- Add article translation tables to package. Translation tables are now loaded from file as data from web app is outdated.
 
 ## 0.5.0
 
-* **New API method:** `batch_update_list`. Uses the same API endpoint as the mobile app to add, complete and remove items from shopping lists and has support for uuid as unique identifier for list items.  
-* `save_item`, `update_item`, `complete_item` and `remove_item` are now wrapper methods for `batch_update_list` and have the additional parameter item_uuid.
+- **New API method:** `batch_update_list`. Uses the same API endpoint as the mobile app to add, complete and remove items from shopping lists and has support for uuid as unique identifier for list items.  
+- `save_item`, `update_item`, `complete_item` and `remove_item` are now wrapper methods for `batch_update_list` and have the additional parameter item_uuid.
 
 ## 0.4.1
 
-* instead of downloading all translation tables, required locales are determined from the user list settings and the user locale. ([tr4nt0r](https://github.com/tr4nt0r))
-* variable `userlistsettings` renamed to snake_cae `user_list_settings`. ([tr4nt0r](https://github.com/tr4nt0r))
+- instead of downloading all translation tables, required locales are determined from the user list settings and the user locale. ([tr4nt0r](https://github.com/tr4nt0r))
+- variable `userlistsettings` renamed to snake_cae `user_list_settings`. ([tr4nt0r](https://github.com/tr4nt0r))
 
 ## 0.4.0
 
-* **Localization support:** catalog items are now automatically translated based on the shopping lists language if configured, otherwise the users default language is used ([tr4nt0r](https://github.com/tr4nt0r))
-* **New API method:** `get_user_account`. Retrieves information about the current user like email, name and language ([tr4nt0r](https://github.com/tr4nt0r))
-* **New API method:** `get_all_user_settings`. Retrieves user settings like default list and individual list settings for section order and language ([tr4nt0r](https://github.com/tr4nt0r))
+- **Localization support:** catalog items are now automatically translated based on the shopping lists language if configured, otherwise the users default language is used ([tr4nt0r](https://github.com/tr4nt0r))
+- **New API method:** `get_user_account`. Retrieves information about the current user like email, name and language ([tr4nt0r](https://github.com/tr4nt0r))
+- **New API method:** `get_all_user_settings`. Retrieves user settings like default list and individual list settings for section order and language ([tr4nt0r](https://github.com/tr4nt0r))
 
 ## 0.3.1
 
-* Unpin requirements and remove subdependencies ([tr4nt0r](https://github.com/tr4nt0r))
+- Unpin requirements and remove subdependencies ([tr4nt0r](https://github.com/tr4nt0r))
 
 ## 0.3.0
 
-* Refactor for PEP8 compliance and code clean-up (breaking change) ([tr4nt0r](https://github.com/tr4nt0r))
+- Refactor for PEP8 compliance and code clean-up (breaking change) ([tr4nt0r](https://github.com/tr4nt0r))
 
 ## 0.2.0
 
-* Add new method does_user_exist ([tr4nt0r](https://github.com/tr4nt0r))
-* Fixes for test workflow
+- Add new method does_user_exist ([tr4nt0r](https://github.com/tr4nt0r))
+- Fixes for test workflow
 
 ## 0.1.4
 
