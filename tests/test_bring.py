@@ -4,10 +4,12 @@ import asyncio
 import enum
 from http import HTTPStatus
 import time
+import uuid
 
 import aiohttp
 from dotenv import load_dotenv
 import pytest
+from syrupy.assertion import SnapshotAssertion
 
 from bring_api.bring import Bring
 from bring_api.const import BRING_SUPPORTED_LOCALES, DEFAULT_HEADERS
@@ -20,7 +22,14 @@ from bring_api.exceptions import (
     BringUserUnknownException,
 )
 from bring_api.helpers import headers_deserialize, headers_serialize
-from bring_api.types import BringItem, BringItemOperation, BringNotificationType
+from bring_api.types import (
+    BringItem,
+    BringItemOperation,
+    BringNotificationType,
+    BringSyncCurrentUserResponse,
+    BringUserSettingsResponse,
+    UserLocale,
+)
 
 from .conftest import (
     BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
@@ -179,7 +188,7 @@ class TestLogin:
         with pytest.raises(BringRequestException):
             await bring.login()
 
-    async def test_login(self, mocked, bring, monkeypatch):
+    async def test_login(self, mocked, bring, monkeypatch, snapshot: SnapshotAssertion):
         """Test login with valid user."""
 
         mocked.post(
@@ -190,7 +199,7 @@ class TestLogin:
 
         async def mocked_get_user_account(*args, **kwargs):
             """Mock get_user_account."""
-            return {"userLocale": {"language": "de", "country": "DE"}}
+            return BringSyncCurrentUserResponse.from_dict(BRING_USER_ACCOUNT_RESPONSE)
 
         async def mocked__load_user_list_settings(*args, **kwargs):
             """Mock __load_user_list_settings."""
@@ -211,18 +220,20 @@ class TestLogin:
         )
 
         data = await bring.login()
-        assert data == BRING_LOGIN_RESPONSE
+        assert data == snapshot
         assert bring.headers["Authorization"] == "Bearer ACCESS_TOKEN"
         assert bring.headers["X-BRING-COUNTRY"] == "DE"
-        assert bring.uuid == UUID
-        assert bring.public_uuid == UUID
+        assert bring.uuid == uuid.UUID(UUID)
+        assert bring.public_uuid == uuid.UUID(UUID)
         assert bring.user_locale == "de-DE"
 
 
 class TestLoadLists:
     """Tests for load_lists method."""
 
-    async def test_load_lists(self, bring, mocked, monkeypatch):
+    async def test_load_lists(
+        self, bring, mocked, monkeypatch, snapshot: SnapshotAssertion
+    ):
         """Test load_lists."""
 
         mocked.get(
@@ -234,7 +245,7 @@ class TestLoadLists:
 
         lists = await bring.load_lists()
 
-        assert lists == BRING_LOAD_LISTS_RESPONSE
+        assert lists == snapshot
 
     @pytest.mark.parametrize(
         ("status", "exception"),
@@ -441,7 +452,9 @@ class TestGetList:
         with pytest.raises(exception):
             await bring.get_list(UUID)
 
-    async def test_get_list(self, mocked, bring, monkeypatch):
+    async def test_get_list(
+        self, mocked, bring, monkeypatch, snapshot: SnapshotAssertion
+    ):
         """Test get list."""
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
@@ -454,17 +467,15 @@ class TestGetList:
         monkeypatch.setattr(bring, "uuid", UUID)
 
         data = await bring.get_list(UUID)
-        assert data == {
-            "uuid": BRING_GET_LIST_RESPONSE["uuid"],
-            "status": BRING_GET_LIST_RESPONSE["status"],
-            **BRING_GET_LIST_RESPONSE["items"],
-        }
+        assert data == snapshot
 
 
 class TestGetAllItemDetails:
     """Test for get_all_item_details method."""
 
-    async def test_get_all_item_details(self, mocked, bring):
+    async def test_get_all_item_details(
+        self, mocked, bring, snapshot: SnapshotAssertion
+    ):
         """Test get_all_item_details."""
         mocked.get(
             f"https://api.getbring.com/rest/bringlists/{UUID}/details",
@@ -473,7 +484,7 @@ class TestGetAllItemDetails:
         )
 
         data = await bring.get_all_item_details(UUID)
-        assert data == BRING_GET_ALL_ITEM_DETAILS_RESPONSE
+        assert data == snapshot
 
     async def test_list_not_found(self, mocked, bring):
         """Test get_all_item_details."""
@@ -794,7 +805,7 @@ class TestArticleTranslations:
     ):
         """Test mapping invalid user_locale to valid locale."""
 
-        user_locale = {"language": test_locale[0:2], "country": test_locale[3:5]}
+        user_locale = UserLocale(language=test_locale[0:2], country=test_locale[3:5])
         locale = bring.map_user_language_to_locale(user_locale)
 
         assert expected_locale == locale
@@ -908,7 +919,9 @@ class TestArticleTranslations:
 class TestGetUserAccount:
     """Tests for get_user_account method."""
 
-    async def test_get_user_account(self, bring, mocked, monkeypatch):
+    async def test_get_user_account(
+        self, bring, mocked, monkeypatch, snapshot: SnapshotAssertion
+    ):
         """Test for get_user_account."""
 
         mocked.get(
@@ -920,7 +933,7 @@ class TestGetUserAccount:
         monkeypatch.setattr(bring, "uuid", UUID)
         data = await bring.get_user_account()
 
-        assert data == BRING_USER_ACCOUNT_RESPONSE
+        assert data == snapshot
 
     @pytest.mark.parametrize(
         "exception",
@@ -976,7 +989,9 @@ class TestGetUserAccount:
 class TestGetAllUserSettings:
     """Tests for get_all_user_settings method."""
 
-    async def test_get_all_user_settings(self, bring, mocked, monkeypatch):
+    async def test_get_all_user_settings(
+        self, bring, mocked, monkeypatch, snapshot: SnapshotAssertion
+    ):
         """Test for get_user_account."""
 
         mocked.get(
@@ -988,7 +1003,7 @@ class TestGetAllUserSettings:
         monkeypatch.setattr(bring, "uuid", UUID)
         data = await bring.get_all_user_settings()
 
-        assert data == BRING_USER_SETTINGS_RESPONSE
+        assert data == snapshot
 
     @pytest.mark.parametrize(
         "exception",
@@ -1044,7 +1059,7 @@ class TestGetAllUserSettings:
         """Test __load_user_list_settings."""
 
         async def mocked_get_all_user_settings(self):
-            return BRING_USER_SETTINGS_RESPONSE
+            return BringUserSettingsResponse.from_dict(BRING_USER_SETTINGS_RESPONSE)
 
         monkeypatch.setattr(
             Bring, "get_all_user_settings", mocked_get_all_user_settings
@@ -1397,7 +1412,9 @@ class TestBatchUpdateList:
 class TestRetrieveNewAccessToken:
     """Test for retrieve_new_access_token method."""
 
-    async def test_retrieve_new_access_token(self, mocked, bring, monkeypatch):
+    async def test_retrieve_new_access_token(
+        self, mocked, bring, monkeypatch, snapshot: SnapshotAssertion
+    ):
         """Test retrieve_new_access_token."""
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth/token",
@@ -1408,7 +1425,7 @@ class TestRetrieveNewAccessToken:
         monkeypatch.setattr(time, "time", lambda: 0)
         data = await bring.retrieve_new_access_token()
 
-        assert data == BRING_TOKEN_RESPONSE
+        assert data == snapshot
         assert bring.headers["Authorization"] == "Bearer {access_token}"
         assert bring.expires_in == BRING_TOKEN_RESPONSE["expires_in"]
 
