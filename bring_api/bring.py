@@ -11,6 +11,7 @@ import traceback
 from typing import cast
 
 import aiohttp
+from yarl import URL
 
 from .const import (
     API_BASE_URL,
@@ -67,7 +68,7 @@ class Bring:
         self.__translations: dict[str, dict[str, str]] = {}
         self.uuid = ""
 
-        self.url = API_BASE_URL
+        self.url = URL(API_BASE_URL)
 
         self.headers = DEFAULT_HEADERS.copy()
 
@@ -106,7 +107,7 @@ class Bring:
         user_data = {"email": self.mail, "password": self.password}
 
         try:
-            url = f"{self.url}v2/bringauth"
+            url = self.url / "v2/bringauth"
             async with self._session.post(url, data=user_data) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s",
@@ -223,7 +224,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}bringusers/{self.uuid}/lists"
+            url = self.url / "bringusers" / self.uuid / "lists"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -301,7 +302,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}v2/bringlists/{list_uuid}"
+            url = self.url / "v2/bringlists" / list_uuid
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -400,7 +401,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}bringlists/{list_uuid}/details"
+            url = self.url / "bringlists" / list_uuid / "details"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -730,7 +731,7 @@ class Bring:
 
             json_data["arguments"] = [item_name]
         try:
-            url = f"{self.url}v2/bringnotifications/lists/{list_uuid}"
+            url = self.url / "v2/bringnotifications/lists" / list_uuid
             async with self._session.post(
                 url, headers=self.headers, json=json_data
             ) as r:
@@ -808,11 +809,9 @@ class Bring:
         if not mail:
             raise ValueError("Argument mail missing.")
 
-        params = {"email": mail}
-
         try:
-            url = f"{self.url}bringusers"
-            async with self._session.get(url, headers=self.headers, params=params) as r:
+            url = self.url / "bringusers" % {"email": mail}
+            async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
                 )
@@ -907,7 +906,7 @@ class Bring:
                 )
 
             try:
-                url = f"{LOCALES_BASE_URL}articles.{locale}.json"
+                url = URL(LOCALES_BASE_URL) / f"articles.{locale}.json"
                 async with self._session.get(url) as r:
                     _LOGGER.debug("Response from %s [%s]", url, r.status)
                     r.raise_for_status()
@@ -1061,7 +1060,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}bringusersettings/{self.uuid}"
+            url = self.url / "bringusersettings" / self.uuid
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -1234,7 +1233,7 @@ class Bring:
 
         """
         try:
-            url = f"{self.url}v2/bringusers/{self.uuid}"
+            url = self.url / "v2/bringusers" / self.uuid
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -1357,7 +1356,7 @@ class Bring:
         }
 
         try:
-            url = f"{self.url}v2/bringlists/{list_uuid}/items"
+            url = self.url / "v2/bringlists" / list_uuid / "items"
             async with self._session.put(
                 url, headers=self.headers, json=json_data
             ) as r:
@@ -1431,7 +1430,7 @@ class Bring:
 
         user_data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
         try:
-            url = f"{self.url}v2/bringauth/token"
+            url = self.url / "v2/bringauth/token"
             async with self._session.post(
                 url, headers=self.headers, data=user_data
             ) as r:
@@ -1526,7 +1525,13 @@ class Bring:
         if language not in BRING_SUPPORTED_LOCALES:
             raise ValueError(f"Language {language} not supported.")
 
-        url = f"{self.url}bringusersettings/{self.uuid}/{list_uuid}/listArticleLanguage"
+        url = (
+            self.url
+            / "bringusersettings"
+            / self.uuid
+            / list_uuid
+            / "listArticleLanguage"
+        )
 
         data = {"value": language}
         try:
