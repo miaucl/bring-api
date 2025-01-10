@@ -224,7 +224,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "bringusers" / self.uuid / "lists"
+            url = self.url / "bringusers" / str(self.uuid) / "lists"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -302,7 +302,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "v2/bringlists" / list_uuid
+            url = self.url / "v2/bringlists" / str(list_uuid)
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -731,7 +731,7 @@ class Bring:
 
             json_data["arguments"] = [item_name]
         try:
-            url = self.url / "v2/bringnotifications/lists" / list_uuid
+            url = self.url / "v2/bringnotifications/lists" / str(list_uuid)
             async with self._session.post(
                 url, headers=self.headers, json=json_data
             ) as r:
@@ -1060,7 +1060,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "bringusersettings" / self.uuid
+            url = self.url / "bringusersettings" / str(self.uuid)
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -1233,7 +1233,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "v2/bringusers" / self.uuid
+            url = self.url / "v2/bringusers" / str(self.uuid)
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -1356,7 +1356,7 @@ class Bring:
         }
 
         try:
-            url = self.url / "v2/bringlists" / list_uuid / "items"
+            url = self.url / "v2/bringlists" / str(list_uuid) / "items"
             async with self._session.put(
                 url, headers=self.headers, json=json_data
             ) as r:
@@ -1528,8 +1528,8 @@ class Bring:
         url = (
             self.url
             / "bringusersettings"
-            / self.uuid
-            / list_uuid
+            / str(self.uuid)
+            / str(list_uuid)
             / "listArticleLanguage"
         )
 
