@@ -2,15 +2,17 @@
 
 import asyncio
 from http import HTTPStatus
+from itertools import chain
 import json
 from json import JSONDecodeError
 import logging
 import os
 import time
 import traceback
-from typing import cast
+from uuid import UUID
 
 import aiohttp
+import orjson
 from yarl import URL
 
 from .const import (
@@ -35,15 +37,13 @@ from .types import (
     BringItem,
     BringItemOperation,
     BringItemsResponse,
-    BringListItemDetails,
     BringListItemsDetailsResponse,
     BringListResponse,
     BringNotificationsConfigType,
     BringNotificationType,
     BringSyncCurrentUserResponse,
-    BringUserListSettingEntry,
-    BringUserSettingsEntry,
     BringUserSettingsResponse,
+    UserLocale,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,12 +61,12 @@ class Bring:
         self.mail = mail
         self.password = password
 
-        self.public_uuid = ""
+        self.public_uuid: UUID | None = None
         self.user_list_settings: dict[str, dict[str, str]] = {}
         self.user_locale = BRING_DEFAULT_LOCALE
 
         self.__translations: dict[str, dict[str, str]] = {}
-        self.uuid = ""
+        self.uuid: UUID | None = None
 
         self.url = URL(API_BASE_URL)
 
@@ -140,14 +140,7 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = cast(
-                        BringAuthResponse,
-                        {
-                            key: val
-                            for key, val in (await r.json()).items()
-                            if key in BringAuthResponse.__annotations__
-                        },
-                    )
+                    data = BringAuthResponse.from_json(await r.text())
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot login:\n %s", traceback.format_exc()
@@ -166,16 +159,16 @@ class Bring:
                 "Authentication failed due to request exception."
             ) from e
 
-        self.uuid = data["uuid"]
-        self.public_uuid = data.get("publicUuid", "")
-        self.headers["X-BRING-USER-UUID"] = self.uuid
-        self.headers["X-BRING-PUBLIC-USER-UUID"] = self.public_uuid
-        self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
-        self.refresh_token = data["refresh_token"]
-        self.expires_in = data["expires_in"]
+        self.uuid = data.uuid
+        self.public_uuid = data.publicUuid
+        self.headers["X-BRING-USER-UUID"] = str(self.uuid)
+        self.headers["X-BRING-PUBLIC-USER-UUID"] = str(self.public_uuid)
+        self.headers["Authorization"] = f"{data.token_type} {data.access_token}"
+        self.refresh_token = data.refresh_token
+        self.expires_in = data.expires_in
 
-        locale = (await self.get_user_account())["userLocale"]
-        self.headers["X-BRING-COUNTRY"] = locale["country"]
+        locale = (await self.get_user_account()).userLocale
+        self.headers["X-BRING-COUNTRY"] = locale.country
         self.user_locale = self.map_user_language_to_locale(locale)
 
         await self.reload_user_list_settings()
@@ -250,14 +243,7 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = cast(
-                        BringListResponse,
-                        {
-                            key: val
-                            for key, val in (await r.json()).items()
-                            if key in BringListResponse.__annotations__
-                        },
-                    )
+                    return BringListResponse.from_json(await r.text())
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
@@ -265,8 +251,6 @@ class Bring:
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
-                else:
-                    return data
         except TimeoutError as e:
             _LOGGER.debug("Exception: Cannot get lists:\n %s", traceback.format_exc())
             raise BringRequestException(
@@ -278,7 +262,7 @@ class Bring:
                 "Loading lists failed due to request exception."
             ) from e
 
-    async def get_list(self, list_uuid: str) -> BringItemsResponse:
+    async def get_list(self, list_uuid: UUID) -> BringItemsResponse:
         """Get all items from a shopping list.
 
         Parameters
@@ -328,21 +312,14 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = await r.json()
+                    data = BringItemsResponse.from_json(await r.text())
 
-                    for lst in data["items"].values():
-                        for item in lst:
-                            item["itemId"] = self.__translate(
-                                item["itemId"],
-                                to_locale=self.__locale(list_uuid),
-                            )
+                    for item in chain(data.items.purchase, data.items.recently):
+                        item.itemId = self.__translate(
+                            item.itemId,
+                            to_locale=self.__locale(list_uuid),
+                        )
 
-                    return BringItemsResponse(
-                        uuid=data["uuid"],
-                        status=data["status"],
-                        purchase=data["items"]["purchase"],
-                        recently=data["items"]["recently"],
-                    )
                 except (JSONDecodeError, KeyError) as e:
                     _LOGGER.debug(
                         "Exception: Cannot get items for list %s:\n%s",
@@ -352,6 +329,8 @@ class Bring:
                     raise BringParseException(
                         "Loading list items failed during parsing of request response."
                     ) from e
+                else:
+                    return data
         except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get items for list %s:\n%s",
@@ -427,18 +406,9 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = [
-                        cast(
-                            BringListItemDetails,
-                            {
-                                key: val
-                                for key, val in item.items()
-                                if key in BringListItemDetails.__annotations__
-                            },
-                        )
-                        for item in await r.json()
-                    ]
-                    return cast(BringListItemsDetailsResponse, data)
+                    return BringListItemsDetailsResponse.from_dict(
+                        {"items": orjson.loads(await r.text())}
+                    )
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get item details for list %s:\n%s",
@@ -469,10 +439,10 @@ class Bring:
 
     async def save_item(
         self,
-        list_uuid: str,
+        list_uuid: UUID,
         item_name: str,
         specification: str = "",
-        item_uuid: str = "",
+        item_uuid: UUID | None = None,
     ) -> aiohttp.ClientResponse:
         """Save an item to a shopping list.
 
@@ -503,7 +473,7 @@ class Bring:
         data = BringItem(
             itemId=item_name,
             spec=specification,
-            uuid=item_uuid,
+            uuid=str(item_uuid) if item_uuid else None,
         )
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
@@ -522,10 +492,10 @@ class Bring:
 
     async def update_item(
         self,
-        list_uuid: str,
+        list_uuid: UUID,
         item_name: str,
         specification: str = "",
-        item_uuid: str = "",
+        item_uuid: UUID | None = None,
     ) -> aiohttp.ClientResponse:
         """Update an existing list item.
 
@@ -559,7 +529,7 @@ class Bring:
         data = BringItem(
             itemId=item_name,
             spec=specification,
-            uuid=item_uuid,
+            uuid=str(item_uuid) if item_uuid else None,
         )
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
@@ -577,7 +547,7 @@ class Bring:
             ) from e
 
     async def remove_item(
-        self, list_uuid: str, item_name: str, item_uuid: str = ""
+        self, list_uuid: UUID, item_name: str, item_uuid: UUID | None = None
     ) -> aiohttp.ClientResponse:
         """Remove an item from a shopping list.
 
@@ -605,7 +575,7 @@ class Bring:
         data = BringItem(
             itemId=item_name,
             spec="",
-            uuid=item_uuid,
+            uuid=str(item_uuid) if item_uuid else None,
         )
         try:
             return await self.batch_update_list(
@@ -625,10 +595,10 @@ class Bring:
 
     async def complete_item(
         self,
-        list_uuid: str,
+        list_uuid: UUID,
         item_name: str,
         specification: str = "",
-        item_uuid: str = "",
+        item_uuid: UUID | None = None,
     ) -> aiohttp.ClientResponse:
         """Complete an item from a shopping list. This will add it to recent items.
 
@@ -659,7 +629,7 @@ class Bring:
         data = BringItem(
             itemId=item_name,
             spec=specification,
-            uuid=item_uuid,
+            uuid=str(item_uuid) if item_uuid else None,
         )
         try:
             return await self.batch_update_list(
@@ -679,7 +649,7 @@ class Bring:
 
     async def notify(
         self,
-        list_uuid: str,
+        list_uuid: UUID,
         notification_type: BringNotificationType,
         item_name: str | None = None,
     ) -> aiohttp.ClientResponse:
@@ -715,7 +685,7 @@ class Bring:
         json_data = BringNotificationsConfigType(
             arguments=[],
             listNotificationType=notification_type.value,
-            senderPublicUserUuid=self.public_uuid,
+            senderPublicUserUuid=str(self.public_uuid),
         )
 
         if not isinstance(notification_type, BringNotificationType):
@@ -1022,13 +992,13 @@ class Bring:
         """
         try:
             return {
-                user_list_setting["listUuid"]: {
-                    user_setting["key"]: user_setting["value"]
-                    for user_setting in user_list_setting["usersettings"]
+                user_list_setting.listUuid: {
+                    user_setting.key: user_setting.value
+                    for user_setting in user_list_setting.usersettings
                 }
-                for user_list_setting in (await self.get_all_user_settings())[
-                    "userlistsettings"
-                ]
+                for user_list_setting in (
+                    await self.get_all_user_settings()
+                ).userlistsettings
             }
 
         except Exception as e:
@@ -1086,52 +1056,7 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    usersettings = [
-                        cast(
-                            BringUserSettingsEntry,
-                            {
-                                key: val
-                                for key, val in item.items()
-                                if key in BringUserSettingsEntry.__annotations__
-                            },
-                        )
-                        for item in (await r.json())["usersettings"]
-                    ]
-
-                    userlistsettings = (await r.json())["userlistsettings"]
-                    for i, listitem in enumerate(userlistsettings):
-                        userlistsettings[i]["usersettings"] = [
-                            cast(
-                                BringUserSettingsEntry,
-                                {
-                                    key: val
-                                    for key, val in item.items()
-                                    if key in BringUserSettingsEntry.__annotations__
-                                },
-                            )
-                            for item in listitem["usersettings"]
-                        ]
-
-                    userlistsettings = [
-                        cast(
-                            BringUserListSettingEntry,
-                            {
-                                key: val
-                                for key, val in item.items()
-                                if key in BringUserListSettingEntry.__annotations__
-                            },
-                        )
-                        for item in userlistsettings
-                    ]
-
-                    data = cast(
-                        BringUserSettingsResponse,
-                        {
-                            "usersettings": usersettings,
-                            "userlistsettings": userlistsettings,
-                        },
-                    )
-
+                    return BringUserSettingsResponse.from_json(await r.text())
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get user settings for uuid %s:\n%s",
@@ -1141,8 +1066,7 @@ class Bring:
                     raise BringParseException(
                         "Loading user settings failed during parsing of request response."
                     ) from e
-                else:
-                    return data
+
         except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get user settings for uuid %s:\n%s",
@@ -1162,7 +1086,7 @@ class Bring:
                 "Loading user settings failed due to request exception."
             ) from e
 
-    def __locale(self, list_uuid: str) -> str:
+    def __locale(self, list_uuid: UUID) -> str:
         """Get list or user locale.
 
         Returns
@@ -1176,13 +1100,13 @@ class Bring:
             If list locale could not be determined from the userlistsettings or user.
 
         """
-        if list_uuid in self.user_list_settings:
-            return self.user_list_settings[list_uuid].get(
+        if str(list_uuid) in self.user_list_settings:
+            return self.user_list_settings[str(list_uuid)].get(
                 "listArticleLanguage", self.user_locale
             )
         return self.user_locale
 
-    def map_user_language_to_locale(self, user_locale: dict[str, str]) -> str:
+    def map_user_language_to_locale(self, user_locale: UserLocale) -> str:
         """Map user language to a supported locale.
 
         The userLocale returned from the user account settings is not necessarily one of the 20
@@ -1204,14 +1128,14 @@ class Bring:
             The locale corresponding to the users language.
 
         """
-        locale = f'{user_locale["language"]}-{user_locale["country"]}'
+        locale = f"{user_locale.language}-{user_locale.country}"
         # if locale is a valid and supported locale we can use it.
         if locale in BRING_SUPPORTED_LOCALES:
             return locale
 
         # if language and country are not valid locales, we use only the language part and
         # map it to a corresponding locale or the most common for that language.
-        return MAP_LANG_TO_LOCALE.get(user_locale["language"], BRING_DEFAULT_LOCALE)
+        return MAP_LANG_TO_LOCALE.get(user_locale.language, BRING_DEFAULT_LOCALE)
 
     async def get_user_account(self) -> BringSyncCurrentUserResponse:
         """Get current user account.
@@ -1260,14 +1184,7 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = cast(
-                        BringSyncCurrentUserResponse,
-                        {
-                            key: val
-                            for key, val in (await r.json()).items()
-                            if key in BringSyncCurrentUserResponse.__annotations__
-                        },
-                    )
+                    return BringSyncCurrentUserResponse.from_json(await r.text())
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
@@ -1275,8 +1192,7 @@ class Bring:
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
-                else:
-                    return data
+
         except TimeoutError as e:
             _LOGGER.debug(
                 "Exception: Cannot get current user settings:\n %s",
@@ -1295,7 +1211,7 @@ class Bring:
 
     async def batch_update_list(
         self,
-        list_uuid: str,
+        list_uuid: UUID,
         items: BringItem | list[BringItem] | list[dict[str, str]],
         operation: BringItemOperation | None = None,
     ) -> aiohttp.ClientResponse:
@@ -1463,14 +1379,7 @@ class Bring:
                 r.raise_for_status()
 
                 try:
-                    data = cast(
-                        BringAuthTokenResponse,
-                        {
-                            key: val
-                            for key, val in (await r.json()).items()
-                            if key in BringAuthTokenResponse.__annotations__
-                        },
-                    )
+                    data = BringAuthTokenResponse.from_json(await r.text())
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot retrieve new access token:\n %s",
@@ -1490,13 +1399,13 @@ class Bring:
                 "Retrieve new access token failed due to request exception."
             ) from e
 
-        self.headers["Authorization"] = f'{data["token_type"]} {data["access_token"]}'
-        self.expires_in = data["expires_in"]
+        self.headers["Authorization"] = f"{data.token_type} {data.access_token}"
+        self.expires_in = data.expires_in
 
         return data
 
     async def set_list_article_language(
-        self, list_uuid: str, language: str
+        self, list_uuid: UUID, language: str
     ) -> aiohttp.ClientResponse:
         """Set the article language for a specified list.
 

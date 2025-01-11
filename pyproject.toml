@@ -173,6 +173,7 @@ split-on-trailing-comma = false
 "bring_api/__main__.py" = ["T201"]
 "bring_api/scripts/*" = ["T201"]
 "script/*" = ["T20"]
+"types.py" = ["N815"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 25

@@ -24,8 +24,8 @@ BRING_LOGIN_RESPONSE = {
 }
 
 BRING_USER_ACCOUNT_RESPONSE = {
-    "userUuid": "{user_uuid}",
-    "publicUserUuid": "{public_uuid}",
+    "userUuid": "00000000-00000000-00000000-00000000",
+    "publicUserUuid": "00000000-00000000-00000000-00000000",
     "email": "{email}",
     "emailVerified": True,
     "name": "{user_name}",

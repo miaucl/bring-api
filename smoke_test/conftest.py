@@ -74,7 +74,7 @@ async def bring_no_auth_api_client(session: aiohttp.ClientSession) -> Bring:
 async def test_list(bring: Bring) -> BringList:
     """Get the BringList instance to test with."""
     # Get information about all available shopping list and select the one to test with
-    lists = (await bring.load_lists())["lists"]
-    lst = next(lst for lst in lists if lst["name"] == os.environ["LIST"])
-    _LOGGER.info("Selected list: %s (%s)", lst["name"], lst["listUuid"])
+    lists = (await bring.load_lists()).lists
+    lst = next(lst for lst in lists if lst.name == os.environ["LIST"])
+    _LOGGER.info("Selected list: %s (%s)", lst.name, lst.listUuid)
     return lst

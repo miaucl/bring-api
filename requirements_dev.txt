@@ -6,6 +6,5 @@ python-dotenv>=1.0.1
 ruff~=0.8
 mkdocs-material==9.5.49
 mkdocstrings[python]==0.27.0
-
-
-
+mashumaro>=3.13.1
+orjson>=3.10.12

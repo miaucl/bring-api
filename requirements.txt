@@ -1,2 +1,4 @@
 aiohttp~=3.11
 yarl~=1.18.3
+mashumaro>=3.13.1
+orjson>=3.10.12
