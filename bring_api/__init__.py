@@ -12,6 +12,7 @@ from .exceptions import (
     BringUserUnknownException,
 )
 from .types import (
+    BringActivityResponse,
     BringAuthResponse,
     BringAuthTokenResponse,
     BringItem,
@@ -30,6 +31,7 @@ from .types import (
 
 __all__ = [
     "Bring",
+    "BringActivityResponse",
     "BringAuthException",
     "BringAuthResponse",
     "BringAuthTokenResponse",
