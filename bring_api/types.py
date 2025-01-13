@@ -67,14 +67,14 @@ class BringAuthResponse(DataClassORJSONMixin):
 
     uuid: UUID
     publicUuid: UUID
-    email: str
-    name: str
     photoPath: str
     bringListUUID: UUID
     access_token: str
     refresh_token: str
     token_type: str
     expires_in: int
+    email: str | None = None
+    name: str | None = None
 
 
 @dataclass(kw_only=True)
