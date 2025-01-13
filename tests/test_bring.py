@@ -32,6 +32,7 @@ from bring_api.types import (
 )
 
 from .conftest import (
+    BRING_GET_ACTIVITY_RESPONSE,
     BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
     BRING_GET_LIST_RESPONSE,
     BRING_LOAD_LISTS_RESPONSE,
@@ -1538,3 +1539,77 @@ class TestSetListArticleLanguage:
 
         with pytest.raises(ValueError):
             await bring.set_list_article_language(UUID, "es-CO")
+
+
+class TestGetActivity:
+    """Tests for get_activity method."""
+
+    async def test_get_activity(
+        self,
+        bring,
+        mocked,
+        monkeypatch,
+        snapshot: SnapshotAssertion,
+    ):
+        """Test get_activity."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/activity",
+            status=HTTPStatus.OK,
+            payload=BRING_GET_ACTIVITY_RESPONSE,
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        activity = await bring.get_activity(uuid.UUID(UUID))
+
+        assert activity == snapshot
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(self, mocked, bring, exception):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/activity",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.get_activity(uuid.UUID(UUID))
+
+    async def test_auth_exception(self, mocked, bring):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/activity",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload={"message": ""},
+        )
+
+        with pytest.raises(BringAuthException):
+            await bring.get_activity(uuid.UUID(UUID))
+
+    @pytest.mark.parametrize(
+        ("status", "exception"),
+        [
+            (HTTPStatus.OK, BringParseException),
+            (HTTPStatus.UNAUTHORIZED, BringAuthException),
+        ],
+    )
+    async def test_parse_exception(self, mocked, bring, status, exception):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/activity",
+            status=status,
+            body="not json",
+            content_type="application/json",
+        )
+
+        with pytest.raises(exception):
+            await bring.get_activity(uuid.UUID(UUID))
