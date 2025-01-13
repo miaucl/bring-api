@@ -32,6 +32,7 @@ from .exceptions import (
     BringUserUnknownException,
 )
 from .types import (
+    BringActivityResponse,
     BringAuthResponse,
     BringAuthTokenResponse,
     BringItem,
@@ -1476,4 +1477,63 @@ class Bring:
             )
             raise BringRequestException(
                 "Set list article language failed due to request exception."
+            ) from e
+
+    async def get_activity(self, list_uuid: UUID) -> BringActivityResponse:
+        """Get activity for given list."""
+        try:
+            url = self.url / "v2/bringlists" / str(list_uuid) / "activity"
+            async with self._session.get(url, headers=self.headers) as r:
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = await r.json()
+                    except (JSONDecodeError, aiohttp.ClientError):
+                        _LOGGER.debug(
+                            "Exception: Cannot parse request response:\n %s",
+                            traceback.format_exc(),
+                        )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get list activity: %s", errmsg["message"]
+                        )
+                    raise BringAuthException(
+                        "Loading list activity failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
+                r.raise_for_status()
+
+                try:
+                    return BringActivityResponse.from_json(await r.text())
+                except (JSONDecodeError, KeyError) as e:
+                    _LOGGER.debug(
+                        "Exception: Cannot get activity for list %s:\n%s",
+                        list_uuid,
+                        traceback.format_exc(),
+                    )
+                    raise BringParseException(
+                        "Loading list activity failed during parsing of request response."
+                    ) from e
+
+        except TimeoutError as e:
+            _LOGGER.debug(
+                "Exception: Cannot get activity for list %s:\n%s",
+                list_uuid,
+                traceback.format_exc(),
+            )
+            raise BringRequestException(
+                "Loading list activity failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.debug(
+                "Exception: Cannot get activity for list %s:\n%s",
+                list_uuid,
+                traceback.format_exc(),
+            )
+            raise BringRequestException(
+                "Loading list activity failed due to request exception."
             ) from e

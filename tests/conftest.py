@@ -8,7 +8,7 @@ import pytest
 from bring_api.bring import Bring
 
 load_dotenv()
-UUID = "00000000-00000000-00000000-00000000"
+UUID = "00000000-0000-0000-0000-000000000000"
 
 BRING_LOGIN_RESPONSE = {
     "uuid": UUID,
@@ -24,8 +24,8 @@ BRING_LOGIN_RESPONSE = {
 }
 
 BRING_USER_ACCOUNT_RESPONSE = {
-    "userUuid": "00000000-00000000-00000000-00000000",
-    "publicUserUuid": "00000000-00000000-00000000-00000000",
+    "userUuid": "00000000-0000-0000-0000-000000000000",
+    "publicUserUuid": "00000000-0000-0000-0000-000000000000",
     "email": "{email}",
     "emailVerified": True,
     "name": "{user_name}",
@@ -134,6 +134,69 @@ BRING_TOKEN_RESPONSE = {
     "refresh_token": "{refresh_token}",
     "token_type": "Bearer",
     "expires_in": 604799,
+}
+
+BRING_GET_ACTIVITY_RESPONSE = {
+    "timeline": [
+        {
+            "type": "LIST_ITEMS_CHANGED",
+            "content": {
+                "uuid": "673594a9-f92d-4cb6-adf1-d2f7a83207a4",
+                "purchase": [
+                    {
+                        "uuid": "658a3770-1a03-4ee0-94a6-10362a642377",
+                        "itemId": "Gurke",
+                        "specification": "",
+                        "attributes": [],
+                    }
+                ],
+                "recently": [
+                    {
+                        "uuid": "1ed22d3d-f19b-4530-a518-19872da3fd3e",
+                        "itemId": "Milch",
+                        "specification": "",
+                        "attributes": [],
+                    }
+                ],
+                "sessionDate": "2025-01-01T03:09:33.036Z",
+                "publicUserUuid": "98615d7e-0a7d-4a7e-8f73-a9cbb9f1bc32",
+            },
+        },
+        {
+            "type": "LIST_ITEMS_ADDED",
+            "content": {
+                "uuid": "9a16635c-dea2-4e00-904a-c5034f9cfecf",
+                "items": [
+                    {
+                        "uuid": "66a633a2-ae09-47bf-8845-3c0198480544",
+                        "itemId": "Joghurt",
+                        "specification": "",
+                        "attributes": [],
+                    },
+                ],
+                "sessionDate": "2025-01-01T02:54:57.656Z",
+                "publicUserUuid": "6743a171-247d-46d0-bc06-baf31194f949",
+            },
+        },
+        {
+            "type": "LIST_ITEMS_REMOVED",
+            "content": {
+                "uuid": "303dedf6-d4b2-4d25-a8cd-1c7967b84fcb",
+                "items": [
+                    {
+                        "uuid": "2ba8ddb6-01c6-4b0b-a89d-f3da6b291528",
+                        "itemId": "Tofu",
+                        "specification": "",
+                        "attributes": [],
+                    }
+                ],
+                "sessionDate": "2025-01-01T03:09:12.380Z",
+                "publicUserUuid": "6d79d10b-70b2-443f-9f7e-0b02e670c402",
+            },
+        },
+    ],
+    "timestamp": "2025-01-01T03:09:33.036Z",
+    "totalEvents": 2,
 }
 
 

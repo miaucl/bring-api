@@ -1,6 +1,7 @@
 """Bring API types."""
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum, StrEnum
 from typing import Literal, NotRequired, TypedDict
 from uuid import UUID
@@ -231,3 +232,40 @@ class BringAuthTokenResponse(DataClassORJSONMixin):
     refresh_token: str
     token_type: str
     expires_in: int
+
+
+class ActivityType(StrEnum):
+    """Activity type."""
+
+    LIST_ITEMS_CHANGED = "LIST_ITEMS_CHANGED"
+    LIST_ITEMS_ADDED = "LIST_ITEMS_ADDED"
+    LIST_ITEMS_REMOVED = "LIST_ITEMS_REMOVED"
+
+
+@dataclass
+class ActivityContent:
+    """An activity content entry."""
+
+    uuid: UUID
+    sessionDate: datetime
+    publicUserUuid: UUID
+    items: list[BringPurchase] = field(default_factory=list)
+    purchase: list[BringPurchase] = field(default_factory=list)
+    recently: list[BringPurchase] = field(default_factory=list)
+
+
+@dataclass
+class Activity:
+    """An activity entry."""
+
+    type: ActivityType
+    content: ActivityContent
+
+
+@dataclass(kw_only=True)
+class BringActivityResponse(DataClassORJSONMixin):
+    """A list activity."""
+
+    timeline: list[Activity] = field(default_factory=list)
+    timestamp: datetime
+    totalEvents: int
