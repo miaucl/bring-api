@@ -269,3 +269,13 @@ class BringActivityResponse(DataClassORJSONMixin):
     timeline: list[Activity] = field(default_factory=list)
     timestamp: datetime
     totalEvents: int
+
+
+@dataclass(kw_only=True)
+class BringErrorResponse(DataClassORJSONMixin):
+    """Error resonse class."""
+
+    message: str
+    error: str
+    error_description: str
+    errorcode: int

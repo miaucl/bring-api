@@ -199,6 +199,13 @@ BRING_GET_ACTIVITY_RESPONSE = {
     "totalEvents": 2,
 }
 
+BRING_ERROR_RESPONSE = {
+    "message": "",
+    "error": "",
+    "error_description": "",
+    "errorcode": 0,
+}
+
 
 @pytest.fixture(name="headers")
 async def headers() -> str:
