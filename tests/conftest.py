@@ -58,6 +58,7 @@ async def aiohttp_client_session() -> AsyncGenerator[aiohttp.ClientSession]:
 async def bring_api_client(session: aiohttp.ClientSession) -> Bring:
     """Create Bring instance."""
     bring = Bring(session, "EMAIL", "PASSWORD")
+    bring.expires_in = 604799
     return bring
 
 

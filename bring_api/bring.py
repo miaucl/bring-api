@@ -1,6 +1,8 @@
 """Bring api implementation."""
 
 import asyncio
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from http import HTTPStatus
 from itertools import chain
 import json
@@ -81,7 +83,7 @@ class Bring:
 
         self.loop = asyncio.get_running_loop()
         self.refresh_token = ""
-        self.__expires_in: int
+        self.__expires_in: int = 0
 
     @property
     def expires_in(self) -> int:
@@ -91,6 +93,74 @@ class Bring:
     @expires_in.setter
     def expires_in(self, expires_in: int | str) -> None:
         self.__expires_in = int(time.time()) + int(expires_in)
+
+    @asynccontextmanager
+    async def _request(
+        self, method: str, url: URL, retry: bool = True, **kwargs
+    ) -> AsyncGenerator[aiohttp.ClientResponse]:
+        """Handle request and ensure valid auth token."""
+
+        if not self.expires_in and retry:
+            await self.retrieve_new_access_token()
+
+        try:
+            async with self._session.request(
+                method, url, headers=self.headers, **kwargs
+            ) as r:
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = BringErrorResponse.from_json(await r.text())
+                    except MissingField as e:
+                        raise BringParseException(
+                            f"Failed to parse response: {str(e)} "
+                            "This is likely a bug. Please report it at: https://github.com/miaucl/bring-api/issues",
+                        ) from e
+                    except (JSONDecodeError, aiohttp.ClientError):
+                        _LOGGER.debug(
+                            "Exception: Cannot parse request response", exc_info=True
+                        )
+                    else:
+                        _LOGGER.debug("Exception: %s", repr(errmsg))
+                        if retry:
+                            try:
+                                await self.retrieve_new_access_token()
+                            except BringAuthException as e:
+                                raise BringAuthException from e
+                            else:
+                                async with self._request(
+                                    method, url, False, **kwargs
+                                ) as r:
+                                    yield r
+                        else:
+                            raise BringAuthException
+
+                r.raise_for_status()
+
+                yield r
+        except BringAuthException as e:
+            raise BringAuthException(
+                "Login failed due to authorization failure, "
+                "please check your email and password."
+            ) from e
+        except aiohttp.ClientResponseError as e:
+            _LOGGER.debug("Exception: %s", repr(e), exc_info=True)
+            raise BringRequestException(
+                "Request failed due to server response error: %s", str(e)
+            ) from e
+        except TimeoutError as e:
+            _LOGGER.debug("Exception: Connection timeout", exc_info=True)
+            raise BringRequestException(
+                "Request failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.debug("Exception: %s", str(e), exc_info=True)
+            raise BringRequestException(
+                "Request failed due to client connection error."
+            ) from e
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
@@ -128,6 +198,11 @@ class Bring:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = BringErrorResponse.from_json(await r.text())
+                    except MissingField as e:
+                        raise BringParseException(
+                            f"Failed to parse response: {str(e)} "
+                            "This is likely a bug. Please report it at: https://github.com/miaucl/bring-api/issues",
+                        ) from e
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse login request response:",
@@ -225,11 +300,7 @@ class Bring:
         """
         try:
             url = self.url / "bringusers" / self.uuid / "lists"
-            async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
+            async with self._request("get", url) as r:
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
                         errmsg = BringErrorResponse.from_json(await r.text())
