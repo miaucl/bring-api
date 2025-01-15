@@ -12,6 +12,7 @@ import traceback
 from uuid import UUID
 
 import aiohttp
+from mashumaro.exceptions import MissingField
 import orjson
 from yarl import URL
 
@@ -26,6 +27,7 @@ from .const import (
 from .exceptions import (
     BringAuthException,
     BringEMailInvalidException,
+    BringMissingFieldException,
     BringParseException,
     BringRequestException,
     BringTranslationException,
@@ -142,6 +144,8 @@ class Bring:
 
                 try:
                     data = BringAuthResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot login:\n %s", traceback.format_exc()
@@ -245,6 +249,8 @@ class Bring:
 
                 try:
                     return BringListResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
@@ -320,7 +326,8 @@ class Bring:
                             item.itemId,
                             to_locale=self.__locale(list_uuid),
                         )
-
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
                 except (JSONDecodeError, KeyError) as e:
                     _LOGGER.debug(
                         "Exception: Cannot get items for list %s:\n%s",
@@ -1058,6 +1065,8 @@ class Bring:
 
                 try:
                     return BringUserSettingsResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get user settings for uuid %s:\n%s",
@@ -1186,6 +1195,8 @@ class Bring:
 
                 try:
                     return BringSyncCurrentUserResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot get lists:\n %s", traceback.format_exc()
@@ -1381,6 +1392,8 @@ class Bring:
 
                 try:
                     data = BringAuthTokenResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
                 except JSONDecodeError as e:
                     _LOGGER.debug(
                         "Exception: Cannot retrieve new access token:\n %s",
@@ -1509,6 +1522,8 @@ class Bring:
 
                 try:
                     return BringActivityResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
                 except (JSONDecodeError, KeyError) as e:
                     _LOGGER.debug(
                         "Exception: Cannot get activity for list %s:\n%s",

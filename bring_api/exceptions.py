@@ -27,3 +27,22 @@ class BringUserUnknownException(BringException):
 
 class BringTranslationException(BringException):
     """When translating an article fails."""
+
+
+class BringMissingFieldException(Exception):
+    """When a required field is missing in the response."""
+
+    def __init__(self, e: Exception):
+        """Initialize the exception.
+
+        Parameters
+        ----------
+        e : Exception
+            The original exception that was raised.
+
+        """
+        message = (
+            f"Failed to parse error response: {str(e)} "
+            "This is likely a bug. Please report it at: https://github.com/miaucl/bring-api/issues"
+        )
+        super().__init__(message)
