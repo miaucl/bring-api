@@ -32,6 +32,7 @@ from bring_api.types import (
 )
 
 from .conftest import (
+    BRING_ERROR_RESPONSE,
     BRING_GET_ACTIVITY_RESPONSE,
     BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
     BRING_GET_LIST_RESPONSE,
@@ -151,7 +152,7 @@ class TestLogin:
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
         expected = "Login failed due to authorization failure, please check your email and password."
         with pytest.raises(BringAuthException, match=expected):
@@ -273,7 +274,7 @@ class TestLoadLists:
         mocked.get(
             f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
         monkeypatch.setattr(bring, "uuid", UUID)
         with pytest.raises(BringAuthException):
@@ -384,7 +385,7 @@ class TestNotifications:
         mocked.post(
             f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
         with pytest.raises(BringAuthException):
             await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)
@@ -428,7 +429,7 @@ class TestGetList:
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
         with pytest.raises(BringAuthException):
             await bring.get_list(UUID)
@@ -503,7 +504,7 @@ class TestGetAllItemDetails:
         mocked.get(
             f"https://api.getbring.com/rest/bringlists/{UUID}/details",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
         with pytest.raises(BringAuthException):
             await bring.get_all_item_details(UUID)
@@ -960,7 +961,7 @@ class TestGetUserAccount:
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringusers/{UUID}",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
         monkeypatch.setattr(bring, "uuid", UUID)
         with pytest.raises(BringAuthException):
@@ -1030,7 +1031,7 @@ class TestGetAllUserSettings:
         mocked.get(
             f"https://api.getbring.com/rest/bringusersettings/{UUID}",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
         monkeypatch.setattr(bring, "uuid", UUID)
         with pytest.raises(BringAuthException):
@@ -1387,7 +1388,7 @@ class TestBatchUpdateList:
         mocked.put(
             f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
 
         with pytest.raises(BringAuthException):
@@ -1454,7 +1455,7 @@ class TestRetrieveNewAccessToken:
         mocked.post(
             "https://api.getbring.com/rest/v2/bringauth/token",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
 
         with pytest.raises(BringAuthException):
