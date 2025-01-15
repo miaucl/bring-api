@@ -182,12 +182,12 @@ class BringSyncCurrentUserResponse(DataClassORJSONMixin):
 
     email: str
     emailVerified: bool
-    name: str
     photoPath: str
     premiumConfiguration: dict[str, bool]
     publicUserUuid: UUID
     userLocale: UserLocale
     userUuid: UUID
+    name: str | None = None
 
 
 class BringItemOperation(StrEnum):
