@@ -1,8 +1,6 @@
 """Bring api implementation."""
 
 import asyncio
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
 from http import HTTPStatus
 from itertools import chain
 import json
@@ -10,6 +8,7 @@ from json import JSONDecodeError
 import logging
 import os
 import time
+from typing import Any
 
 import aiohttp
 from mashumaro.exceptions import MissingField
@@ -82,70 +81,65 @@ class Bring:
         self.headers = DEFAULT_HEADERS.copy()
 
         self.loop = asyncio.get_running_loop()
-        self.refresh_token = ""
-        self.__expires_in: int = 0
+        self.__refresh_token: str | None = None
+        self.__access_token_expires_at: float | None = None
+        self._etag: dict[str, str] = {}
+        self._site_cache: dict[str, str] = {}
 
     @property
-    def expires_in(self) -> int:
+    def _expires_at(self) -> float | None:
         """Refresh token expiration."""
-        return max(0, self.__expires_in - int(time.time()))
+        return self.__access_token_expires_at
 
-    @expires_in.setter
-    def expires_in(self, expires_in: int | str) -> None:
-        self.__expires_in = int(time.time()) + int(expires_in)
+    @_expires_at.setter
+    def _expires_at(self, expires_in: int) -> None:
+        self.__access_token_expires_at = time.time() + expires_in
 
-    @asynccontextmanager
+    @property
+    def _token_expired(self) -> bool:
+        """True if access token expired."""
+
+        return (
+            self.__access_token_expires_at is None
+            or self.__access_token_expires_at < time.time()
+        )
+
     async def _request(
-        self, method: str, url: URL, retry: bool = True, **kwargs
-    ) -> AsyncGenerator[aiohttp.ClientResponse]:
+        self, method: str, url: URL, retry: bool = False, **kwargs: Any
+    ) -> str:
         """Handle request and ensure valid auth token."""
-
-        if not self.expires_in and retry:
+        headers = self.headers.copy()
+        if (self._token_expired or retry) and self.__refresh_token:
             await self.retrieve_new_access_token()
 
+        if method == "get" and (etag := self._etag.get(str(url))) and not retry:
+            headers["If-None-Match"] = etag
+
         try:
-            async with self._session.request(
-                method, url, headers=self.headers, **kwargs
-            ) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
+            r = await self._session.request(method, url, headers=headers, **kwargs)
+            _LOGGER.debug("Response from %s [%s]: %s", url, r.status, await r.text())
+
+            if r.status == HTTPStatus.UNAUTHORIZED:
+                try:
+                    errmsg = BringErrorResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
+                except (JSONDecodeError, aiohttp.ClientError):
+                    _LOGGER.debug(
+                        "Exception: Cannot parse error response", exc_info=True
+                    )
+                else:
+                    _LOGGER.debug("Exception: Authentication failed: %s", repr(errmsg))
+                    if not retry:
+                        return await self._request(method, url, True, **kwargs)
+
+                raise BringAuthException(
+                    "Loading list items failed due to authorization failure, "
+                    "the authorization token is invalid or expired."
                 )
 
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except MissingField as e:
-                        raise BringParseException(
-                            f"Failed to parse response: {str(e)} "
-                            "This is likely a bug. Please report it at: https://github.com/miaucl/bring-api/issues",
-                        ) from e
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug("Exception: %s", repr(errmsg))
-                        if retry:
-                            try:
-                                await self.retrieve_new_access_token()
-                            except BringAuthException as e:
-                                raise BringAuthException from e
-                            else:
-                                async with self._request(
-                                    method, url, False, **kwargs
-                                ) as r:
-                                    yield r
-                        else:
-                            raise BringAuthException
+            r.raise_for_status()
 
-                r.raise_for_status()
-
-                yield r
-        except BringAuthException as e:
-            raise BringAuthException(
-                "Login failed due to authorization failure, "
-                "please check your email and password."
-            ) from e
         except aiohttp.ClientResponseError as e:
             _LOGGER.debug("Exception: %s", repr(e), exc_info=True)
             raise BringRequestException(
@@ -161,6 +155,21 @@ class Bring:
             raise BringRequestException(
                 "Request failed due to client connection error."
             ) from e
+        else:
+            if r.status == HTTPStatus.NOT_MODIFIED and etag:
+                try:
+                    return self._site_cache[etag]
+                except KeyError:
+                    self._etag.pop(str(url), None)
+                    return await self._request(method, url, True, **kwargs)
+
+            body = await r.text()
+
+            if etag := r.headers.get("etag"):
+                self._etag[str(url)] = etag
+                self._site_cache[etag] = body
+
+            return body
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
@@ -246,8 +255,8 @@ class Bring:
         self.headers["X-BRING-USER-UUID"] = self.uuid
         self.headers["X-BRING-PUBLIC-USER-UUID"] = self.public_uuid
         self.headers["Authorization"] = f"{data.token_type} {data.access_token}"
-        self.refresh_token = data.refresh_token
-        self.expires_in = data.expires_in
+        self.__refresh_token = data.refresh_token
+        self._expires_at = data.expires_in
 
         locale = (await self.get_user_account()).userLocale
         self.headers["X-BRING-COUNTRY"] = locale.country
@@ -298,43 +307,17 @@ class Bring:
             If the request fails due to invalid or expired authorization token.
 
         """
+
+        url = self.url / "bringusers" / self.uuid / "lists"
+        r = await self._request("get", url)
         try:
-            url = self.url / "bringusers" / self.uuid / "lists"
-            async with self._request("get", url) as r:
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug("Exception: Cannot get lists: %s", errmsg.message)
-                    raise BringAuthException(
-                        "Loading lists failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-
-                try:
-                    return BringListResponse.from_json(await r.text())
-                except MissingField as e:
-                    raise BringMissingFieldException(e) from e
-                except JSONDecodeError as e:
-                    _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
-                    raise BringParseException(
-                        "Loading lists failed during parsing of request response."
-                    ) from e
-        except TimeoutError as e:
+            return BringListResponse.from_json(r)
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
             _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
-            raise BringRequestException(
-                "Loading lists failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
-            raise BringRequestException(
-                "Loading lists failed due to request exception."
+            raise BringParseException(
+                "Loading lists failed during parsing of request response."
             ) from e
 
     async def get_list(self, list_uuid: str) -> BringItemsResponse:
@@ -1430,7 +1413,8 @@ class Bring:
             If the request fails due to invalid or expired refresh token.
 
         """
-        refresh_token = refresh_token or self.refresh_token
+        if not (refresh_token := refresh_token or self.__refresh_token):
+            raise BringAuthException("Refresh token not found. Login required.")
 
         user_data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
         try:
@@ -1489,7 +1473,7 @@ class Bring:
             ) from e
 
         self.headers["Authorization"] = f"{data.token_type} {data.access_token}"
-        self.expires_in = data.expires_in
+        self._expires_at = data.expires_in
 
         return data
 
