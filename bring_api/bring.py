@@ -8,7 +8,6 @@ from json import JSONDecodeError
 import logging
 import os
 import time
-import traceback
 from uuid import UUID
 
 import aiohttp
@@ -125,8 +124,8 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse login request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse login request response:",
+                            exc_info=True,
                         )
                     else:
                         _LOGGER.debug("Exception: Cannot login: %s", errmsg.message)
@@ -144,19 +143,17 @@ class Bring:
                 try:
                     data = BringAuthResponse.from_json(await r.text())
                 except JSONDecodeError as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot login:\n %s", traceback.format_exc()
-                    )
+                    _LOGGER.debug("Exception: Cannot login:", exc_info=True)
                     raise BringParseException(
                         "Cannot parse login request response."
                     ) from e
         except TimeoutError as e:
-            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:", exc_info=True)
             raise BringRequestException(
                 "Authentication failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:", exc_info=True)
             raise BringRequestException(
                 "Authentication failed due to request exception."
             ) from e
@@ -230,8 +227,7 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug("Exception: Cannot get lists: %s", errmsg.message)
@@ -245,19 +241,17 @@ class Bring:
                 try:
                     return BringListResponse.from_json(await r.text())
                 except JSONDecodeError as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot get lists:\n %s", traceback.format_exc()
-                    )
+                    _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
         except TimeoutError as e:
-            _LOGGER.debug("Exception: Cannot get lists:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
             raise BringRequestException(
-                "Loading list failed due to connection timeout."
+                "Loading lists failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.debug("Exception: Cannot get lists:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
             raise BringRequestException(
                 "Loading lists failed due to request exception."
             ) from e
@@ -297,8 +291,7 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
@@ -322,9 +315,9 @@ class Bring:
 
                 except (JSONDecodeError, KeyError) as e:
                     _LOGGER.debug(
-                        "Exception: Cannot get items for list %s:\n%s",
+                        "Exception: Cannot get items for list %s:",
                         list_uuid,
-                        traceback.format_exc(),
+                        exc_info=True,
                     )
                     raise BringParseException(
                         "Loading list items failed during parsing of request response."
@@ -333,18 +326,18 @@ class Bring:
                     return data
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot get items for list %s:\n%s",
+                "Exception: Cannot get items for list %s:",
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Loading list items failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.debug(
-                "Exception: Cannot get items for list %s:\n%s",
+                "Exception: Cannot get items for list %s:",
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Loading list items failed due to request exception."
@@ -391,8 +384,7 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
@@ -411,27 +403,27 @@ class Bring:
                     )
                 except JSONDecodeError as e:
                     _LOGGER.debug(
-                        "Exception: Cannot get item details for list %s:\n%s",
+                        "Exception: Cannot get item details for list %s:",
                         list_uuid,
-                        traceback.format_exc(),
+                        exc_info=True,
                     )
                     raise BringParseException(
                         "Loading list details failed during parsing of request response."
                     ) from e
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot get item details for list %s:\n%s",
+                "Exception: Cannot get item details for list %s:",
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Loading list details failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.debug(
-                "Exception: Cannot get item details for list %s:\n%s",
+                "Exception: Cannot get item details for list %s:",
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Loading list details failed due to request exception."
@@ -479,11 +471,11 @@ class Bring:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except BringRequestException as e:
             _LOGGER.debug(
-                "Exception: Cannot save item %s (%s) to list %s:\n%s",
+                "Exception: Cannot save item %s (%s) to list %s:",
                 item_name,
                 specification,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Saving item {item_name} ({specification}) to list {list_uuid} "
@@ -535,11 +527,11 @@ class Bring:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except BringRequestException as e:
             _LOGGER.debug(
-                "Exception: Cannot update item %s (%s) to list %s:\n%s",
+                "Exception: Cannot update item %s (%s) to list %s:",
                 item_name,
                 specification,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Updating item {item_name} ({specification}) in list {list_uuid} "
@@ -583,10 +575,10 @@ class Bring:
             )
         except BringRequestException as e:
             _LOGGER.debug(
-                "Exception: Cannot delete item %s from list %s:\n%s",
+                "Exception: Cannot delete item %s from list %s:",
                 item_name,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Removing item {item_name} from list {list_uuid} "
@@ -637,10 +629,10 @@ class Bring:
             )
         except BringRequestException as e:
             _LOGGER.debug(
-                "Exception: Cannot complete item %s in list %s:\n%s",
+                "Exception: Cannot complete item %s in list %s:",
                 item_name,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Completing item {item_name} from list {list_uuid} "
@@ -714,8 +706,7 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
@@ -730,10 +721,10 @@ class Bring:
                 return r
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot send notification %s for list %s:\n%s",
+                "Exception: Cannot send notification %s for list %s:",
                 notification_type,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Sending notification {notification_type} for list {list_uuid}"
@@ -741,10 +732,10 @@ class Bring:
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.debug(
-                "Exception: Cannot send notification %s for list %s:\n%s",
+                "Exception: Cannot send notification %s for list %s:",
                 notification_type,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Sending notification {notification_type} for list {list_uuid}"
@@ -793,9 +784,7 @@ class Bring:
 
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot get verification for %s:\n%s",
-                mail,
-                traceback.format_exc(),
+                "Exception: Cannot get verification for %s:", mail, exc_info=True
             )
             raise BringRequestException(
                 "Verifying email failed due to connection timeout."
@@ -885,9 +874,9 @@ class Bring:
                         dictionaries[locale] = await r.json()
                     except JSONDecodeError as e:
                         _LOGGER.debug(
-                            "Exception: Cannot load articles.%s.json:\n%s",
+                            "Exception: Cannot load articles.%s.json:",
                             locale,
-                            traceback.format_exc(),
+                            exc_info=True,
                         )
                         raise BringParseException(
                             f"Loading article translations for locale {locale} "
@@ -895,9 +884,7 @@ class Bring:
                         ) from e
             except TimeoutError as e:
                 _LOGGER.debug(
-                    "Exception: Cannot load articles.%s.json::\n%s",
-                    locale,
-                    traceback.format_exc(),
+                    "Exception: Cannot load articles.%s.json:", locale, exc_info=True
                 )
                 raise BringRequestException(
                     f"Loading article translations for locale {locale} "
@@ -906,9 +893,7 @@ class Bring:
 
             except aiohttp.ClientError as e:
                 _LOGGER.debug(
-                    "Exception: Cannot load articles.%s.json:\n%s",
-                    locale,
-                    traceback.format_exc(),
+                    "Exception: Cannot load articles.%s.json:", locale, exc_info=True
                 )
                 raise BringRequestException(
                     f"Loading article translations for locale {locale} "
@@ -969,8 +954,7 @@ class Bring:
 
         except Exception as e:
             _LOGGER.debug(
-                "Exception: Cannot load translation dictionary:\n%s",
-                traceback.format_exc(),
+                "Exception: Cannot load translation dictionary:", exc_info=True
             )
             raise BringTranslationException(
                 "Translation failed due to error loading translation dictionary."
@@ -1002,10 +986,7 @@ class Bring:
             }
 
         except Exception as e:
-            _LOGGER.debug(
-                "Exception: Cannot load user list settings:\n%s",
-                traceback.format_exc(),
-            )
+            _LOGGER.debug("Exception: Cannot load user list settings:", exc_info=True)
             raise BringTranslationException(
                 "Translation failed due to error loading user list settings."
             ) from e
@@ -1041,8 +1022,7 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
@@ -1059,9 +1039,9 @@ class Bring:
                     return BringUserSettingsResponse.from_json(await r.text())
                 except JSONDecodeError as e:
                     _LOGGER.debug(
-                        "Exception: Cannot get user settings for uuid %s:\n%s",
+                        "Exception: Cannot get user settings for uuid %s:",
                         self.uuid,
-                        traceback.format_exc(),
+                        exc_info=True,
                     )
                     raise BringParseException(
                         "Loading user settings failed during parsing of request response."
@@ -1069,18 +1049,18 @@ class Bring:
 
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot get user settings for uuid %s:\n%s",
+                "Exception: Cannot get user settings for uuid %s:",
                 self.uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Loading user settings failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.debug(
-                "Exception: Cannot get user settings for uuid %s:\n%s",
+                "Exception: Cannot get user settings for uuid %s:",
                 self.uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Loading user settings failed due to request exception."
@@ -1168,8 +1148,7 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
@@ -1186,25 +1165,18 @@ class Bring:
                 try:
                     return BringSyncCurrentUserResponse.from_json(await r.text())
                 except JSONDecodeError as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot get lists:\n %s", traceback.format_exc()
-                    )
+                    _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
                     raise BringParseException(
                         "Loading lists failed during parsing of request response."
                     ) from e
 
         except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get current user settings:\n %s",
-                traceback.format_exc(),
-            )
+            _LOGGER.debug("Exception: Cannot get current user settings:", exc_info=True)
             raise BringRequestException(
                 "Loading current user settings failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot  current user settings:\n %s", traceback.format_exc()
-            )
+            _LOGGER.debug("Exception: Cannot  current user settings:", exc_info=True)
             raise BringRequestException(
                 "Loading current user settings failed due to request exception."
             ) from e
@@ -1285,8 +1257,7 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
@@ -1302,18 +1273,18 @@ class Bring:
                 return r
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot execute batch operations for list %s:\n%s",
+                "Exception: Cannot execute batch operations for list %s:",
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Batch operation for list {list_uuid} failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.debug(
-                "Exception: Cannot execute batch operations for %s:\n%s",
+                "Exception: Cannot execute batch operations for %s:",
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 f"Batch operation for list {list_uuid} failed due to request exception."
@@ -1363,8 +1334,8 @@ class Bring:
                         errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse token request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse token request response:",
+                            exc_info=True,
                         )
                     else:
                         _LOGGER.debug(
@@ -1382,19 +1353,18 @@ class Bring:
                     data = BringAuthTokenResponse.from_json(await r.text())
                 except JSONDecodeError as e:
                     _LOGGER.debug(
-                        "Exception: Cannot retrieve new access token:\n %s",
-                        traceback.format_exc(),
+                        "Exception: Cannot retrieve new access token:", exc_info=True
                     )
                     raise BringParseException(
                         "Cannot parse token request response."
                     ) from e
         except TimeoutError as e:
-            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:", exc_info=True)
             raise BringRequestException(
                 "Retrieve new access token failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
-            _LOGGER.debug("Exception: Cannot login:\n %s", traceback.format_exc())
+            _LOGGER.debug("Exception: Cannot login:", exc_info=True)
             raise BringRequestException(
                 "Retrieve new access token failed due to request exception."
             ) from e
@@ -1459,20 +1429,20 @@ class Bring:
                 return r
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot set article language to %s for list %s:\n%s",
+                "Exception: Cannot set article language to %s for list %s:",
                 language,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Set list article language failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.debug(
-                "Exception: Cannot set article language to %s for list %s:\n%s",
+                "Exception: Cannot set article language to %s for list %s:",
                 language,
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Set list article language failed due to request exception."
@@ -1492,8 +1462,7 @@ class Bring:
                         errmsg = await r.json()
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
-                            "Exception: Cannot parse request response:\n %s",
-                            traceback.format_exc(),
+                            "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
@@ -1510,9 +1479,9 @@ class Bring:
                     return BringActivityResponse.from_json(await r.text())
                 except (JSONDecodeError, KeyError) as e:
                     _LOGGER.debug(
-                        "Exception: Cannot get activity for list %s:\n%s",
+                        "Exception: Cannot get activity for list %s:",
                         list_uuid,
-                        traceback.format_exc(),
+                        exc_info=True,
                     )
                     raise BringParseException(
                         "Loading list activity failed during parsing of request response."
@@ -1520,18 +1489,16 @@ class Bring:
 
         except TimeoutError as e:
             _LOGGER.debug(
-                "Exception: Cannot get activity for list %s:\n%s",
+                "Exception: Cannot get activity for list %s:",
                 list_uuid,
-                traceback.format_exc(),
+                exc_info=True,
             )
             raise BringRequestException(
                 "Loading list activity failed due to connection timeout."
             ) from e
         except aiohttp.ClientError as e:
             _LOGGER.debug(
-                "Exception: Cannot get activity for list %s:\n%s",
-                list_uuid,
-                traceback.format_exc(),
+                "Exception: Cannot get activity for list %s:", list_uuid, exc_info=True
             )
             raise BringRequestException(
                 "Loading list activity failed due to request exception."
