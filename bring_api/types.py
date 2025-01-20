@@ -145,7 +145,7 @@ class BringUserSettingsEntry(DataClassORJSONMixin):
 class BringUserListSettingEntry(DataClassORJSONMixin):
     """A user list settings class. Represents a single list setting."""
 
-    listUuid: UUID
+    listUuid: str
     usersettings: list[BringUserSettingsEntry]
 
 

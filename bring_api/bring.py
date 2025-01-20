@@ -983,7 +983,7 @@ class Bring:
         """
         try:
             return {
-                str(user_list_setting.listUuid): {
+                user_list_setting.listUuid: {
                     user_setting.key: user_setting.value
                     for user_setting in user_list_setting.usersettings
                 }
