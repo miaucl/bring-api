@@ -8,7 +8,6 @@ from json import JSONDecodeError
 import logging
 import os
 import time
-from uuid import UUID
 
 import aiohttp
 from mashumaro.exceptions import MissingField
@@ -64,12 +63,12 @@ class Bring:
         self.mail = mail
         self.password = password
 
-        self.public_uuid: UUID | None = None
+        self.public_uuid: str = ""
         self.user_list_settings: dict[str, dict[str, str]] = {}
         self.user_locale = BRING_DEFAULT_LOCALE
 
         self.__translations: dict[str, dict[str, str]] = {}
-        self.uuid: UUID | None = None
+        self.uuid: str = ""
 
         self.url = URL(API_BASE_URL)
 
@@ -164,8 +163,8 @@ class Bring:
 
         self.uuid = data.uuid
         self.public_uuid = data.publicUuid
-        self.headers["X-BRING-USER-UUID"] = str(self.uuid)
-        self.headers["X-BRING-PUBLIC-USER-UUID"] = str(self.public_uuid)
+        self.headers["X-BRING-USER-UUID"] = self.uuid
+        self.headers["X-BRING-PUBLIC-USER-UUID"] = self.public_uuid
         self.headers["Authorization"] = f"{data.token_type} {data.access_token}"
         self.refresh_token = data.refresh_token
         self.expires_in = data.expires_in
@@ -220,7 +219,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "bringusers" / str(self.uuid) / "lists"
+            url = self.url / "bringusers" / self.uuid / "lists"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -262,7 +261,7 @@ class Bring:
                 "Loading lists failed due to request exception."
             ) from e
 
-    async def get_list(self, list_uuid: UUID) -> BringItemsResponse:
+    async def get_list(self, list_uuid: str) -> BringItemsResponse:
         """Get all items from a shopping list.
 
         Parameters
@@ -286,7 +285,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "v2/bringlists" / str(list_uuid)
+            url = self.url / "v2/bringlists" / list_uuid
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -438,10 +437,10 @@ class Bring:
 
     async def save_item(
         self,
-        list_uuid: UUID,
+        list_uuid: str,
         item_name: str,
         specification: str = "",
-        item_uuid: UUID | None = None,
+        item_uuid: str | None = None,
     ) -> aiohttp.ClientResponse:
         """Save an item to a shopping list.
 
@@ -469,11 +468,7 @@ class Bring:
             If the request fails.
 
         """
-        data = BringItem(
-            itemId=item_name,
-            spec=specification,
-            uuid=str(item_uuid) if item_uuid else None,
-        )
+        data = BringItem(itemId=item_name, spec=specification, uuid=item_uuid)
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except BringRequestException as e:
@@ -491,10 +486,10 @@ class Bring:
 
     async def update_item(
         self,
-        list_uuid: UUID,
+        list_uuid: str,
         item_name: str,
         specification: str = "",
-        item_uuid: UUID | None = None,
+        item_uuid: str | None = None,
     ) -> aiohttp.ClientResponse:
         """Update an existing list item.
 
@@ -528,7 +523,7 @@ class Bring:
         data = BringItem(
             itemId=item_name,
             spec=specification,
-            uuid=str(item_uuid) if item_uuid else None,
+            uuid=item_uuid,
         )
         try:
             return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
@@ -546,7 +541,7 @@ class Bring:
             ) from e
 
     async def remove_item(
-        self, list_uuid: UUID, item_name: str, item_uuid: UUID | None = None
+        self, list_uuid: str, item_name: str, item_uuid: str | None = None
     ) -> aiohttp.ClientResponse:
         """Remove an item from a shopping list.
 
@@ -574,7 +569,7 @@ class Bring:
         data = BringItem(
             itemId=item_name,
             spec="",
-            uuid=str(item_uuid) if item_uuid else None,
+            uuid=item_uuid,
         )
         try:
             return await self.batch_update_list(
@@ -594,10 +589,10 @@ class Bring:
 
     async def complete_item(
         self,
-        list_uuid: UUID,
+        list_uuid: str,
         item_name: str,
         specification: str = "",
-        item_uuid: UUID | None = None,
+        item_uuid: str | None = None,
     ) -> aiohttp.ClientResponse:
         """Complete an item from a shopping list. This will add it to recent items.
 
@@ -628,7 +623,7 @@ class Bring:
         data = BringItem(
             itemId=item_name,
             spec=specification,
-            uuid=str(item_uuid) if item_uuid else None,
+            uuid=item_uuid,
         )
         try:
             return await self.batch_update_list(
@@ -648,7 +643,7 @@ class Bring:
 
     async def notify(
         self,
-        list_uuid: UUID,
+        list_uuid: str,
         notification_type: BringNotificationType,
         item_name: str | None = None,
     ) -> aiohttp.ClientResponse:
@@ -684,7 +679,7 @@ class Bring:
         json_data = BringNotificationsConfigType(
             arguments=[],
             listNotificationType=notification_type.value,
-            senderPublicUserUuid=str(self.public_uuid),
+            senderPublicUserUuid=self.public_uuid,
         )
 
         if not isinstance(notification_type, BringNotificationType):
@@ -700,7 +695,7 @@ class Bring:
 
             json_data["arguments"] = [item_name]
         try:
-            url = self.url / "v2/bringnotifications/lists" / str(list_uuid)
+            url = self.url / "v2/bringnotifications/lists" / list_uuid
             async with self._session.post(
                 url, headers=self.headers, json=json_data
             ) as r:
@@ -1018,7 +1013,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "bringusersettings" / str(self.uuid)
+            url = self.url / "bringusersettings" / self.uuid
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -1075,7 +1070,7 @@ class Bring:
                 "Loading user settings failed due to request exception."
             ) from e
 
-    def __locale(self, list_uuid: UUID) -> str:
+    def __locale(self, list_uuid: str) -> str:
         """Get list or user locale.
 
         Returns
@@ -1089,8 +1084,8 @@ class Bring:
             If list locale could not be determined from the userlistsettings or user.
 
         """
-        if str(list_uuid) in self.user_list_settings:
-            return self.user_list_settings[str(list_uuid)].get(
+        if list_uuid in self.user_list_settings:
+            return self.user_list_settings[list_uuid].get(
                 "listArticleLanguage", self.user_locale
             )
         return self.user_locale
@@ -1146,7 +1141,7 @@ class Bring:
 
         """
         try:
-            url = self.url / "v2/bringusers" / str(self.uuid)
+            url = self.url / "v2/bringusers" / self.uuid
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
@@ -1194,7 +1189,7 @@ class Bring:
 
     async def batch_update_list(
         self,
-        list_uuid: UUID,
+        list_uuid: str,
         items: BringItem | list[BringItem] | list[dict[str, str]],
         operation: BringItemOperation | None = None,
     ) -> aiohttp.ClientResponse:
@@ -1255,7 +1250,7 @@ class Bring:
         }
 
         try:
-            url = self.url / "v2/bringlists" / str(list_uuid) / "items"
+            url = self.url / "v2/bringlists" / list_uuid / "items"
             async with self._session.put(
                 url, headers=self.headers, json=json_data
             ) as r:
@@ -1388,7 +1383,7 @@ class Bring:
         return data
 
     async def set_list_article_language(
-        self, list_uuid: UUID, language: str
+        self, list_uuid: str, language: str
     ) -> aiohttp.ClientResponse:
         """Set the article language for a specified list.
 
@@ -1420,8 +1415,8 @@ class Bring:
         url = (
             self.url
             / "bringusersettings"
-            / str(self.uuid)
-            / str(list_uuid)
+            / self.uuid
+            / list_uuid
             / "listArticleLanguage"
         )
 
@@ -1461,10 +1456,10 @@ class Bring:
                 "Set list article language failed due to request exception."
             ) from e
 
-    async def get_activity(self, list_uuid: UUID) -> BringActivityResponse:
+    async def get_activity(self, list_uuid: str) -> BringActivityResponse:
         """Get activity for given list."""
         try:
-            url = self.url / "v2/bringlists" / str(list_uuid) / "activity"
+            url = self.url / "v2/bringlists" / list_uuid / "activity"
             async with self._session.get(url, headers=self.headers) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
