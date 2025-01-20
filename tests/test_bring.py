@@ -4,7 +4,6 @@ import asyncio
 import enum
 from http import HTTPStatus
 import time
-import uuid
 
 import aiohttp
 from dotenv import load_dotenv
@@ -225,8 +224,8 @@ class TestLogin:
         assert data == snapshot
         assert bring.headers["Authorization"] == "Bearer ACCESS_TOKEN"
         assert bring.headers["X-BRING-COUNTRY"] == "DE"
-        assert bring.uuid == uuid.UUID(UUID)
-        assert bring.public_uuid == uuid.UUID(UUID)
+        assert bring.uuid == UUID
+        assert bring.public_uuid == UUID
         assert bring.user_locale == "de-DE"
 
 
@@ -1561,7 +1560,7 @@ class TestGetActivity:
         )
         monkeypatch.setattr(bring, "uuid", UUID)
 
-        activity = await bring.get_activity(uuid.UUID(UUID))
+        activity = await bring.get_activity(UUID)
 
         assert activity == snapshot
 
@@ -1581,7 +1580,7 @@ class TestGetActivity:
         )
 
         with pytest.raises(BringRequestException):
-            await bring.get_activity(uuid.UUID(UUID))
+            await bring.get_activity(UUID)
 
     async def test_auth_exception(self, mocked, bring):
         """Test request exceptions."""
@@ -1593,7 +1592,7 @@ class TestGetActivity:
         )
 
         with pytest.raises(BringAuthException):
-            await bring.get_activity(uuid.UUID(UUID))
+            await bring.get_activity(UUID)
 
     @pytest.mark.parametrize(
         ("status", "exception"),
@@ -1613,4 +1612,4 @@ class TestGetActivity:
         )
 
         with pytest.raises(exception):
-            await bring.get_activity(uuid.UUID(UUID))
+            await bring.get_activity(UUID)

@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, StrEnum
 from typing import Literal, NotRequired, TypedDict
-from uuid import UUID
 
 from mashumaro.mixins.orjson import DataClassORJSONMixin
 
@@ -13,7 +12,7 @@ from mashumaro.mixins.orjson import DataClassORJSONMixin
 class BringList(DataClassORJSONMixin):
     """A list class. Represents a single list."""
 
-    listUuid: UUID
+    listUuid: str
     name: str
     theme: str
 
@@ -39,7 +38,7 @@ class Attribute(DataClassORJSONMixin):
 class BringPurchase(DataClassORJSONMixin):
     """A purchase class. Represents a single item."""
 
-    uuid: UUID
+    uuid: str
     itemId: str
     specification: str
     attributes: list[Attribute] = field(default_factory=list)
@@ -53,9 +52,9 @@ class BringListItemDetails(DataClassORJSONMixin):
     Caution: This does not have to be an item that is currently marked as 'to buy'.
     """
 
-    uuid: UUID
+    uuid: str
     itemId: str
-    listUuid: UUID
+    listUuid: str
     userIconItemId: str
     userSectionId: str
     assignedTo: str
@@ -66,10 +65,9 @@ class BringListItemDetails(DataClassORJSONMixin):
 class BringAuthResponse(DataClassORJSONMixin):
     """An auth response class."""
 
-    uuid: UUID
-    publicUuid: UUID
-
-    bringListUUID: UUID
+    uuid: str
+    publicUuid: str
+    bringListUUID: str
     access_token: str
     refresh_token: str
     token_type: str
@@ -98,7 +96,7 @@ class Items(DataClassORJSONMixin):
 class BringItemsResponse(DataClassORJSONMixin):
     """An items response class."""
 
-    uuid: UUID
+    uuid: str
     status: str
     items: Items
 
@@ -184,9 +182,9 @@ class BringSyncCurrentUserResponse(DataClassORJSONMixin):
     email: str
     emailVerified: bool
     premiumConfiguration: dict[str, bool]
-    publicUserUuid: UUID
+    publicUserUuid: str
     userLocale: UserLocale
-    userUuid: UUID
+    userUuid: str
     name: str = ""
     photoPath: str = ""
 
@@ -247,9 +245,9 @@ class ActivityType(StrEnum):
 class ActivityContent:
     """An activity content entry."""
 
-    uuid: UUID
+    uuid: str
     sessionDate: datetime
-    publicUserUuid: UUID
+    publicUserUuid: str
     items: list[BringPurchase] = field(default_factory=list)
     purchase: list[BringPurchase] = field(default_factory=list)
     recently: list[BringPurchase] = field(default_factory=list)
