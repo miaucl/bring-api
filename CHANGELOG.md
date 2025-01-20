@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.0.0
+
+- Refactored response types to dataclasses (breaking change)
+- Use mashumaro for faster json serialization
+- **New API method:** `get_activity` retrieves latest activity for a list
+- Various improvements to exception handling and overall code quality
+
 ## 0.9.1
 
 - Don't raise BringParseException on parsing errors for unauthorized request responses
