@@ -68,14 +68,15 @@ class BringAuthResponse(DataClassORJSONMixin):
 
     uuid: UUID
     publicUuid: UUID
-    photoPath: str
+
     bringListUUID: UUID
     access_token: str
     refresh_token: str
     token_type: str
     expires_in: int
-    email: str | None = None
-    name: str | None = None
+    photoPath: str
+    email: str = ""
+    name: str = ""
 
 
 @dataclass(kw_only=True)
@@ -182,12 +183,12 @@ class BringSyncCurrentUserResponse(DataClassORJSONMixin):
 
     email: str
     emailVerified: bool
-    photoPath: str
     premiumConfiguration: dict[str, bool]
     publicUserUuid: UUID
     userLocale: UserLocale
     userUuid: UUID
-    name: str | None = None
+    name: str = ""
+    photoPath: str = ""
 
 
 class BringItemOperation(StrEnum):

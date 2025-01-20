@@ -12,13 +12,13 @@
   BringItemsResponse(uuid=UUID('00000000-0000-0000-0000-000000000000'), status='SHARED', items=Items(purchase=[BringPurchase(uuid=UUID('43bdd5a2-740a-4230-8b27-d0bbde886da7'), itemId='Paprika', specification='grün', attributes=[]), BringPurchase(uuid=UUID('2de9d1c0-c211-4129-b6c5-c1260c3fc735'), itemId='Zucchetti', specification='gelb', attributes=[])], recently=[BringPurchase(uuid=UUID('5681ed79-c8e4-4c8b-95ec-112999d016c0'), itemId='Paprika', specification='rot', attributes=[]), BringPurchase(uuid=UUID('01eea2cd-f433-4263-ad08-3d71317c4298'), itemId='Pouletbrüstli', specification='', attributes=[])]))
 # ---
 # name: TestGetUserAccount.test_get_user_account
-  BringSyncCurrentUserResponse(email='{email}', emailVerified=True, photoPath='bring/user/portrait/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx', premiumConfiguration={'hasPremium': False, 'hideSponsoredProducts': False, 'hideSponsoredTemplates': False, 'hideSponsoredPosts': False, 'hideSponsoredCategories': False, 'hideOffersOnMain': False}, publicUserUuid=UUID('00000000-0000-0000-0000-000000000000'), userLocale=UserLocale(language='de', country='DE'), userUuid=UUID('00000000-0000-0000-0000-000000000000'), name='{user_name}')
+  BringSyncCurrentUserResponse(email='{email}', emailVerified=True, premiumConfiguration={'hasPremium': False, 'hideSponsoredProducts': False, 'hideSponsoredTemplates': False, 'hideSponsoredPosts': False, 'hideSponsoredCategories': False, 'hideOffersOnMain': False}, publicUserUuid=UUID('00000000-0000-0000-0000-000000000000'), userLocale=UserLocale(language='de', country='DE'), userUuid=UUID('00000000-0000-0000-0000-000000000000'), name='{user_name}', photoPath='bring/user/portrait/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx')
 # ---
 # name: TestLoadLists.test_load_lists
   BringListResponse(lists=[BringList(listUuid=UUID('00000000-0000-0000-0000-000000000000'), name='Einkauf', theme='ch.publisheria.bring.theme.home')])
 # ---
 # name: TestLogin.test_login
-  BringAuthResponse(uuid=UUID('00000000-0000-0000-0000-000000000000'), publicUuid=UUID('00000000-0000-0000-0000-000000000000'), photoPath='', bringListUUID=UUID('00000000-0000-0000-0000-000000000000'), access_token='ACCESS_TOKEN', refresh_token='REFRESH_TOKEN', token_type='Bearer', expires_in=604799, email='EMAIL', name='NAME')
+  BringAuthResponse(uuid=UUID('00000000-0000-0000-0000-000000000000'), publicUuid=UUID('00000000-0000-0000-0000-000000000000'), bringListUUID=UUID('00000000-0000-0000-0000-000000000000'), access_token='ACCESS_TOKEN', refresh_token='REFRESH_TOKEN', token_type='Bearer', expires_in=604799, photoPath='', email='EMAIL', name='NAME')
 # ---
 # name: TestRetrieveNewAccessToken.test_retrieve_new_access_token
   BringAuthTokenResponse(access_token='{access_token}', refresh_token='{refresh_token}', token_type='Bearer', expires_in=604799)
