@@ -1588,7 +1588,7 @@ class TestGetActivity:
         mocked.get(
             f"https://api.getbring.com/rest/v2/bringlists/{UUID}/activity",
             status=HTTPStatus.UNAUTHORIZED,
-            payload={"message": ""},
+            payload=BRING_ERROR_RESPONSE,
         )
 
         with pytest.raises(BringAuthException):

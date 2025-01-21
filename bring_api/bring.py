@@ -1467,14 +1467,14 @@ class Bring:
 
                 if r.status == HTTPStatus.UNAUTHORIZED:
                     try:
-                        errmsg = await r.json()
+                        errmsg = BringErrorResponse.from_json(await r.text())
                     except (JSONDecodeError, aiohttp.ClientError):
                         _LOGGER.debug(
                             "Exception: Cannot parse request response:", exc_info=True
                         )
                     else:
                         _LOGGER.debug(
-                            "Exception: Cannot get list activity: %s", errmsg["message"]
+                            "Exception: Cannot get list activity: %s", errmsg.message
                         )
                     raise BringAuthException(
                         "Loading list activity failed due to authorization failure, "
