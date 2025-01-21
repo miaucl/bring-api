@@ -32,6 +32,9 @@ from .exceptions import (
     BringUserUnknownException,
 )
 from .types import (
+    Activity,
+    ActivityReaction,
+    ActivityType,
     BringActivityResponse,
     BringAuthResponse,
     BringAuthTokenResponse,
@@ -45,6 +48,7 @@ from .types import (
     BringNotificationType,
     BringSyncCurrentUserResponse,
     BringUserSettingsResponse,
+    ReactionType,
     UserLocale,
 )
 
@@ -646,22 +650,36 @@ class Bring:
         list_uuid: str,
         notification_type: BringNotificationType,
         item_name: str | None = None,
+        activity: str | Activity | None = None,
+        receiver: str | None = None,
+        activity_type: ActivityType | None = None,
+        reaction: ReactionType | None = None,
     ) -> aiohttp.ClientResponse:
         """Send a push notification to all other members of a shared list.
 
         Parameters
         ----------
         list_uuid : str
-            A list uuid returned by loadLists()
+            The unique identifier of the list.
         notification_type : BringNotificationType
-            The type of notification to be sent
+            The type of notification to be sent.
         item_name : str, optional
-            The item_name **must** be included when notication_type
-            is BringNotificationType.URGENT_MESSAGE
+            The name of the item. Required if notification_type is URGENT_MESSAGE.
+        activity: str or Activity, optional
+            The UUID or the Activity object of the activity to react to.
+            Required if notification_type is LIST_ACTIVITY_STREAM_REACTION.
+        receiver: str, optional
+            The public user UUID of the recipient.
+            Required if notification_type is LIST_ACTIVITY_STREAM_REACTION and activity is referenced by it's uuid.
+        activity_type: ActivityType, optional
+            Required if notification_type is LIST_ACTIVITY_STREAM_REACTION and activity is referenced by it's uuid.
+        reaction: ReactionType, optional
+            The type of reaction. Either :MONOCLE:, :THUMBS_UP:, :HEART:, or :DROOLING:
+            Required if notification_type is LIST_ACTIVITY_STREAM_REACTION.
 
         Returns
         -------
-        Response
+        aiohttp.ClientResponse
             The server response object.
 
         Raises
@@ -671,12 +689,12 @@ class Bring:
         BringAuthException
             If the request fails due to invalid or expired authorization token.
         TypeError
-            if the notification_type parameter is invalid.
+            If the notification_type parameter is invalid.
         ValueError
-            If the value for item_name is invalid.
+            If the value for item_name, receiver, activity, activity_type, or reaction is invalid.
 
         """
-        json_data = BringNotificationsConfigType(
+        json = BringNotificationsConfigType(
             arguments=[],
             listNotificationType=notification_type.value,
             senderPublicUserUuid=self.public_uuid,
@@ -687,18 +705,39 @@ class Bring:
                 f"notificationType {notification_type} not supported,"
                 "must be of type BringNotificationType."
             )
+
         if notification_type is BringNotificationType.URGENT_MESSAGE:
             if not item_name or len(item_name) == 0:
                 raise ValueError(
                     "notificationType is URGENT_MESSAGE but argument itemName missing."
                 )
+            else:
+                json["arguments"] = [item_name]
 
-            json_data["arguments"] = [item_name]
+        if notification_type is BringNotificationType.LIST_ACTIVITY_STREAM_REACTION:
+            if isinstance(activity, Activity) and reaction:
+                json["receiverPublicUserUuid"] = activity.content.publicUserUuid
+                json["listActivityStreamReaction"] = ActivityReaction(
+                    moduleUuid=activity.content.uuid,
+                    moduleType=activity.type.name,
+                    reactionType=reaction.name,
+                )
+            elif isinstance(activity, str) and receiver and activity_type and reaction:
+                json["receiverPublicUserUuid"] = receiver
+                json["listActivityStreamReaction"] = ActivityReaction(
+                    moduleUuid=activity,
+                    moduleType=activity_type.name,
+                    reactionType=reaction.name,
+                )
+            else:
+                raise ValueError(
+                    "notificationType is LIST_ACTIVITY_STREAM_REACTION but a parameter is missing. "
+                    f"[{receiver=},{activity=},{activity_type=},{reaction=}]"
+                )
+
         try:
             url = self.url / "v2/bringnotifications/lists" / list_uuid
-            async with self._session.post(
-                url, headers=self.headers, json=json_data
-            ) as r:
+            async with self._session.post(url, headers=self.headers, json=json) as r:
                 _LOGGER.debug(
                     "Response from %s [%s]: %s", url, r.status, await r.text()
                 )

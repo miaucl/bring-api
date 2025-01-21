@@ -2,10 +2,53 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Literal, NotRequired, TypedDict
 
 from mashumaro.mixins.orjson import DataClassORJSONMixin
+
+
+class ActivityType(StrEnum):
+    """Activity type."""
+
+    LIST_ITEMS_CHANGED = "LIST_ITEMS_CHANGED"
+    LIST_ITEMS_ADDED = "LIST_ITEMS_ADDED"
+    LIST_ITEMS_REMOVED = "LIST_ITEMS_REMOVED"
+
+
+class BringNotificationType(StrEnum):
+    """Notification type.
+
+    GOING_SHOPPING: "I'm going shopping! - Last chance for adjustments"
+    CHANGED_LIST: "List changed - Check it out"
+    SHOPPING_DONE: "Shopping done - you can relax"
+    URGENT_MESSAGE: "Breaking news - Please get {itemName}!
+    LIST_ACTIVITY_STREAM_REACTION: React with 🧐, 👍🏼, 🤤 or 💜 to activity
+    """
+
+    GOING_SHOPPING = "GOING_SHOPPING"
+    CHANGED_LIST = "CHANGED_LIST"
+    SHOPPING_DONE = "SHOPPING_DONE"
+    URGENT_MESSAGE = "URGENT_MESSAGE"
+    LIST_ACTIVITY_STREAM_REACTION = "LIST_ACTIVITY_STREAM_REACTION"
+
+
+class ReactionType(StrEnum):
+    """Activity reaction types."""
+
+    THUMBS_UP = "THUMBS_UP"
+    MONOCLE = "MONOCLE"
+    DROOLING = "DROOLING"
+    HEART = "HEART"
+
+
+class BringItemOperation(StrEnum):
+    """Operation to be be executed on list items."""
+
+    ADD = "TO_PURCHASE"
+    COMPLETE = "TO_RECENTLY"
+    REMOVE = "REMOVE"
+    ATTRIBUTE_UPDATE = "ATTRIBUTE_UPDATE"
 
 
 @dataclass(kw_only=True)
@@ -108,27 +151,22 @@ class BringListItemsDetailsResponse(DataClassORJSONMixin):
     items: list[BringListItemDetails]
 
 
-class BringNotificationType(Enum):
-    """Notification type.
+class ActivityReaction(TypedDict):
+    """Reaction config."""
 
-    GOING_SHOPPING: "I'm going shopping! - Last chance for adjustments"
-    CHANGED_LIST: "List changed - Check it out"
-    SHOPPING_DONE: "Shopping done - you can relax"
-    URGENT_MESSAGE: "Breaking news - Please get {itemName}!
-    """
-
-    GOING_SHOPPING = "GOING_SHOPPING"
-    CHANGED_LIST = "CHANGED_LIST"
-    SHOPPING_DONE = "SHOPPING_DONE"
-    URGENT_MESSAGE = "URGENT_MESSAGE"
+    moduleUuid: str
+    moduleType: str
+    reactionType: str
 
 
-class BringNotificationsConfigType(TypedDict):
+class BringNotificationsConfigType(TypedDict, total=True):
     """A notification config."""
 
-    arguments: list[str]
+    arguments: NotRequired[list[str]]
     listNotificationType: str
     senderPublicUserUuid: str
+    receiverPublicUserUuid: NotRequired[str]
+    listActivityStreamReaction: NotRequired[ActivityReaction]
 
 
 @dataclass(kw_only=True)
@@ -189,15 +227,6 @@ class BringSyncCurrentUserResponse(DataClassORJSONMixin):
     photoPath: str = ""
 
 
-class BringItemOperation(StrEnum):
-    """Operation to be be executed on list items."""
-
-    ADD = "TO_PURCHASE"
-    COMPLETE = "TO_RECENTLY"
-    REMOVE = "REMOVE"
-    ATTRIBUTE_UPDATE = "ATTRIBUTE_UPDATE"
-
-
 class BringAttribute(TypedDict):
     """An attribute dict. Represents a single item attribute."""
 
@@ -233,14 +262,6 @@ class BringAuthTokenResponse(DataClassORJSONMixin):
     expires_in: int
 
 
-class ActivityType(StrEnum):
-    """Activity type."""
-
-    LIST_ITEMS_CHANGED = "LIST_ITEMS_CHANGED"
-    LIST_ITEMS_ADDED = "LIST_ITEMS_ADDED"
-    LIST_ITEMS_REMOVED = "LIST_ITEMS_REMOVED"
-
-
 @dataclass
 class ActivityContent:
     """An activity content entry."""
@@ -254,7 +275,7 @@ class ActivityContent:
 
 
 @dataclass
-class Activity:
+class Activity(DataClassORJSONMixin):
     """An activity entry."""
 
     type: ActivityType
