@@ -299,3 +299,24 @@ class BringErrorResponse(DataClassORJSONMixin):
     error: str
     error_description: str
     errorcode: int
+
+
+@dataclass(kw_only=True)
+class BringUser:
+    """A Bring user."""
+
+    publicUuid: str
+    pushEnabled: bool
+    plusTryOut: bool
+    country: str
+    language: str
+    name: str = ""
+    email: str = ""
+    photoPath: str = ""
+
+
+@dataclass(kw_only=True)
+class BringUsersResponse(DataClassORJSONMixin):
+    """List users."""
+
+    users: list[BringUser] = field(default_factory=list)

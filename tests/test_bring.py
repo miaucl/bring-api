@@ -38,6 +38,7 @@ from .conftest import (
     BRING_GET_ACTIVITY_RESPONSE,
     BRING_GET_ALL_ITEM_DETAILS_RESPONSE,
     BRING_GET_LIST_RESPONSE,
+    BRING_GET_LIST_USERS_RESPONSE,
     BRING_LOAD_LISTS_RESPONSE,
     BRING_LOGIN_RESPONSE,
     BRING_TOKEN_RESPONSE,
@@ -1658,3 +1659,85 @@ class TestGetActivity:
 
         with pytest.raises(exception):
             await bring.get_activity(UUID)
+
+
+class TestGetListUsers:
+    """Tests for get_list_users method."""
+
+    async def test_get_lists_users(
+        self,
+        bring: Bring,
+        mocked: aioresponses,
+        monkeypatch: pytest.MonkeyPatch,
+        snapshot: SnapshotAssertion,
+    ):
+        """Test get_list_users."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/users",
+            status=HTTPStatus.OK,
+            payload=BRING_GET_LIST_USERS_RESPONSE,
+        )
+        monkeypatch.setattr(bring, "uuid", UUID)
+
+        activity = await bring.get_list_users(UUID)
+
+        assert activity == snapshot
+
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ],
+    )
+    async def test_request_exception(
+        self, mocked: aioresponses, bring: Bring, exception: Exception
+    ):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/users",
+            exception=exception,
+        )
+
+        with pytest.raises(BringRequestException):
+            await bring.get_list_users(UUID)
+
+    async def test_auth_exception(self, mocked: aioresponses, bring: Bring):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/users",
+            status=HTTPStatus.UNAUTHORIZED,
+            payload=BRING_ERROR_RESPONSE,
+        )
+
+        with pytest.raises(BringAuthException):
+            await bring.get_list_users(UUID)
+
+    @pytest.mark.parametrize(
+        ("status", "exception"),
+        [
+            (HTTPStatus.OK, BringParseException),
+            (HTTPStatus.UNAUTHORIZED, BringAuthException),
+        ],
+    )
+    async def test_parse_exception(
+        self,
+        mocked: aioresponses,
+        bring: Bring,
+        status: HTTPStatus,
+        exception: Exception,
+    ):
+        """Test request exceptions."""
+
+        mocked.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/users",
+            status=status,
+            body="not json",
+            content_type="application/json",
+        )
+
+        with pytest.raises(exception):
+            await bring.get_list_users(UUID)
