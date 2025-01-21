@@ -12,6 +12,7 @@ from .exceptions import (
     BringUserUnknownException,
 )
 from .types import (
+    ActivityType,
     BringActivityResponse,
     BringAuthResponse,
     BringAuthTokenResponse,
@@ -27,9 +28,11 @@ from .types import (
     BringUserListSettingEntry,
     BringUserSettingsEntry,
     BringUserSettingsResponse,
+    ReactionType,
 )
 
 __all__ = [
+    "ActivityType",
     "Bring",
     "BringActivityResponse",
     "BringAuthException",
@@ -52,4 +55,5 @@ __all__ = [
     "BringUserSettingsEntry",
     "BringUserSettingsResponse",
     "BringUserUnknownException",
+    "ReactionType",
 ]

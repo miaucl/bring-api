@@ -6,6 +6,7 @@ from http import HTTPStatus
 import time
 
 import aiohttp
+from aioresponses import aioresponses
 from dotenv import load_dotenv
 import pytest
 from syrupy.assertion import SnapshotAssertion
@@ -22,11 +23,13 @@ from bring_api.exceptions import (
 )
 from bring_api.helpers import headers_deserialize, headers_serialize
 from bring_api.types import (
+    ActivityType,
     BringItem,
     BringItemOperation,
     BringNotificationType,
     BringSyncCurrentUserResponse,
     BringUserSettingsResponse,
+    ReactionType,
     UserLocale,
 )
 
@@ -304,9 +307,9 @@ class TestNotifications:
     @pytest.mark.parametrize(
         ("notification_type", "item_name"),
         [
-            (BringNotificationType.GOING_SHOPPING, ""),
-            (BringNotificationType.CHANGED_LIST, ""),
-            (BringNotificationType.SHOPPING_DONE, ""),
+            (BringNotificationType.GOING_SHOPPING, None),
+            (BringNotificationType.CHANGED_LIST, None),
+            (BringNotificationType.SHOPPING_DONE, None),
             (BringNotificationType.URGENT_MESSAGE, "WITH_ITEM_NAME"),
         ],
     )
@@ -314,7 +317,7 @@ class TestNotifications:
         self,
         bring,
         notification_type: BringNotificationType,
-        item_name: str,
+        item_name: str | None,
         mocked,
     ):
         """Test GOING_SHOPPING notification."""
@@ -325,6 +328,48 @@ class TestNotifications:
         )
         resp = await bring.notify(UUID, notification_type, item_name)
         assert resp.status == HTTPStatus.OK
+
+    @pytest.mark.parametrize(
+        "activity_type",
+        [
+            ActivityType.LIST_ITEMS_REMOVED,
+            ActivityType.LIST_ITEMS_ADDED,
+            ActivityType.LIST_ITEMS_CHANGED,
+        ],
+    )
+    @pytest.mark.parametrize(
+        "reaction",
+        [
+            ReactionType.THUMBS_UP,
+            ReactionType.MONOCLE,
+            ReactionType.DROOLING,
+            ReactionType.HEART,
+        ],
+    )
+    async def test_notify_activity_stream_reaction(
+        self,
+        bring: Bring,
+        mocked: aioresponses,
+        activity_type: ActivityType,
+        reaction: ReactionType,
+    ):
+        """Test GOING_SHOPPING notification."""
+
+        mocked.post(
+            f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+            status=HTTPStatus.OK,
+        )
+
+        resp = await bring.notify(
+            UUID,
+            BringNotificationType.LIST_ACTIVITY_STREAM_REACTION,
+            receiver=UUID,
+            activity=UUID,
+            activity_type=activity_type,
+            reaction=reaction,
+        )
+        assert resp.status == HTTPStatus.OK
+        mocked.assert_called_once()
 
     async def test_notify_urgent_message_item_name_missing(self, bring, mocked):
         """Test URGENT_MESSAGE notification."""
