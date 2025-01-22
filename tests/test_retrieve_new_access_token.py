@@ -32,7 +32,7 @@ async def test_retrieve_new_access_token(
 
         assert data == snapshot
         assert bring.headers["Authorization"] == "Bearer {access_token}"
-        assert bring.expires_in == 604799
+        assert bring._expires_at == 604799
 
 
 @pytest.mark.parametrize(

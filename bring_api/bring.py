@@ -8,7 +8,7 @@ from json import JSONDecodeError
 import logging
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 from mashumaro.exceptions import MissingField
@@ -105,14 +105,18 @@ class Bring:
         )
 
     async def _request(
-        self, method: str, url: URL, retry: bool = False, **kwargs: Any
+        self,
+        method: str,
+        url: URL,
+        retry: bool = False,
+        **kwargs: Any,
     ) -> str:
         """Handle request and ensure valid auth token."""
         headers = self.headers.copy()
-        if (self._token_expired or retry) and self.__refresh_token:
+        if self._token_expired and self.__refresh_token:
             await self.retrieve_new_access_token()
 
-        if method == "get" and (etag := self._etag.get(str(url))) and not retry:
+        if (etag := self._etag.get(str(url))) and method == "GET" and not retry:
             headers["If-None-Match"] = etag
 
         try:
@@ -131,10 +135,12 @@ class Bring:
                 else:
                     _LOGGER.debug("Exception: Authentication failed: %s", repr(errmsg))
                     if not retry:
-                        return await self._request(method, url, True, **kwargs)
+                        _LOGGER.debug("Access token invalidated, retrying request")
+                        self._expires_at = 0
+                        return await self._request(method, url, retry=True, **kwargs)
 
                 raise BringAuthException(
-                    "Loading list items failed due to authorization failure, "
+                    "Request failed due to authorization failure, "
                     "the authorization token is invalid or expired."
                 )
 
@@ -155,21 +161,22 @@ class Bring:
             raise BringRequestException(
                 "Request failed due to client connection error."
             ) from e
+
+        if r.status == HTTPStatus.NOT_MODIFIED and etag:
+            _LOGGER.debug("Status NOT_MODIFIED, serving request from site cache")
+            try:
+                response = self._site_cache[etag]
+            except KeyError:
+                self._etag.pop(str(url), None)
+                return await self._request(method, url, retry=True, **kwargs)
         else:
-            if r.status == HTTPStatus.NOT_MODIFIED and etag:
-                try:
-                    return self._site_cache[etag]
-                except KeyError:
-                    self._etag.pop(str(url), None)
-                    return await self._request(method, url, True, **kwargs)
+            response = await r.text()
 
-            body = await r.text()
+        if etag := r.headers.get("etag"):
+            self._etag[str(url)] = etag
+            self._site_cache[etag] = response
 
-            if etag := r.headers.get("etag"):
-                self._etag[str(url)] = etag
-                self._site_cache[etag] = body
-
-            return body
+        return response
 
     async def login(self) -> BringAuthResponse:
         """Try to login.
@@ -309,15 +316,14 @@ class Bring:
         """
 
         url = self.url / "bringusers" / self.uuid / "lists"
-        r = await self._request("get", url)
         try:
-            return BringListResponse.from_json(r)
+            return BringListResponse.from_json(await self._request("GET", url))
         except MissingField as e:
             raise BringMissingFieldException(e) from e
         except JSONDecodeError as e:
-            _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
             raise BringParseException(
-                "Loading lists failed during parsing of request response."
+                "Request failed during parsing of request response."
             ) from e
 
     async def get_list(self, list_uuid: str) -> BringItemsResponse:
@@ -343,70 +349,27 @@ class Bring:
             If the request fails due to invalid or expired authorization token.
 
         """
+        url = self.url / "v2/bringlists" / list_uuid
+
         try:
-            url = self.url / "v2/bringlists" / list_uuid
-            async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot get list items: %s", errmsg.message
-                        )
-                    raise BringAuthException(
-                        "Loading list items failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-
-                try:
-                    data = BringItemsResponse.from_json(await r.text())
-
-                    for item in chain(data.items.purchase, data.items.recently):
-                        item.itemId = self.__translate(
-                            item.itemId,
-                            to_locale=self.__locale(list_uuid),
-                        )
-                except MissingField as e:
-                    raise BringMissingFieldException(e) from e
-                except (JSONDecodeError, KeyError) as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot get items for list %s:",
-                        list_uuid,
-                        exc_info=True,
-                    )
-                    raise BringParseException(
-                        "Loading list items failed during parsing of request response."
-                    ) from e
-                else:
-                    return data
-        except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get items for list %s:",
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                "Loading list items failed due to connection timeout."
+            data = BringItemsResponse.from_json(await self._request("GET", url))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
             ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get items for list %s:",
-                list_uuid,
-                exc_info=True,
+
+        if TYPE_CHECKING:
+            assert isinstance(data, BringItemsResponse)
+        for item in chain(data.items.purchase, data.items.recently):
+            item.itemId = self.__translate(
+                item.itemId,
+                to_locale=self.__locale(list_uuid),
             )
-            raise BringRequestException(
-                "Loading list items failed due to request exception."
-            ) from e
+
+        return data
 
     async def get_all_item_details(
         self, list_uuid: str
@@ -500,7 +463,7 @@ class Bring:
         item_name: str,
         specification: str = "",
         item_uuid: str | None = None,
-    ) -> aiohttp.ClientResponse:
+    ) -> None:
         """Save an item to a shopping list.
 
         Parameters
@@ -515,12 +478,6 @@ class Bring:
             The uuid for the item to add. If a unique identifier is
             required it is recommended to generate a random uuid4.
 
-
-        Returns
-        -------
-        Response
-            The server response object.
-
         Raises
         ------
         BringRequestException
@@ -529,7 +486,7 @@ class Bring:
         """
         data = BringItem(itemId=item_name, spec=specification, uuid=item_uuid)
         try:
-            return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
+            await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except BringRequestException as e:
             _LOGGER.debug(
                 "Exception: Cannot save item %s (%s) to list %s:",
@@ -549,7 +506,7 @@ class Bring:
         item_name: str,
         specification: str = "",
         item_uuid: str | None = None,
-    ) -> aiohttp.ClientResponse:
+    ) -> None:
         """Update an existing list item.
 
         Caution: Do not update `item_name`. Providing `item_uuid` makes it
@@ -568,11 +525,6 @@ class Bring:
         item_uuid : str, optional
             The uuid of the item to update.
 
-        Returns
-        -------
-        Response
-            The server response object.
-
         Raises
         ------
         BringRequestException
@@ -585,7 +537,7 @@ class Bring:
             uuid=item_uuid,
         )
         try:
-            return await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
+            await self.batch_update_list(list_uuid, data, BringItemOperation.ADD)
         except BringRequestException as e:
             _LOGGER.debug(
                 "Exception: Cannot update item %s (%s) to list %s:",
@@ -601,7 +553,7 @@ class Bring:
 
     async def remove_item(
         self, list_uuid: str, item_name: str, item_uuid: str | None = None
-    ) -> aiohttp.ClientResponse:
+    ) -> None:
         """Remove an item from a shopping list.
 
         Parameters
@@ -613,11 +565,6 @@ class Bring:
         item_uuid : str, optional
             The uuid of the item you want to remove. The item to remove can be remove by only
             referencing its uuid and setting item_name to any nonempty string.
-
-        Returns
-        -------
-        Response
-            The server response object.
 
         Raises
         ------
@@ -631,9 +578,7 @@ class Bring:
             uuid=item_uuid,
         )
         try:
-            return await self.batch_update_list(
-                list_uuid, data, BringItemOperation.REMOVE
-            )
+            await self.batch_update_list(list_uuid, data, BringItemOperation.REMOVE)
         except BringRequestException as e:
             _LOGGER.debug(
                 "Exception: Cannot delete item %s from list %s:",
@@ -652,7 +597,7 @@ class Bring:
         item_name: str,
         specification: str = "",
         item_uuid: str | None = None,
-    ) -> aiohttp.ClientResponse:
+    ) -> None:
         """Complete an item from a shopping list. This will add it to recent items.
 
         If it was not on the list, it will still be added to recent items.
@@ -668,11 +613,6 @@ class Bring:
         item_uuid : str, optional
             The uuid of the item you want to complete.
 
-        Returns
-        -------
-        Response
-            The server response object.
-
         Raises
         ------
         BringRequestException
@@ -685,9 +625,7 @@ class Bring:
             uuid=item_uuid,
         )
         try:
-            return await self.batch_update_list(
-                list_uuid, data, BringItemOperation.COMPLETE
-            )
+            await self.batch_update_list(list_uuid, data, BringItemOperation.COMPLETE)
         except BringRequestException as e:
             _LOGGER.debug(
                 "Exception: Cannot complete item %s in list %s:",
@@ -709,7 +647,7 @@ class Bring:
         receiver: str | None = None,
         activity_type: ActivityType | None = None,
         reaction: ReactionType | None = None,
-    ) -> aiohttp.ClientResponse:
+    ) -> None:
         """Send a push notification to all other members of a shared list.
 
         Parameters
@@ -732,10 +670,6 @@ class Bring:
             The type of reaction. Either :MONOCLE:, :THUMBS_UP:, :HEART:, or :DROOLING:
             Required if notification_type is LIST_ACTIVITY_STREAM_REACTION.
 
-        Returns
-        -------
-        aiohttp.ClientResponse
-            The server response object.
 
         Raises
         ------
@@ -790,53 +724,8 @@ class Bring:
                     f"[{receiver=},{activity=},{activity_type=},{reaction=}]"
                 )
 
-        try:
-            url = self.url / "v2/bringnotifications/lists" / list_uuid
-            async with self._session.post(url, headers=self.headers, json=json) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot send notification: %s", errmsg.message
-                        )
-                    raise BringAuthException(
-                        "Sending notification failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-                return r
-        except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot send notification %s for list %s:",
-                notification_type,
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                f"Sending notification {notification_type} for list {list_uuid}"
-                "failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot send notification %s for list %s:",
-                notification_type,
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                f"Sending notification {notification_type} for list {list_uuid}"
-                "failed due to request exception."
-            ) from e
+        url = self.url / "v2/bringnotifications/lists" / list_uuid
+        await self._request("POST", url, json=json)
 
     async def does_user_exist(self, mail: str | None = None) -> bool:
         """Check if e-mail is valid and user exists.
@@ -1100,68 +989,21 @@ class Bring:
         ------
         BringRequestException
             If the request fails.
-        BringParseException
+        BringParseExceptiontry:
             If the parsing of the request response fails.
         BringAuthException
             If the request fails due to invalid or expired authorization token.
 
         """
+        url = self.url / "bringusersettings" / self.uuid
         try:
-            url = self.url / "bringusersettings" / self.uuid
-            async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot get user settings: %s", errmsg.message
-                        )
-                    raise BringAuthException(
-                        "Loading user settings failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-
-                try:
-                    return BringUserSettingsResponse.from_json(await r.text())
-                except MissingField as e:
-                    raise BringMissingFieldException(e) from e
-                except JSONDecodeError as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot get user settings for uuid %s:",
-                        self.uuid,
-                        exc_info=True,
-                    )
-                    raise BringParseException(
-                        "Loading user settings failed during parsing of request response."
-                    ) from e
-
-        except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get user settings for uuid %s:",
-                self.uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                "Loading user settings failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get user settings for uuid %s:",
-                self.uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                "Loading user settings failed due to request exception."
+            return BringUserSettingsResponse.from_json(await self._request("GET", url))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
             ) from e
 
     def __locale(self, list_uuid: str) -> str:
@@ -1234,51 +1076,18 @@ class Bring:
             If the request fails due to invalid or expired authorization token.
 
         """
+        url = self.url / "v2/bringusers" / self.uuid
+
         try:
-            url = self.url / "v2/bringusers" / self.uuid
-            async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot get current user settings: %s",
-                            errmsg.message,
-                        )
-                    raise BringAuthException(
-                        "Loading current user settings failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-
-                try:
-                    return BringSyncCurrentUserResponse.from_json(await r.text())
-                except MissingField as e:
-                    raise BringMissingFieldException(e) from e
-                except JSONDecodeError as e:
-                    _LOGGER.debug("Exception: Cannot get lists:", exc_info=True)
-                    raise BringParseException(
-                        "Loading lists failed during parsing of request response."
-                    ) from e
-
-        except TimeoutError as e:
-            _LOGGER.debug("Exception: Cannot get current user settings:", exc_info=True)
-            raise BringRequestException(
-                "Loading current user settings failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug("Exception: Cannot  current user settings:", exc_info=True)
-            raise BringRequestException(
-                "Loading current user settings failed due to request exception."
+            return BringSyncCurrentUserResponse.from_json(
+                await self._request("GET", url)
+            )
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
             ) from e
 
     async def batch_update_list(
@@ -1286,7 +1095,7 @@ class Bring:
         list_uuid: str,
         items: BringItem | list[BringItem] | list[dict[str, str]],
         operation: BringItemOperation | None = None,
-    ) -> aiohttp.ClientResponse:
+    ) -> None:
         """Batch update items on a shopping list.
 
         Parameters
@@ -1300,11 +1109,6 @@ class Bring:
             Parameter can be ommited, and the BringItem key 'operation' can be set to TO_PURCHASE,
             TO_RECENTLY or REMOVE. Defaults to BringItemOperation.ADD if operation is neither
             passed as parameter nor is set in the BringItem.
-
-        Returns
-        -------
-        Response
-            The server response object.
 
         Raises
         ------
@@ -1342,53 +1146,8 @@ class Bring:
             ],
             "sender": "",
         }
-
-        try:
-            url = self.url / "v2/bringlists" / list_uuid / "items"
-            async with self._session.put(
-                url, headers=self.headers, json=json_data
-            ) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot get execute batch operation: %s",
-                            errmsg.message,
-                        )
-                    raise BringAuthException(
-                        "Batch operation failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-                return r
-        except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot execute batch operations for list %s:",
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                f"Batch operation for list {list_uuid} failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot execute batch operations for %s:",
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                f"Batch operation for list {list_uuid} failed due to request exception."
-            ) from e
+        url = self.url / "v2/bringlists" / list_uuid / "items"
+        await self._request("PUT", url, json=json_data)
 
     async def retrieve_new_access_token(
         self, refresh_token: str | None = None
@@ -1477,9 +1236,7 @@ class Bring:
 
         return data
 
-    async def set_list_article_language(
-        self, list_uuid: str, language: str
-    ) -> aiohttp.ClientResponse:
+    async def set_list_article_language(self, list_uuid: str, language: str) -> None:
         """Set the article language for a specified list.
 
         Parameters
@@ -1488,11 +1245,6 @@ class Bring:
             The unique identifier for the list.
         language : str
             The language to set for the list articles.
-
-        Returns
-        -------
-        aiohttp.ClientResponse
-            The server response object.
 
         Raises
         ------
@@ -1516,152 +1268,33 @@ class Bring:
         )
 
         data = {"value": language}
-        try:
-            async with self._session.post(url, headers=self.headers, data=data) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    raise BringAuthException(
-                        "Set list article language failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-                r.raise_for_status()
-                self.user_list_settings = await self.__load_user_list_settings()
-                self.__translations = await self.__load_article_translations()
-                return r
-        except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot set article language to %s for list %s:",
-                language,
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                "Set list article language failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot set article language to %s for list %s:",
-                language,
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                "Set list article language failed due to request exception."
-            ) from e
+        await self._request("POST", url, data=data)
 
     async def get_activity(self, list_uuid: str) -> BringActivityResponse:
         """Get activity for given list."""
+        url = self.url / "v2/bringlists" / list_uuid / "activity"
+
         try:
-            url = self.url / "v2/bringlists" / list_uuid / "activity"
-            async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot get list activity: %s", errmsg.message
-                        )
-                    raise BringAuthException(
-                        "Loading list activity failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-
-                try:
-                    return BringActivityResponse.from_json(await r.text())
-                except MissingField as e:
-                    raise BringMissingFieldException(e) from e
-                except (JSONDecodeError, KeyError) as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot get activity for list %s:",
-                        list_uuid,
-                        exc_info=True,
-                    )
-                    raise BringParseException(
-                        "Loading list activity failed during parsing of request response."
-                    ) from e
-
-        except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get activity for list %s:",
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                "Loading list activity failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get activity for list %s:", list_uuid, exc_info=True
-            )
-            raise BringRequestException(
-                "Loading list activity failed due to request exception."
+            return BringActivityResponse.from_json(await self._request("GET", url))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
             ) from e
 
     async def get_list_users(self, list_uuid: str) -> BringUsersResponse:
         """Retrieve members of a shared list."""
 
+        url = self.url / "v2/bringlists" / list_uuid / "users"
+
         try:
-            url = self.url / "v2/bringlists" / list_uuid / "users"
-            async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot get list users: %s", errmsg.message
-                        )
-                    raise BringAuthException(
-                        "Loading list users failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-
-                try:
-                    return BringUsersResponse.from_json(await r.text())
-                except MissingField as e:
-                    raise BringMissingFieldException(e) from e
-                except (JSONDecodeError, KeyError) as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot get users for list %s:",
-                        list_uuid,
-                        exc_info=True,
-                    )
-                    raise BringParseException(
-                        "Loading list users failed during parsing of request response."
-                    ) from e
-
-        except TimeoutError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get users for list %s:", list_uuid, exc_info=True
-            )
-            raise BringRequestException(
-                "Loading list users failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get users for list %s:", list_uuid, exc_info=True
-            )
-            raise BringRequestException(
-                "Loading list users failed due to request exception."
+            return BringUsersResponse.from_json(await self._request("GET", url))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
             ) from e
