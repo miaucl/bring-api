@@ -765,7 +765,7 @@ class TestArticleTranslations:
 
         assert "Pouletbrüstli" in dictionary
         assert dictionary["Pouletbrüstli"] == "Pouletbrüstli"
-        assert len(dictionary) == 444
+        assert len(dictionary) == 445
 
     async def test_load_from_list_article_language(self, bring, monkeypatch):
         """Test loading json from listArticleLanguage."""
