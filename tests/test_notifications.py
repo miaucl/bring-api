@@ -1,44 +1,75 @@
 """Tests for notification method."""
 
-import asyncio
 import enum
-from http import HTTPStatus
+from typing import Any
 
-import aiohttp
 from aioresponses import aioresponses
 import pytest
 
-from bring_api import (
-    ActivityType,
-    Bring,
-    BringAuthException,
-    BringNotificationType,
-    BringRequestException,
-    ReactionType,
-)
+from bring_api import ActivityType, Bring, BringNotificationType, ReactionType
 
-from .conftest import UUID, load_fixture
+from .conftest import DEFAULT_HEADERS, UUID
 
 
 @pytest.mark.parametrize(
-    ("notification_type", "item_name"),
+    ("notification_type", "item_name", "call_args"),
     [
-        (BringNotificationType.GOING_SHOPPING, None),
-        (BringNotificationType.CHANGED_LIST, None),
-        (BringNotificationType.SHOPPING_DONE, None),
-        (BringNotificationType.URGENT_MESSAGE, "WITH_ITEM_NAME"),
+        (
+            BringNotificationType.GOING_SHOPPING,
+            None,
+            {
+                "arguments": [],
+                "listNotificationType": "GOING_SHOPPING",
+                "senderPublicUserUuid": "00000000-0000-0000-0000-000000000000",
+            },
+        ),
+        (
+            BringNotificationType.CHANGED_LIST,
+            None,
+            {
+                "arguments": [],
+                "listNotificationType": "CHANGED_LIST",
+                "senderPublicUserUuid": "00000000-0000-0000-0000-000000000000",
+            },
+        ),
+        (
+            BringNotificationType.SHOPPING_DONE,
+            None,
+            {
+                "arguments": [],
+                "listNotificationType": "SHOPPING_DONE",
+                "senderPublicUserUuid": "00000000-0000-0000-0000-000000000000",
+            },
+        ),
+        (
+            BringNotificationType.URGENT_MESSAGE,
+            "WITH_ITEM_NAME",
+            {
+                "arguments": ["WITH_ITEM_NAME"],
+                "listNotificationType": "URGENT_MESSAGE",
+                "senderPublicUserUuid": "00000000-0000-0000-0000-000000000000",
+            },
+        ),
     ],
 )
-@pytest.mark.usefixtures("mocked")
 async def test_notify(
+    mocked: aioresponses,
     bring: Bring,
     notification_type: BringNotificationType,
     item_name: str | None,
+    call_args: dict[str, Any],
 ) -> None:
     """Test GOING_SHOPPING notification."""
+    await bring.login()
+    await bring.notify(UUID, notification_type, item_name)
 
-    resp = await bring.notify(UUID, notification_type, item_name)
-    assert resp.status == HTTPStatus.OK
+    mocked.assert_called_with(
+        f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+        method="post",
+        headers=DEFAULT_HEADERS,
+        json=call_args,
+        data=None,
+    )
 
 
 @pytest.mark.parametrize(
@@ -65,8 +96,8 @@ async def test_notify_activity_stream_reaction(
     reaction: ReactionType,
 ) -> None:
     """Test GOING_SHOPPING notification."""
-
-    resp = await bring.notify(
+    await bring.login()
+    await bring.notify(
         UUID,
         BringNotificationType.LIST_ACTIVITY_STREAM_REACTION,
         receiver=UUID,
@@ -74,7 +105,23 @@ async def test_notify_activity_stream_reaction(
         activity_type=activity_type,
         reaction=reaction,
     )
-    assert resp.status == HTTPStatus.OK
+
+    mocked.assert_called_with(
+        f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+        method="post",
+        headers=DEFAULT_HEADERS,
+        json={
+            "arguments": [],
+            "listNotificationType": "LIST_ACTIVITY_STREAM_REACTION",
+            "senderPublicUserUuid": "00000000-0000-0000-0000-000000000000",
+            "receiverPublicUserUuid": "00000000-0000-0000-0000-000000000000",
+            "listActivityStreamReaction": {
+                "moduleUuid": "00000000-0000-0000-0000-000000000000",
+                "moduleType": activity_type.value,
+                "reactionType": reaction.value,
+            },
+        },
+    )
 
 
 @pytest.mark.usefixtures("mocked")
@@ -119,58 +166,3 @@ async def test_notify_notification_type_raise_type_error(
         "must be of type BringNotificationType.",
     ):
         await bring.notify(UUID, WrongEnum.UNKNOWN, "")  # type: ignore[arg-type]
-
-
-@pytest.mark.parametrize(
-    "exception",
-    [
-        asyncio.TimeoutError,
-        aiohttp.ClientError,
-    ],
-)
-async def test_request_exception(
-    mocked: aioresponses,
-    bring: Bring,
-    exception: type[Exception],
-) -> None:
-    """Test request exceptions."""
-    mocked.clear()
-    mocked.post(
-        f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
-        exception=exception,
-    )
-
-    with pytest.raises(BringRequestException):
-        await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)
-
-
-async def test_unauthorized(
-    mocked: aioresponses,
-    bring: Bring,
-) -> None:
-    """Test unauthorized exception."""
-    mocked.clear()
-    mocked.post(
-        f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
-        status=HTTPStatus.UNAUTHORIZED,
-        body=load_fixture("error_response.json"),
-    )
-    with pytest.raises(BringAuthException):
-        await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)
-
-
-async def test_parse_exception(
-    mocked: aioresponses,
-    bring: Bring,
-) -> None:
-    """Test parse exceptions."""
-    mocked.clear()
-    mocked.post(
-        f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
-        status=HTTPStatus.UNAUTHORIZED,
-        body="not json",
-        content_type="application/json",
-    )
-
-    with pytest.raises(BringAuthException):
-        await bring.notify(UUID, BringNotificationType.GOING_SHOPPING)

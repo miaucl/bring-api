@@ -3,9 +3,11 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal, NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict, TypeVar
 
 from mashumaro.mixins.orjson import DataClassORJSONMixin
+
+BringResponse = TypeVar("BringResponse", bound=DataClassORJSONMixin)
 
 
 class ActivityType(StrEnum):

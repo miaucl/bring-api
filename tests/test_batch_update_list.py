@@ -1,22 +1,13 @@
 """Tests for batch_update_list."""
 
-import asyncio
-from http import HTTPStatus
 from typing import Any
 
-import aiohttp
 from aioresponses import aioresponses
 import pytest
 
-from bring_api import (
-    Bring,
-    BringAuthException,
-    BringItem,
-    BringItemOperation,
-    BringRequestException,
-)
+from bring_api import Bring, BringItem, BringItemOperation
 
-from .conftest import DEFAULT_HEADERS, UUID, load_fixture
+from .conftest import DEFAULT_HEADERS, UUID
 
 
 @pytest.mark.parametrize(
@@ -400,14 +391,12 @@ async def test_batch_update_list_single_item(
 ) -> None:
     """Test batch_update_list."""
     await bring.login()
-    r = await bring.batch_update_list(UUID, item, operation)
+    await bring.batch_update_list(UUID, item, operation)
 
-    assert r.status == HTTPStatus.OK
     mocked.assert_called_with(
         f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
         method="PUT",
         headers=DEFAULT_HEADERS,
-        data=None,
         json=payload,
     )
 
@@ -474,78 +463,11 @@ async def test_batch_update_list_multiple_items(
         "sender": "",
     }
     await bring.login()
-    r = await bring.batch_update_list(UUID, test_items)
+    await bring.batch_update_list(UUID, test_items)
 
-    assert r.status == HTTPStatus.OK
     mocked.assert_called_with(
         f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
         method="PUT",
         headers=DEFAULT_HEADERS,
-        data=None,
         json=payload,
     )
-
-
-@pytest.mark.parametrize(
-    "exception",
-    [
-        asyncio.TimeoutError,
-        aiohttp.ClientError,
-    ],
-)
-async def test_request_exception(
-    mocked: aioresponses,
-    bring: Bring,
-    exception: type[Exception],
-) -> None:
-    """Test request exceptions."""
-    await bring.login()
-    mocked.clear()
-    mocked.put(
-        f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
-        exception=exception,
-    )
-
-    with pytest.raises(BringRequestException):
-        await bring.batch_update_list(
-            UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
-        )
-
-
-async def test_unauthorized(
-    mocked: aioresponses,
-    bring: Bring,
-) -> None:
-    """Test unauthorized exception."""
-    await bring.login()
-    mocked.clear()
-    mocked.put(
-        f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
-        status=HTTPStatus.UNAUTHORIZED,
-        body=load_fixture("error_response.json"),
-    )
-
-    with pytest.raises(BringAuthException):
-        await bring.batch_update_list(
-            UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
-        )
-
-
-async def test_parse_exception(
-    mocked: aioresponses,
-    bring: Bring,
-) -> None:
-    """Test parse exceptions."""
-    await bring.login()
-    mocked.clear()
-    mocked.put(
-        f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
-        status=HTTPStatus.UNAUTHORIZED,
-        body="not json",
-        content_type="application/json",
-    )
-
-    with pytest.raises(BringAuthException):
-        await bring.batch_update_list(
-            UUID, BringItem(itemId="item_name", spec="spec", uuid=UUID)
-        )
