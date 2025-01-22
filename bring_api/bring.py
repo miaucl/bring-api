@@ -48,6 +48,7 @@ from .types import (
     BringNotificationType,
     BringSyncCurrentUserResponse,
     BringUserSettingsResponse,
+    BringUsersResponse,
     ReactionType,
     UserLocale,
 )
@@ -1551,4 +1552,61 @@ class Bring:
             )
             raise BringRequestException(
                 "Loading list activity failed due to request exception."
+            ) from e
+
+    async def get_list_users(self, list_uuid: str) -> BringUsersResponse:
+        """Retrieve members of a shared list."""
+
+        try:
+            url = self.url / "v2/bringlists" / list_uuid / "users"
+            async with self._session.get(url, headers=self.headers) as r:
+                _LOGGER.debug(
+                    "Response from %s [%s]: %s", url, r.status, await r.text()
+                )
+
+                if r.status == HTTPStatus.UNAUTHORIZED:
+                    try:
+                        errmsg = BringErrorResponse.from_json(await r.text())
+                    except (JSONDecodeError, aiohttp.ClientError):
+                        _LOGGER.debug(
+                            "Exception: Cannot parse request response:", exc_info=True
+                        )
+                    else:
+                        _LOGGER.debug(
+                            "Exception: Cannot get list users: %s", errmsg.message
+                        )
+                    raise BringAuthException(
+                        "Loading list users failed due to authorization failure, "
+                        "the authorization token is invalid or expired."
+                    )
+
+                r.raise_for_status()
+
+                try:
+                    return BringUsersResponse.from_json(await r.text())
+                except MissingField as e:
+                    raise BringMissingFieldException(e) from e
+                except (JSONDecodeError, KeyError) as e:
+                    _LOGGER.debug(
+                        "Exception: Cannot get users for list %s:",
+                        list_uuid,
+                        exc_info=True,
+                    )
+                    raise BringParseException(
+                        "Loading list users failed during parsing of request response."
+                    ) from e
+
+        except TimeoutError as e:
+            _LOGGER.debug(
+                "Exception: Cannot get users for list %s:", list_uuid, exc_info=True
+            )
+            raise BringRequestException(
+                "Loading list users failed due to connection timeout."
+            ) from e
+        except aiohttp.ClientError as e:
+            _LOGGER.debug(
+                "Exception: Cannot get users for list %s:", list_uuid, exc_info=True
+            )
+            raise BringRequestException(
+                "Loading list users failed due to request exception."
             ) from e

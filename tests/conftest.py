@@ -199,6 +199,38 @@ BRING_GET_ACTIVITY_RESPONSE = {
     "totalEvents": 2,
 }
 
+BRING_GET_LIST_USERS_RESPONSE = {
+    "users": [
+        {
+            "publicUuid": "98615d7e-0a7d-4a7e-8f73-a9cbb9f1bc32",
+            "name": "NAME",
+            "email": "EMAIL",
+            "photoPath": "",
+            "pushEnabled": True,
+            "plusTryOut": False,
+            "country": "DE",
+            "language": "de",
+        },
+        {
+            "publicUuid": "73af455f-c158-4004-a5e0-79f4f8a6d4bd",
+            "name": "NAME",
+            "email": "EMAIL",
+            "photoPath": "",
+            "pushEnabled": True,
+            "plusTryOut": False,
+            "country": "US",
+            "language": "en",
+        },
+        {
+            "publicUuid": "7d5e9d08-877a-4c36-8740-a9bf74ec690a",
+            "pushEnabled": True,
+            "plusTryOut": False,
+            "country": "US",
+            "language": "en",
+        },
+    ]
+}
+
 BRING_ERROR_RESPONSE = {
     "message": "",
     "error": "",
