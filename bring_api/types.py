@@ -72,7 +72,7 @@ class BringAuthResponse(DataClassORJSONMixin):
     refresh_token: str
     token_type: str
     expires_in: int
-    photoPath: str
+    photoPath: str = ""
     email: str = ""
     name: str = ""
 
