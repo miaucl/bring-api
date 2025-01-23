@@ -51,6 +51,15 @@ class BringItemOperation(StrEnum):
     ATTRIBUTE_UPDATE = "ATTRIBUTE_UPDATE"
 
 
+class Status(StrEnum):
+    """List status."""
+
+    REGISTERED = "REGISTERED"
+    UNREGISTERED = "UNREGISTERED"
+    SHARED = "SHARED"
+    INVITATION = "INVITATION"
+
+
 @dataclass(kw_only=True)
 class BringList(DataClassORJSONMixin):
     """A list class. Represents a single list."""
@@ -140,7 +149,7 @@ class BringItemsResponse(DataClassORJSONMixin):
     """An items response class."""
 
     uuid: str
-    status: str
+    status: Status
     items: Items
 
 
