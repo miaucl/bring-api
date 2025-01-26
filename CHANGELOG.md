@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 1.0.0
+
+- Refactored response types to dataclasses (breaking change)
+- Use mashumaro for faster json serialization
+- **New API method:** `get_activity` retrieves latest activity for a list
+- **New API method:** `get_lists_users` to retrieve data of users of a shared list.
+- Added support for new notification type `LIST_ACTIVITY_STREAM_REACTION` to send 🧐, 👍🏼, 🤤 or 💜 emoji reactions to list activities
+- Various improvements to exception handling and overall code quality
+- Locales de-CH, fr-CH, fr-FR, it-CH, and it-IT updated to Bring! App v4.73.1
+- Status in `BringItemsResponse` is now an enum
+
 ## 0.9.1
 
 - Don't raise BringParseException on parsing errors for unauthorized request responses
