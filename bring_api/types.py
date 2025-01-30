@@ -124,9 +124,9 @@ class BringAuthResponse(DataClassORJSONMixin):
     refresh_token: str
     token_type: str
     expires_in: int
-    photoPath: str = ""
-    email: str = ""
-    name: str = ""
+    photoPath: str | None = None
+    email: str | None = None
+    name: str | None = None
 
 
 @dataclass(kw_only=True)
@@ -232,8 +232,8 @@ class BringSyncCurrentUserResponse(DataClassORJSONMixin):
     publicUserUuid: str
     userLocale: UserLocale
     userUuid: str
-    name: str = ""
-    photoPath: str = ""
+    name: str | None = None
+    photoPath: str | None = None
 
 
 class BringAttribute(TypedDict):
@@ -319,9 +319,9 @@ class BringUser:
     plusTryOut: bool
     country: str
     language: str
-    name: str = ""
-    email: str = ""
-    photoPath: str = ""
+    name: str | None = None
+    email: str | None = None
+    photoPath: str | None = None
 
 
 @dataclass(kw_only=True)
