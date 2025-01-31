@@ -1,0 +1,4 @@
+# serializer version: 1
+# name: test_get_list
+  BringItemsResponse(uuid='00000000-0000-0000-0000-000000000000', status=<Status.SHARED: 'SHARED'>, items=Items(purchase=[BringPurchase(uuid='43bdd5a2-740a-4230-8b27-d0bbde886da7', itemId='Paprika', specification='grün', attributes=[]), BringPurchase(uuid='2de9d1c0-c211-4129-b6c5-c1260c3fc735', itemId='Zucchini', specification='gelb', attributes=[])], recently=[BringPurchase(uuid='5681ed79-c8e4-4c8b-95ec-112999d016c0', itemId='Paprika', specification='rot', attributes=[]), BringPurchase(uuid='01eea2cd-f433-4263-ad08-3d71317c4298', itemId='Hähnchenbrust', specification='', attributes=[])]))
+# ---

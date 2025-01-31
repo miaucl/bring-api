@@ -1,0 +1,4 @@
+# serializer version: 1
+# name: test_retrieve_new_access_token
+  BringAuthTokenResponse(access_token='{access_token}', refresh_token='{refresh_token}', token_type='Bearer', expires_in=604799)
+# ---
