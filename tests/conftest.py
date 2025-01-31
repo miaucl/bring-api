@@ -1,242 +1,41 @@
 """Unit tests for bring-api."""
 
+from collections.abc import AsyncGenerator, Generator
+from functools import lru_cache
+from http import HTTPStatus
+import pathlib
+
 import aiohttp
 from aioresponses import aioresponses
 from dotenv import load_dotenv
 import pytest
 
-from bring_api.bring import Bring
+from bring_api import Bring
 
 load_dotenv()
 UUID = "00000000-0000-0000-0000-000000000000"
 
-BRING_LOGIN_RESPONSE = {
-    "uuid": UUID,
-    "publicUuid": UUID,
-    "email": "EMAIL",
-    "name": "NAME",
-    "photoPath": "",
-    "bringListUUID": UUID,
-    "access_token": "ACCESS_TOKEN",
-    "refresh_token": "REFRESH_TOKEN",
-    "token_type": "Bearer",
-    "expires_in": 604799,
+
+DEFAULT_HEADERS = {
+    "Authorization": "Bearer ACCESS_TOKEN",
+    "X-BRING-API-KEY": "cof4Nc6D8saplXjE3h3HXqHH8m7VU2i1Gs0g85Sp",
+    "X-BRING-CLIENT": "android",
+    "X-BRING-APPLICATION": "bring",
+    "X-BRING-COUNTRY": "DE",
+    "X-BRING-USER-UUID": "00000000-0000-0000-0000-000000000000",
+    "X-BRING-PUBLIC-USER-UUID": "00000000-0000-0000-0000-000000000000",
 }
 
-BRING_USER_ACCOUNT_RESPONSE = {
-    "userUuid": "00000000-0000-0000-0000-000000000000",
-    "publicUserUuid": "00000000-0000-0000-0000-000000000000",
-    "email": "{email}",
-    "emailVerified": True,
-    "name": "{user_name}",
-    "photoPath": "bring/user/portrait/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx",
-    "userLocale": {"language": "de", "country": "DE"},
-    "premiumConfiguration": {
-        "hasPremium": False,
-        "hideSponsoredProducts": False,
-        "hideSponsoredTemplates": False,
-        "hideSponsoredPosts": False,
-        "hideSponsoredCategories": False,
-        "hideOffersOnMain": False,
-    },
-}
 
-BRING_USER_SETTINGS_RESPONSE = {
-    "usersettings": [
-        {"key": "autoPush", "value": "ON"},
-        {"key": "purchaseStyle", "value": "grouped"},
-        {"key": "premiumHideSponsoredCategories", "value": "OFF"},
-        {"key": "premiumHideInspirationsBadge", "value": "OFF"},
-        {"key": "premiumHideOffersBadge", "value": "OFF"},
-        {"key": "premiumHideOffersOnMain", "value": "OFF"},
-        {"key": "defaultListUUID", "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"},
-        {"key": "discountActivatorOnMainEnabled", "value": "OFF"},
-        {"key": "onboardClient", "value": "android"},
-    ],
-    "userlistsettings": [
-        {
-            "listUuid": UUID,
-            "usersettings": [
-                {
-                    "key": "listSectionOrder",
-                    "value": '["Früchte & Gemüse","Brot & Gebäck","Milch & Käse","Fleisch & Fisch","Zutaten & Gewürze","Fertig- & Tiefkühlprodukte","Getreideprodukte","Snacks & Süsswaren","Getränke & Tabak","Haushalt & Gesundheit","Pflege & Gesundheit","Tierbedarf","Baumarkt & Garten","Eigene Artikel"]',
-                },
-                {"key": "listArticleLanguage", "value": "de-DE"},
-            ],
-        }
-    ],
-}
+@lru_cache
+def load_fixture(filename: str) -> str:
+    """Load a fixture."""
 
-BRING_LOAD_LISTS_RESPONSE = {
-    "lists": [
-        {
-            "listUuid": UUID,
-            "name": "Einkauf",
-            "theme": "ch.publisheria.bring.theme.home",
-        },
-    ]
-}
-
-BRING_GET_LIST_RESPONSE = {
-    "uuid": UUID,
-    "status": "SHARED",
-    "items": {
-        "purchase": [
-            {
-                "uuid": "43bdd5a2-740a-4230-8b27-d0bbde886da7",
-                "specification": "grün",
-                "itemId": "Paprika",
-            },
-            {
-                "uuid": "2de9d1c0-c211-4129-b6c5-c1260c3fc735",
-                "specification": "gelb",
-                "itemId": "Zucchetti",
-            },
-        ],
-        "recently": [
-            {
-                "uuid": "5681ed79-c8e4-4c8b-95ec-112999d016c0",
-                "specification": "rot",
-                "itemId": "Paprika",
-            },
-            {
-                "uuid": "01eea2cd-f433-4263-ad08-3d71317c4298",
-                "specification": "",
-                "itemId": "Pouletbrüstli",
-            },
-        ],
-    },
-}
-
-BRING_GET_ALL_ITEM_DETAILS_RESPONSE = [
-    {
-        "uuid": "bfb5634c-d219-4d66-b68e-1388e54f0bb0",
-        "itemId": "Milchreis",
-        "listUuid": UUID,
-        "userIconItemId": "Reis",
-        "userSectionId": "Getreideprodukte",
-        "assignedTo": "",
-        "imageUrl": "",
-    },
-    {
-        "uuid": "0056b23c-7fc3-44da-8c34-426f8b632220",
-        "itemId": "Zitronensaft",
-        "listUuid": UUID,
-        "userIconItemId": "Zitrone",
-        "userSectionId": "Zutaten & Gewürze",
-        "assignedTo": "",
-        "imageUrl": "",
-    },
-]
-
-BRING_TOKEN_RESPONSE = {
-    "access_token": "{access_token}",
-    "refresh_token": "{refresh_token}",
-    "token_type": "Bearer",
-    "expires_in": 604799,
-}
-
-BRING_GET_ACTIVITY_RESPONSE = {
-    "timeline": [
-        {
-            "type": "LIST_ITEMS_CHANGED",
-            "content": {
-                "uuid": "673594a9-f92d-4cb6-adf1-d2f7a83207a4",
-                "purchase": [
-                    {
-                        "uuid": "658a3770-1a03-4ee0-94a6-10362a642377",
-                        "itemId": "Gurke",
-                        "specification": "",
-                        "attributes": [],
-                    }
-                ],
-                "recently": [
-                    {
-                        "uuid": "1ed22d3d-f19b-4530-a518-19872da3fd3e",
-                        "itemId": "Milch",
-                        "specification": "",
-                        "attributes": [],
-                    }
-                ],
-                "sessionDate": "2025-01-01T03:09:33.036Z",
-                "publicUserUuid": "98615d7e-0a7d-4a7e-8f73-a9cbb9f1bc32",
-            },
-        },
-        {
-            "type": "LIST_ITEMS_ADDED",
-            "content": {
-                "uuid": "9a16635c-dea2-4e00-904a-c5034f9cfecf",
-                "items": [
-                    {
-                        "uuid": "66a633a2-ae09-47bf-8845-3c0198480544",
-                        "itemId": "Joghurt",
-                        "specification": "",
-                        "attributes": [],
-                    },
-                ],
-                "sessionDate": "2025-01-01T02:54:57.656Z",
-                "publicUserUuid": "6743a171-247d-46d0-bc06-baf31194f949",
-            },
-        },
-        {
-            "type": "LIST_ITEMS_REMOVED",
-            "content": {
-                "uuid": "303dedf6-d4b2-4d25-a8cd-1c7967b84fcb",
-                "items": [
-                    {
-                        "uuid": "2ba8ddb6-01c6-4b0b-a89d-f3da6b291528",
-                        "itemId": "Tofu",
-                        "specification": "",
-                        "attributes": [],
-                    }
-                ],
-                "sessionDate": "2025-01-01T03:09:12.380Z",
-                "publicUserUuid": "6d79d10b-70b2-443f-9f7e-0b02e670c402",
-            },
-        },
-    ],
-    "timestamp": "2025-01-01T03:09:33.036Z",
-    "totalEvents": 2,
-}
-
-BRING_GET_LIST_USERS_RESPONSE = {
-    "users": [
-        {
-            "publicUuid": "98615d7e-0a7d-4a7e-8f73-a9cbb9f1bc32",
-            "name": "NAME",
-            "email": "EMAIL",
-            "photoPath": "",
-            "pushEnabled": True,
-            "plusTryOut": False,
-            "country": "DE",
-            "language": "de",
-        },
-        {
-            "publicUuid": "73af455f-c158-4004-a5e0-79f4f8a6d4bd",
-            "name": "NAME",
-            "email": "EMAIL",
-            "photoPath": "",
-            "pushEnabled": True,
-            "plusTryOut": False,
-            "country": "US",
-            "language": "en",
-        },
-        {
-            "publicUuid": "7d5e9d08-877a-4c36-8740-a9bf74ec690a",
-            "pushEnabled": True,
-            "plusTryOut": False,
-            "country": "US",
-            "language": "en",
-        },
-    ]
-}
-
-BRING_ERROR_RESPONSE = {
-    "message": "",
-    "error": "",
-    "error_description": "",
-    "errorcode": 0,
-}
+    return (
+        pathlib.Path(__file__)
+        .parent.joinpath("fixtures", filename)
+        .read_text(encoding="utf-8")
+    )
 
 
 @pytest.fixture(name="headers")
@@ -249,21 +48,89 @@ async def headers() -> str:
 
 
 @pytest.fixture(name="session")
-async def aiohttp_client_session():
+async def aiohttp_client_session() -> AsyncGenerator[aiohttp.ClientSession]:
     """Create  a client session."""
     async with aiohttp.ClientSession() as session:
         yield session
 
 
 @pytest.fixture(name="bring")
-async def bring_api_client(session) -> Bring:
+async def bring_api_client(session: aiohttp.ClientSession) -> Bring:
     """Create Bring instance."""
     bring = Bring(session, "EMAIL", "PASSWORD")
     return bring
 
 
-@pytest.fixture(name="mocked")
-def aioclient_mock():
-    """Mock Aiohttp client requests."""
+@pytest.fixture
+def mock_aiohttp() -> Generator[aioresponses]:
+    """Mock Aiohttp client."""
     with aioresponses() as m:
+        yield m
+
+
+@pytest.fixture(name="mocked")
+def aioclient_mock() -> Generator[aioresponses]:
+    """Mock Bring API requests."""
+    with aioresponses() as m:
+        m.post(
+            "https://api.getbring.com/rest/v2/bringauth",
+            status=HTTPStatus.OK,
+            body=load_fixture("login_response.json"),
+        )
+        m.get(
+            f"https://api.getbring.com/rest/v2/bringusers/{UUID}",
+            status=HTTPStatus.OK,
+            body=load_fixture("user_account_response.json"),
+            repeat=True,
+        )
+        m.get(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}",
+            status=HTTPStatus.OK,
+            body=load_fixture("user_settings_response.json"),
+            repeat=True,
+        )
+        m.get(
+            f"https://api.getbring.com/rest/bringusers/{UUID}/lists",
+            status=HTTPStatus.OK,
+            body=load_fixture("load_lists_response.json"),
+        )
+        m.post(
+            f"https://api.getbring.com/rest/v2/bringnotifications/lists/{UUID}",
+            status=HTTPStatus.OK,
+        )
+        m.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}",
+            status=HTTPStatus.OK,
+            body=load_fixture("get_list_response.json"),
+            repeat=True,
+        )
+        m.get(
+            f"https://api.getbring.com/rest/bringlists/{UUID}/details",
+            status=HTTPStatus.OK,
+            body=load_fixture("item_details_response.json"),
+        )
+        m.put(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
+            status=HTTPStatus.OK,
+        )
+        m.post(
+            "https://api.getbring.com/rest/v2/bringauth/token",
+            status=HTTPStatus.OK,
+            body=load_fixture("token_response.json"),
+            repeat=True,
+        )
+        m.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/activity",
+            status=HTTPStatus.OK,
+            body=load_fixture("activity_response.json"),
+        )
+        m.get(
+            f"https://api.getbring.com/rest/v2/bringlists/{UUID}/users",
+            status=HTTPStatus.OK,
+            body=load_fixture("list_users_response.json"),
+        )
+        m.post(
+            f"https://api.getbring.com/rest/bringusersettings/{UUID}/{UUID}/listArticleLanguage",
+            status=HTTPStatus.OK,
+        )
         yield m

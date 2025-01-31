@@ -1,0 +1,4 @@
+# serializer version: 1
+# name: test_get_all_item_details
+  BringListItemsDetailsResponse(items=[BringListItemDetails(uuid='bfb5634c-d219-4d66-b68e-1388e54f0bb0', itemId='Milchreis', listUuid='00000000-0000-0000-0000-000000000000', userIconItemId='Reis', userSectionId='Getreideprodukte', assignedTo='', imageUrl=''), BringListItemDetails(uuid='0056b23c-7fc3-44da-8c34-426f8b632220', itemId='Zitronensaft', listUuid='00000000-0000-0000-0000-000000000000', userIconItemId='Zitrone', userSectionId='Zutaten & Gewürze', assignedTo='', imageUrl='')])
+# ---

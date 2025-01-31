@@ -1,0 +1,4 @@
+# serializer version: 1
+# name: test_load_lists
+  BringListResponse(lists=[BringList(listUuid='00000000-0000-0000-0000-000000000000', name='Einkauf', theme='ch.publisheria.bring.theme.home')])
+# ---

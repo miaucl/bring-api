@@ -1,0 +1,4 @@
+# serializer version: 1
+# name: test_get_user_account
+  BringSyncCurrentUserResponse(email='{email}', emailVerified=True, premiumConfiguration={'hasPremium': False, 'hideSponsoredProducts': False, 'hideSponsoredTemplates': False, 'hideSponsoredPosts': False, 'hideSponsoredCategories': False, 'hideOffersOnMain': False}, publicUserUuid='00000000-0000-0000-0000-000000000000', userLocale=UserLocale(language='de', country='DE'), userUuid='00000000-0000-0000-0000-000000000000', name='{user_name}', photoPath='bring/user/portrait/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx')
+# ---
