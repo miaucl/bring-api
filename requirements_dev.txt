@@ -5,6 +5,6 @@ pre-commit>=3.6.1
 python-dotenv>=1.0.1
 ruff~=0.9
 mkdocs-material==9.5.50
-mkdocstrings[python]==0.27.0
+mkdocstrings[python]==0.28.0
 mashumaro>=3.13.1
 orjson>=3.10.12
