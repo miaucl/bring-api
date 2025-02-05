@@ -1,4 +1,9 @@
+
 # CHANGELOG
+
+## DEPRECATED
+
+This changelog is no longer maintained and will not be updated in future releases. Please refer to the [release notes](https://github.com/miaucl/bring-api/releases/latest) on GitHub for the latest changes.
 
 ## 1.0.0
 

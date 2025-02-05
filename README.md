@@ -268,6 +268,6 @@ Following VSCode integrations may be helpful:
 
 ### Releasing
 
-It is only possible to release a _final version_ on the `main` branch. For it to pass the gates of the `publish` workflow, it must have the same version in the `tag`, the `bring_api/__init__.py` and an entry in the `CHANGELOG.md` file.
+A _final version_ can only be released from the `main` branch. To pass the gates of the `publish` workflow, the version must match in both the `tag` and `bring_api/__init__.py`.
 
-To release a prerelease version, no changelog entry is required, but it can only happen on a feature branch (**not** `main` branch). Also, prerelease versions are marked as such in the github release page.
+To release a prerelease version, it must be done from a feature branch (**not** `main`). Prerelease versions are explicitly marked as such on the GitHub release page.
