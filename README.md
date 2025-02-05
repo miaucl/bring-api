@@ -1,22 +1,22 @@
 # Bring! Shopping Lists API
 
 [![PyPI version](https://badge.fury.io/py/bring-api.svg)](https://pypi.org/p/bring-api)
-[![Pytest](https://github.com/miaucl/bring-api/actions/workflows/pytest.yaml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/pytest.yaml)
+[![Unit tests](https://github.com/miaucl/bring-api/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/unit-tests.yaml)
 [![Ruff](https://github.com/miaucl/bring-api/actions/workflows/ruff.yml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/ruff.yml)
 [![Mypy](https://github.com/miaucl/bring-api/actions/workflows/mypy.yaml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/mypy.yaml)
 [![Markdownlint](https://github.com/miaucl/bring-api/actions/workflows/markdownlint.yml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/markdownlint.yml)
 [![Docs](https://github.com/miaucl/bring-api/actions/workflows/documentation.yml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/documentation.yml)
-[![Integration test](https://github.com/miaucl/bring-api/actions/workflows/test.yaml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/test.yaml)
+[![Smoke Test](https://github.com/miaucl/bring-api/actions/workflows/smoke-test.yaml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/smoke-test.yaml)
 
 An unofficial python package to access the Bring! shopping lists API.
 
 [![Sponsor](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/miaucl)
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/miaucl)
-[@miaucl](https://github.com/@miaucl)
+[@miaucl](https://github.com/miaucl)
 
 [![Sponsor](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/tr4nt0r)
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/tr4nt0r)
-[@tr4nt0r](https://github.com/@tr4nt0r)
+[@tr4nt0r](https://github.com/tr4nt0r)
 
 ## Credits
 
