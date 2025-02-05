@@ -12,3 +12,4 @@ build/
 site
 .headers
 .pytest_cache
+*.ipynb

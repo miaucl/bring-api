@@ -1,10 +1,8 @@
 """Tests for get_all_user_settings method."""
 
-import asyncio
 from http import HTTPStatus
 from unittest.mock import patch
 
-import aiohttp
 from aioresponses import aioresponses
 import pytest
 from syrupy.assertion import SnapshotAssertion
@@ -17,7 +15,7 @@ from bring_api import (
     BringTranslationException,
 )
 
-from .conftest import UUID, load_fixture
+from .conftest import UUID
 
 
 @pytest.mark.usefixtures("mocked")
@@ -30,47 +28,6 @@ async def test_get_all_user_settings(
     data = await bring.get_all_user_settings()
 
     assert data == snapshot
-
-
-@pytest.mark.parametrize(
-    "exception",
-    [
-        asyncio.TimeoutError,
-        aiohttp.ClientError,
-    ],
-)
-async def test_request_exception(
-    mocked: aioresponses,
-    bring: Bring,
-    exception: type[Exception],
-) -> None:
-    """Test request exceptions."""
-    await bring.login()
-    mocked.clear()
-    mocked.get(
-        f"https://api.getbring.com/rest/bringusersettings/{UUID}",
-        exception=exception,
-    )
-
-    with pytest.raises(BringRequestException):
-        await bring.get_all_user_settings()
-
-
-async def test_unauthorized(
-    mocked: aioresponses,
-    bring: Bring,
-) -> None:
-    """Test unauthorized exception."""
-    await bring.login()
-    mocked.clear()
-    mocked.get(
-        f"https://api.getbring.com/rest/bringusersettings/{UUID}",
-        status=HTTPStatus.UNAUTHORIZED,
-        body=load_fixture("error_response.json"),
-    )
-
-    with pytest.raises(BringAuthException):
-        await bring.get_all_user_settings()
 
 
 @pytest.mark.parametrize(

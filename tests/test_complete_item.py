@@ -93,7 +93,6 @@ async def test_complete_item(
         f"https://api.getbring.com/rest/v2/bringlists/{UUID}/items",
         method="PUT",
         headers=DEFAULT_HEADERS,
-        data=None,
         json=payload,
     )
 

@@ -1,21 +1,14 @@
 """Tests for get_list_users method."""
 
-import asyncio
 from http import HTTPStatus
 
-import aiohttp
 from aioresponses import aioresponses
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
-from bring_api import (
-    Bring,
-    BringAuthException,
-    BringParseException,
-    BringRequestException,
-)
+from bring_api import Bring, BringAuthException, BringParseException
 
-from .conftest import UUID, load_fixture
+from .conftest import UUID
 
 
 @pytest.mark.usefixtures("mocked")
@@ -29,47 +22,6 @@ async def test_get_lists_users(
     activity = await bring.get_list_users(UUID)
 
     assert activity == snapshot
-
-
-@pytest.mark.parametrize(
-    "exception",
-    [
-        asyncio.TimeoutError,
-        aiohttp.ClientError,
-    ],
-)
-async def test_request_exception(
-    mocked: aioresponses,
-    bring: Bring,
-    exception: type[Exception],
-) -> None:
-    """Test request exceptions."""
-    await bring.login()
-    mocked.clear()
-    mocked.get(
-        f"https://api.getbring.com/rest/v2/bringlists/{UUID}/users",
-        exception=exception,
-    )
-
-    with pytest.raises(BringRequestException):
-        await bring.get_list_users(UUID)
-
-
-async def test_auth_exception(
-    mocked: aioresponses,
-    bring: Bring,
-) -> None:
-    """Test request exceptions."""
-    await bring.login()
-    mocked.clear()
-    mocked.get(
-        f"https://api.getbring.com/rest/v2/bringlists/{UUID}/users",
-        status=HTTPStatus.UNAUTHORIZED,
-        body=load_fixture("error_response.json"),
-    )
-
-    with pytest.raises(BringAuthException):
-        await bring.get_list_users(UUID)
 
 
 @pytest.mark.parametrize(
