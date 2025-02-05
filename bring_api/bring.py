@@ -163,9 +163,11 @@ class Bring:
             ) from e
 
         if r.status == HTTPStatus.NOT_MODIFIED and etag:
-            _LOGGER.debug("Status NOT_MODIFIED, serving request from site cache")
+            _LOGGER.debug(
+                "ETag %s returned status 304, serving %s from site cache", etag, url
+            )
             try:
-                response = self._site_cache[etag]
+                return self._site_cache[etag]
             except KeyError:
                 self._etag.pop(str(url), None)
                 return await self._request(method, url, retry=True, **kwargs)
