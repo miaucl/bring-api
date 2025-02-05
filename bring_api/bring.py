@@ -402,61 +402,20 @@ class Bring:
             If the request fails due to invalid or expired authorization token.
 
         """
+        url = self.url / "bringlists" / list_uuid / "details"
+
         try:
-            url = self.url / "bringlists" / list_uuid / "details"
-            async with self._session.get(url, headers=self.headers) as r:
-                _LOGGER.debug(
-                    "Response from %s [%s]: %s", url, r.status, await r.text()
-                )
-
-                if r.status == HTTPStatus.UNAUTHORIZED:
-                    try:
-                        errmsg = BringErrorResponse.from_json(await r.text())
-                    except (JSONDecodeError, aiohttp.ClientError):
-                        _LOGGER.debug(
-                            "Exception: Cannot parse request response:", exc_info=True
-                        )
-                    else:
-                        _LOGGER.debug(
-                            "Exception: Cannot get list details: %s", errmsg.message
-                        )
-                    raise BringAuthException(
-                        "Loading list details failed due to authorization failure, "
-                        "the authorization token is invalid or expired."
-                    )
-
-                r.raise_for_status()
-
-                try:
-                    return BringListItemsDetailsResponse.from_dict(
-                        {"items": orjson.loads(await r.text())}
-                    )
-                except JSONDecodeError as e:
-                    _LOGGER.debug(
-                        "Exception: Cannot get item details for list %s:",
-                        list_uuid,
-                        exc_info=True,
-                    )
-                    raise BringParseException(
-                        "Loading list details failed during parsing of request response."
-                    ) from e
-        except TimeoutError as e:
+            return BringListItemsDetailsResponse.from_dict(
+                {"items": orjson.loads(await self._request("GET", url))}
+            )
+        except JSONDecodeError as e:
             _LOGGER.debug(
                 "Exception: Cannot get item details for list %s:",
                 list_uuid,
                 exc_info=True,
             )
-            raise BringRequestException(
-                "Loading list details failed due to connection timeout."
-            ) from e
-        except aiohttp.ClientError as e:
-            _LOGGER.debug(
-                "Exception: Cannot get item details for list %s:",
-                list_uuid,
-                exc_info=True,
-            )
-            raise BringRequestException(
-                "Loading list details failed due to request exception."
+            raise BringParseException(
+                "Loading list details failed during parsing of request response."
             ) from e
 
     async def save_item(
