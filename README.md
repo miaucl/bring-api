@@ -7,6 +7,7 @@
 [![Markdownlint](https://github.com/miaucl/bring-api/actions/workflows/markdownlint.yml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/markdownlint.yml)
 [![Docs](https://github.com/miaucl/bring-api/actions/workflows/documentation.yml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/documentation.yml)
 [![Smoke Test](https://github.com/miaucl/bring-api/actions/workflows/smoke-test.yaml/badge.svg)](https://github.com/miaucl/bring-api/actions/workflows/smoke-test.yaml)
+[![codecov](https://codecov.io/gh/miaucl/bring-api/graph/badge.svg?token=BFGAENFT7M)](https://codecov.io/gh/miaucl/bring-api)
 
 An unofficial python package to access the Bring! shopping lists API.
 
