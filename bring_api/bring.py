@@ -7,6 +7,7 @@ import json
 from json import JSONDecodeError
 import logging
 import os
+from random import randint
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -143,6 +144,18 @@ class Bring:
                     "Request failed due to authorization failure, "
                     "the authorization token is invalid or expired."
                 )
+
+            if (
+                r.status
+                in (
+                    HTTPStatus.BAD_GATEWAY,
+                    HTTPStatus.SERVICE_UNAVAILABLE,
+                    HTTPStatus.GATEWAY_TIMEOUT,
+                )
+                and not retry
+            ):
+                await asyncio.sleep(delay=randint(1, 5000) / 1000)
+                return await self._request(method, url, retry=True, **kwargs)
 
             r.raise_for_status()
 

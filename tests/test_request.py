@@ -2,6 +2,7 @@
 
 import asyncio
 from http import HTTPStatus
+from unittest.mock import patch
 
 import aiohttp
 from aioresponses import aioresponses
@@ -88,3 +89,30 @@ async def test_auth_expired(
         method="get",
         headers=DEFAULT_HEADERS,
     )
+
+
+async def test_bad_gateway_retry(mocked: aioresponses, bring: Bring) -> None:
+    """Test retry logic for bad gateway errors."""
+
+    await bring.login()
+    mocked.clear()
+
+    mocked.get(
+        URL("https://api.getbring.com/test"),
+        status=HTTPStatus.BAD_GATEWAY,
+    )
+    mocked.get(
+        URL("https://api.getbring.com/test"),
+        status=HTTPStatus.OK,
+    )
+
+    with patch("bring_api.bring.randint", return_value=0):
+        await bring._request("GET", URL("https://api.getbring.com/test"))
+
+    mocked.assert_called_with(
+        "https://api.getbring.com/test",
+        method="get",
+        headers=DEFAULT_HEADERS,
+    )
+
+    assert len(mocked._responses) == 2
