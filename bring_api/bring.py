@@ -48,6 +48,7 @@ from .types import (
     BringListResponse,
     BringNotificationsConfigType,
     BringNotificationType,
+    BringRecipe,
     BringSyncCurrentUserResponse,
     BringUserSettingsResponse,
     BringUsersResponse,
@@ -1272,3 +1273,113 @@ class Bring:
             raise BringParseException(
                 "Request failed during parsing of request response."
             ) from e
+
+    async def parse_recipe(
+        self,
+        recipe_url: str,
+    ) -> BringRecipe:
+        """Parse a recipe from a URL into a Bring recipe template.
+
+        Parameters
+        ----------
+        recipe_url : str
+            The URL of the recipe to be parsed.
+
+        Returns
+        -------
+        BringRecipe
+            An instance of BringRecipe representing the parsed recipe.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the recipe page or the response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+        url = self.url / "bringrecipes/parser"
+        params = {"url": str(recipe_url)}
+
+        try:
+            return BringRecipe.from_json(await self._request("GET", url, params=params))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
+            ) from e
+        except aiohttp.ClientResponseError as e:
+            if e.status == HTTPStatus.BAD_REQUEST:
+                raise BringParseException(
+                    "Failed to parse recipe. The page is possibly missing structured recipe data."
+                ) from e
+            raise
+
+    async def create_recipe(self, recipe: BringRecipe) -> BringRecipe:
+        """Create a new recipe in Bring.
+
+        Parameters
+        ----------
+        recipe : BringRecipe
+            An instance of BringRecipe containing the recipe details to be created.
+
+        Returns
+        -------
+        BringRecipe
+            An instance of BringRecipe representing the created recipe.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+
+        url = self.url / "v2/bringtemplates"
+
+        data = {
+            "content": recipe.to_dict(omit_none=True),
+            "type": "RECIPE",
+            "userUuid": self.uuid,
+        }
+        try:
+            return BringRecipe.from_json(await self._request("POST", url, json=data))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
+            ) from e
+
+    async def delete_recipe(self, recipe_uuid: str) -> None:
+        """Delete a recipe by its UUID.
+
+        Parameters
+        ----------
+        recipe_uuid : str
+            The unique identifier of the recipe to be deleted.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+
+        url = self.url / "v2/bringtemplates" / recipe_uuid
+        await self._request("DELETE", url)

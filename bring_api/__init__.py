@@ -31,6 +31,7 @@ from .types import (
     BringNotificationsConfigType,
     BringNotificationType,
     BringPurchase,
+    BringRecipe,
     BringSyncCurrentUserResponse,
     BringUser,
     BringUserListSettingEntry,
@@ -84,4 +85,5 @@ __all__ = [
     "ReactionType",
     "Status",
     "UserLocale",
+    "BringRecipe",
 ]

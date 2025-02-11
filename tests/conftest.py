@@ -135,4 +135,18 @@ def aioclient_mock() -> Generator[aioresponses]:
             f"https://api.getbring.com/rest/bringusersettings/{UUID}/{UUID}/listArticleLanguage",
             status=HTTPStatus.OK,
         )
+        m.get(
+            "https://api.getbring.com/rest/bringrecipes/parser?url=https://example.com",
+            status=HTTPStatus.OK,
+            body=load_fixture("recipe.json"),
+        )
+        m.post(
+            "https://api.getbring.com/rest/v2/bringtemplates",
+            status=HTTPStatus.CREATED,
+            body=load_fixture("create_recipe_response.json"),
+        )
+        m.delete(
+            "https://api.getbring.com/rest/v2/bringtemplates/98ad5860-e8d2-4e3f-8c9e-0fe3f59eec8a",
+            status=HTTPStatus.NO_CONTENT,
+        )
         yield m
