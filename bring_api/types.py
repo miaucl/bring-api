@@ -62,6 +62,13 @@ class Status(StrEnum):
     INVITATION = "INVITATION"
 
 
+class TemplateType(StrEnum):
+    """Template or recipe."""
+
+    TEMPLATE = "TEMPLATE"
+    RECIPE = "RECIPE"
+
+
 @dataclass
 class BaseModel(DataClassORJSONMixin):
     """Base model for Bring dataclasses."""
@@ -69,7 +76,6 @@ class BaseModel(DataClassORJSONMixin):
     class Config:
         """Config."""
 
-        debug = True
         code_generation_options = [TO_DICT_ADD_OMIT_NONE_FLAG]
         serialize_by_alias = True
 
@@ -357,7 +363,7 @@ class Ingredient(BaseModel):
 
 
 @dataclass(kw_only=True)
-class BringRecipe(BaseModel):
+class BringTemplate(BaseModel):
     """Bring recipe."""
 
     name: str
@@ -383,7 +389,9 @@ class BringRecipe(BaseModel):
     campaign: str | None = None
     title: str | None = None
     importCount: int | None = None
-    entry_type: str | None = field(default=None, metadata=field_options(alias="type"))
+    template_type: TemplateType | None = field(
+        default=TemplateType.TEMPLATE, metadata=field_options(alias="type")
+    )
     isPromoted: bool | None = None
     isAd: bool | None = None
     contentSrcUrl: str | None = None
@@ -396,8 +404,10 @@ class BringRecipe(BaseModel):
 class Inspiration(BaseConfig):
     """Inspiration entry."""
 
-    entry_type: str | None = field(default=None, metadata=field_options(alias="type"))
-    content: BringRecipe
+    template_type: TemplateType | None = field(
+        default=None, metadata=field_options(alias="type")
+    )
+    content: BringTemplate
 
 
 @dataclass(kw_only=True)

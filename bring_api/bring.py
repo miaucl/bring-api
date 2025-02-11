@@ -48,11 +48,12 @@ from .types import (
     BringListResponse,
     BringNotificationsConfigType,
     BringNotificationType,
-    BringRecipe,
     BringSyncCurrentUserResponse,
+    BringTemplate,
     BringUserSettingsResponse,
     BringUsersResponse,
     ReactionType,
+    TemplateType,
     UserLocale,
 )
 
@@ -1277,8 +1278,8 @@ class Bring:
     async def parse_recipe(
         self,
         recipe_url: str,
-    ) -> BringRecipe:
-        """Parse a recipe from a URL into a Bring recipe template.
+    ) -> BringTemplate:
+        """Parse a recipe from a URL into a BringTemplate.
 
         Parameters
         ----------
@@ -1287,15 +1288,15 @@ class Bring:
 
         Returns
         -------
-        BringRecipe
-            An instance of BringRecipe representing the parsed recipe.
+        BringTemplate
+            An instance of BringTemplate representing the parsed recipe.
 
         Raises
         ------
         BringRequestException
             If the request fails.
         BringParseException
-            If the parsing of the recipe page or the response fails.
+            If the parsing of the response fails.
         BringAuthException
             If the request fails due to invalid or expired authorization token.
 
@@ -1304,7 +1305,9 @@ class Bring:
         params = {"url": str(recipe_url)}
 
         try:
-            return BringRecipe.from_json(await self._request("GET", url, params=params))
+            return BringTemplate.from_json(
+                await self._request("GET", url, params=params)
+            )
         except MissingField as e:
             raise BringMissingFieldException(e) from e
         except JSONDecodeError as e:
@@ -1312,25 +1315,25 @@ class Bring:
             raise BringParseException(
                 "Request failed during parsing of request response."
             ) from e
-        except aiohttp.ClientResponseError as e:
-            if e.status == HTTPStatus.BAD_REQUEST:
-                raise BringParseException(
-                    "Failed to parse recipe. The page is possibly missing structured recipe data."
-                ) from e
-            raise
 
-    async def create_recipe(self, recipe: BringRecipe) -> BringRecipe:
-        """Create a new recipe in Bring.
+    async def create_template(
+        self,
+        template: BringTemplate,
+        template_type: TemplateType = TemplateType.TEMPLATE,
+    ) -> BringTemplate:
+        """Create a new template or recipe in Bring.
 
         Parameters
         ----------
-        recipe : BringRecipe
-            An instance of BringRecipe containing the recipe details to be created.
+        template : BringTemplate
+            An instance of BringTemplate containing the template or recipe details to be created.
+        template_type: TemplateType
+            The type of template to be created. It can be either a standard template or a recipe.
 
         Returns
         -------
-        BringRecipe
-            An instance of BringRecipe representing the created recipe.
+        BringTemplate
+            An instance of BringTemplate representing the created template.
 
         Raises
         ------
@@ -1346,12 +1349,12 @@ class Bring:
         url = self.url / "v2/bringtemplates"
 
         data = {
-            "content": recipe.to_dict(omit_none=True),
-            "type": "RECIPE",
+            "content": template.to_dict(omit_none=True),
+            "type": template_type,
             "userUuid": self.uuid,
         }
         try:
-            return BringRecipe.from_json(await self._request("POST", url, json=data))
+            return BringTemplate.from_json(await self._request("POST", url, json=data))
         except MissingField as e:
             raise BringMissingFieldException(e) from e
         except JSONDecodeError as e:
@@ -1360,13 +1363,13 @@ class Bring:
                 "Request failed during parsing of request response."
             ) from e
 
-    async def delete_recipe(self, recipe_uuid: str) -> None:
-        """Delete a recipe by its UUID.
+    async def delete_template(self, template_uuid: str) -> None:
+        """Delete a template or recipe by its UUID.
 
         Parameters
         ----------
-        recipe_uuid : str
-            The unique identifier of the recipe to be deleted.
+        template_uuid : str
+            The unique identifier of the template or recipe to be deleted.
 
         Returns
         -------
@@ -1381,5 +1384,5 @@ class Bring:
 
         """
 
-        url = self.url / "v2/bringtemplates" / recipe_uuid
+        url = self.url / "v2/bringtemplates" / template_uuid
         await self._request("DELETE", url)

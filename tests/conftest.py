@@ -143,7 +143,12 @@ def aioclient_mock() -> Generator[aioresponses]:
         m.post(
             "https://api.getbring.com/rest/v2/bringtemplates",
             status=HTTPStatus.CREATED,
-            body=load_fixture("create_recipe_response.json"),
+            body=load_fixture("create_template_response.json"),
+        )
+        m.put(
+            "https://api.getbring.com/rest/v2/bringtemplates/98ad5860-e8d2-4e3f-8c9e-0fe3f59eec8a",
+            status=HTTPStatus.OK,
+            body=load_fixture("create_template_response.json"),
         )
         m.delete(
             "https://api.getbring.com/rest/v2/bringtemplates/98ad5860-e8d2-4e3f-8c9e-0fe3f59eec8a",
