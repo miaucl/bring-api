@@ -1,0 +1,33 @@
+{
+  "uuid": "98ad5860-e8d2-4e3f-8c9e-0fe3f59eec8a",
+  "contentUuid": "647a2a25-e158-4747-a9f4-2c5887ac840d",
+  "contentVersion": 1,
+  "title": "Erdnusspfanne",
+  "name": "Erdnusspfanne",
+  "text": "",
+  "author": "Chefkoch",
+  "imageUrl": "https://img.chefkoch-cdn.de/rezepte/3844601585665452/bilder/1296333/crop-960x720/erdnusspfanne.jpg",
+  "imageWidth": 960,
+  "imageHeight": 720,
+  "importCount": 0,
+  "likeCount": 38,
+  "linkOutUrl": "https://www.chefkoch.de/rezepte/3844601585665452/Erdnusspfanne.html",
+  "type": "RECIPE",
+  "tags": [
+    "bring_recipe_parser",
+    "vegetarisch",
+    "Gemüse",
+    "chefkoch.de",
+    "Pilze",
+    "Hauptspeise",
+    "einfach",
+    "vegan",
+    "Schnell",
+    "gekocht"
+  ],
+  "contentSrcUrl": "https://api.getbring.com/rest/v2/bringtemplates/content/647a2a25-e158-4747-a9f4-2c5887ac840d",
+  "attribution": "",
+  "attributionSubtitle": "",
+  "attributionIcon": "",
+  "enableQuantityChange": true
+}

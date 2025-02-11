@@ -1,6 +1,6 @@
 """Bring API package."""
 
-__version__ = "1.0.1rc3"
+__version__ = "1.0.2"
 
 from .bring import Bring
 from .exceptions import (
@@ -32,6 +32,7 @@ from .types import (
     BringNotificationType,
     BringPurchase,
     BringSyncCurrentUserResponse,
+    BringTemplate,
     BringUser,
     BringUserListSettingEntry,
     BringUserSettingsEntry,
@@ -42,6 +43,7 @@ from .types import (
     PremiumConfiguration,
     ReactionType,
     Status,
+    TemplateType,
     UserLocale,
 )
 
@@ -71,6 +73,7 @@ __all__ = [
     "BringPurchase",
     "BringRequestException",
     "BringSyncCurrentUserResponse",
+    "BringTemplate",
     "BringTranslationException",
     "BringUser",
     "BringUserListSettingEntry",
@@ -83,5 +86,6 @@ __all__ = [
     "PremiumConfiguration",
     "ReactionType",
     "Status",
+    "TemplateType",
     "UserLocale",
 ]

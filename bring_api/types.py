@@ -5,6 +5,8 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Literal, NotRequired, TypedDict
 
+from mashumaro import field_options
+from mashumaro.config import TO_DICT_ADD_OMIT_NONE_FLAG, BaseConfig
 from mashumaro.mixins.orjson import DataClassORJSONMixin
 
 
@@ -58,6 +60,24 @@ class Status(StrEnum):
     UNREGISTERED = "UNREGISTERED"
     SHARED = "SHARED"
     INVITATION = "INVITATION"
+
+
+class TemplateType(StrEnum):
+    """Template or recipe."""
+
+    TEMPLATE = "TEMPLATE"
+    RECIPE = "RECIPE"
+
+
+@dataclass
+class BaseModel(DataClassORJSONMixin):
+    """Base model for Bring dataclasses."""
+
+    class Config:
+        """Config."""
+
+        code_generation_options = [TO_DICT_ADD_OMIT_NONE_FLAG]
+        serialize_by_alias = True
 
 
 @dataclass(kw_only=True)
@@ -329,3 +349,69 @@ class BringUsersResponse(DataClassORJSONMixin):
     """List users."""
 
     users: list[BringUser] = field(default_factory=list)
+
+
+@dataclass(kw_only=True)
+class Ingredient(BaseModel):
+    """Bring recipe ingredient."""
+
+    itemId: str
+    stock: bool
+    spec: str | None = None
+    altIcon: str | None = None
+    altSection: str | None = None
+
+
+@dataclass(kw_only=True)
+class BringTemplate(BaseModel):
+    """Bring recipe."""
+
+    name: str
+    author: str
+    tagline: str | None = None
+    linkOutUrl: str
+    imageUrl: str
+    imageWidth: int
+    imageHeight: int
+    items: list[Ingredient] = field(default_factory=list)
+    requestQuantity: str | None = field(
+        default=None, metadata=field_options(alias="yield")
+    )
+    baseQuantity: int | None = None
+    time: str | None = None
+    ingredients: list[Ingredient] = field(default_factory=list)
+    likeCount: int
+    tags: list[str] = field(default_factory=list)
+    enableQuantityChange: bool
+    uuid: str | None = None
+    contentUuid: str | None = None
+    contentVersion: int | None = None
+    campaign: str | None = None
+    title: str | None = None
+    importCount: int | None = None
+    template_type: TemplateType | None = field(
+        default=TemplateType.TEMPLATE, metadata=field_options(alias="type")
+    )
+    isPromoted: bool | None = None
+    isAd: bool | None = None
+    contentSrcUrl: str | None = None
+    attribution: str | None = None
+    attributionSubtitle: str | None = None
+    attributionIcon: str | None = None
+
+
+@dataclass(kw_only=True)
+class Inspiration(BaseConfig):
+    """Inspiration entry."""
+
+    template_type: TemplateType | None = field(
+        default=None, metadata=field_options(alias="type")
+    )
+    content: BringTemplate
+
+
+@dataclass(kw_only=True)
+class BringInspirationsResponse(BaseConfig):
+    """Bring inspirations response."""
+
+    entries: list[Inspiration]
