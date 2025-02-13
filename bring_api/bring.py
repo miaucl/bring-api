@@ -49,9 +49,11 @@ from .types import (
     BringNotificationsConfigType,
     BringNotificationType,
     BringSyncCurrentUserResponse,
+    BringTemplate,
     BringUserSettingsResponse,
     BringUsersResponse,
     ReactionType,
+    TemplateType,
     UserLocale,
 )
 
@@ -1272,3 +1274,115 @@ class Bring:
             raise BringParseException(
                 "Request failed during parsing of request response."
             ) from e
+
+    async def parse_recipe(
+        self,
+        recipe_url: str,
+    ) -> BringTemplate:
+        """Parse a recipe from a URL into a BringTemplate.
+
+        Parameters
+        ----------
+        recipe_url : str
+            The URL of the recipe to be parsed.
+
+        Returns
+        -------
+        BringTemplate
+            An instance of BringTemplate representing the parsed recipe.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+        url = self.url / "bringrecipes/parser"
+        params = {"url": str(recipe_url)}
+
+        try:
+            return BringTemplate.from_json(
+                await self._request("GET", url, params=params)
+            )
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
+            ) from e
+
+    async def create_template(
+        self,
+        template: BringTemplate,
+        template_type: TemplateType = TemplateType.TEMPLATE,
+    ) -> BringTemplate:
+        """Create a new template or recipe in Bring.
+
+        Parameters
+        ----------
+        template : BringTemplate
+            An instance of BringTemplate containing the template or recipe details to be created.
+        template_type: TemplateType
+            The type of template to be created. It can be either a standard template or a recipe.
+
+        Returns
+        -------
+        BringTemplate
+            An instance of BringTemplate representing the created template.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+
+        url = self.url / "v2/bringtemplates"
+
+        data = {
+            "content": template.to_dict(omit_none=True),
+            "type": template_type,
+            "userUuid": self.uuid,
+        }
+        try:
+            return BringTemplate.from_json(await self._request("POST", url, json=data))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
+            ) from e
+
+    async def delete_template(self, template_uuid: str) -> None:
+        """Delete a template or recipe by its UUID.
+
+        Parameters
+        ----------
+        template_uuid : str
+            The unique identifier of the template or recipe to be deleted.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+
+        url = self.url / "v2/bringtemplates" / template_uuid
+        await self._request("DELETE", url)

@@ -1,0 +1,159 @@
+{
+  "name": "Erdnusspfanne",
+  "author": "Chefkoch",
+  "tagline": "Gesamtzeit ca. 35 Minuten",
+  "linkOutUrl": "https://www.chefkoch.de/rezepte/3844601585665452/Erdnusspfanne.html",
+  "imageUrl": "https://img.chefkoch-cdn.de/rezepte/3844601585665452/bilder/1296333/crop-960x720/erdnusspfanne.jpg",
+  "imageWidth": 960,
+  "imageHeight": 720,
+  "items": [
+    { "itemId": "Tofu", "spec": "1 Pck., (200 g)", "stock": false },
+    {
+      "itemId": "Paprikaschote(n)",
+      "spec": "1",
+      "altIcon": "Peperoni",
+      "altSection": "Früchte & Gemüse",
+      "stock": false
+    },
+    { "itemId": "Champignons", "spec": "250g", "stock": false },
+    {
+      "itemId": "Zwiebel(n)",
+      "spec": "1",
+      "altIcon": "Zwiebeln",
+      "altSection": "Früchte & Gemüse",
+      "stock": false
+    },
+    {
+      "itemId": "Knoblauchzehe(n)",
+      "spec": "1",
+      "altIcon": "Knoblauch",
+      "altSection": "Früchte & Gemüse",
+      "stock": false
+    },
+    {
+      "itemId": "Erdnusscreme",
+      "spec": "3 EL",
+      "altIcon": "Nougatcreme",
+      "altSection": "Snacks & Süsswaren",
+      "stock": false
+    },
+    { "itemId": "Soyasauce", "spec": "3 EL", "stock": false },
+    {
+      "itemId": "Gemüsebrühe",
+      "spec": "200ml",
+      "altIcon": "Bouillon",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    },
+    {
+      "itemId": "Hafermilch (Haferdrink)",
+      "spec": "300ml, oder Sojadrink",
+      "altIcon": "Milch",
+      "altSection": "Milch & Käse",
+      "stock": false
+    },
+    { "itemId": "Salz und Pfeffer", "altIcon": "Salz", "stock": true },
+    {
+      "itemId": "Currypulver",
+      "altIcon": "Paprikapulver",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    },
+    {
+      "itemId": "Chilipulver",
+      "altIcon": "Paprikapulver",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    },
+    { "itemId": "Petersilie", "spec": "optional", "stock": false },
+    {
+      "itemId": "Kokosöl",
+      "altIcon": "Öl",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    }
+  ],
+  "yield": "4",
+  "baseQuantity": 4,
+  "time": "PT35M",
+  "ingredients": [
+    { "itemId": "Tofu", "spec": "1 Pck., (200 g)", "stock": false },
+    {
+      "itemId": "Paprikaschote(n)",
+      "spec": "1",
+      "altIcon": "Peperoni",
+      "altSection": "Früchte & Gemüse",
+      "stock": false
+    },
+    { "itemId": "Champignons", "spec": "250g", "stock": false },
+    {
+      "itemId": "Zwiebel(n)",
+      "spec": "1",
+      "altIcon": "Zwiebeln",
+      "altSection": "Früchte & Gemüse",
+      "stock": false
+    },
+    {
+      "itemId": "Knoblauchzehe(n)",
+      "spec": "1",
+      "altIcon": "Knoblauch",
+      "altSection": "Früchte & Gemüse",
+      "stock": false
+    },
+    {
+      "itemId": "Erdnusscreme",
+      "spec": "3 EL",
+      "altIcon": "Nougatcreme",
+      "altSection": "Snacks & Süsswaren",
+      "stock": false
+    },
+    { "itemId": "Soyasauce", "spec": "3 EL", "stock": false },
+    {
+      "itemId": "Gemüsebrühe",
+      "spec": "200ml",
+      "altIcon": "Bouillon",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    },
+    {
+      "itemId": "Hafermilch (Haferdrink)",
+      "spec": "300ml, oder Sojadrink",
+      "altIcon": "Milch",
+      "altSection": "Milch & Käse",
+      "stock": false
+    },
+    { "itemId": "Salz und Pfeffer", "altIcon": "Salz", "stock": true },
+    {
+      "itemId": "Currypulver",
+      "altIcon": "Paprikapulver",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    },
+    {
+      "itemId": "Chilipulver",
+      "altIcon": "Paprikapulver",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    },
+    { "itemId": "Petersilie", "spec": "optional", "stock": false },
+    {
+      "itemId": "Kokosöl",
+      "altIcon": "Öl",
+      "altSection": "Zutaten & Gewürze",
+      "stock": false
+    }
+  ],
+  "likeCount": 38,
+  "tags": [
+    "bring_recipe_parser",
+    "Gemüse",
+    "bring_mealDiet_vegetarian",
+    "bring_mealType_easy",
+    "chefkoch.de",
+    "Pilze",
+    "vegan",
+    "bring_mealType_mainCourse",
+    "gekocht"
+  ],
+  "enableQuantityChange": true
+}
