@@ -154,4 +154,14 @@ def aioclient_mock() -> Generator[aioresponses]:
             "https://api.getbring.com/rest/v2/bringtemplates/98ad5860-e8d2-4e3f-8c9e-0fe3f59eec8a",
             status=HTTPStatus.NO_CONTENT,
         )
+        m.get(
+            f"https://api.getbring.com/rest/v2/bringusers/{UUID}/inspirations?filterTags=mine&limit=2147483647&offset=0",
+            status=HTTPStatus.OK,
+            body=load_fixture("inspirations_response.json"),
+        )
+        m.get(
+            f"https://api.getbring.com/rest/v2/bringusers/{UUID}/inspirationstreamfilters",
+            status=HTTPStatus.OK,
+            body=load_fixture("inspiration_filters_response.json"),
+        )
         yield m

@@ -1,0 +1,91 @@
+{
+  "entries": [
+    {
+      "type": "RECIPE",
+      "content": {
+        "uuid": "2317b635-1004-426c-939c-b883200e6143",
+        "contentUuid": "1f80e479-f04b-4dfa-98fb-bee670536fe8",
+        "contentVersion": 1,
+        "campaign": "Erdbeeren mit Balsamico",
+        "title": "Erdbeeren mit Balsamico",
+        "name": "Erdbeeren mit Balsamico",
+        "text": "",
+        "author": "Chefkoch",
+        "imageUrl": "https://img.chefkoch-cdn.de/rezepte/1950311317199396/bilder/921233/crop-960x720/erdbeeren-mit-balsamico.jpg",
+        "imageWidth": 960,
+        "imageHeight": 720,
+        "importCount": 0,
+        "linkOutUrl": "https://www.chefkoch.de/rezepte/1950311317199396/Erdbeeren-mit-Balsamico.html",
+        "type": "RECIPE",
+        "isPromoted": false,
+        "isAd": false,
+        "tags": [
+          "all",
+          "mine",
+          "bring_recipe_parser",
+          "Frühling",
+          "chefkoch.de",
+          "type_recipe",
+          "einfach",
+          "Früchte",
+          "Dessert",
+          "Schnell",
+          "Salat",
+          "Beilage",
+          "Sommer"
+        ],
+        "contentSrcUrl": "https://api.getbring.com/rest/v2/bringtemplates/content/1f80e479-f04b-4dfa-98fb-bee670536fe8",
+        "attribution": "Chefkoch",
+        "attributionSubtitle": "",
+        "attributionIcon": "",
+        "likeCount": 1,
+        "enableQuantityChange": true
+      }
+    },
+
+    {
+      "type": "RECIPE",
+      "content": {
+        "uuid": "0d1d68e7-b3d5-4a14-889e-2244d4995342",
+        "contentUuid": "9ec60716-ca6b-4511-ae78-925325c64e26",
+        "contentVersion": 1,
+        "campaign": "Erdnusspfanne",
+        "title": "Erdnusspfanne",
+        "name": "Erdnusspfanne",
+        "text": "",
+        "author": "irghjeriognheroghibnerg",
+        "imageUrl": "https://img.chefkoch-cdn.de/rezepte/3844601585665452/bilder/1296333/crop-960x720/erdnusspfanne.jpg",
+        "imageWidth": 960,
+        "imageHeight": 720,
+        "importCount": 0,
+        "linkOutUrl": "https://www.chefkoch.de/rezepte/3844601585665452/Erdnusspfanne.html",
+        "type": "RECIPE",
+        "isPromoted": false,
+        "isAd": false,
+        "tags": [
+          "all",
+          "mine",
+          "bring_recipe_parser",
+          "chefkoch.de",
+          "Pilze",
+          "type_recipe",
+          "Hauptspeise",
+          "einfach",
+          "vegan",
+          "Schnell",
+          "vegetarisch",
+          "Gemüse",
+          "gekocht"
+        ],
+        "contentSrcUrl": "https://api.getbring.com/rest/v2/bringtemplates/content/9ec60716-ca6b-4511-ae78-925325c64e26",
+        "attribution": "irghjeriognheroghibnerg",
+        "attributionSubtitle": "",
+        "attributionIcon": "",
+        "likeCount": 45,
+        "enableQuantityChange": true
+      }
+    }
+  ],
+  "count": 8,
+  "total": 8
+}

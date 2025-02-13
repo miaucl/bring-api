@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import Literal, NotRequired, TypedDict
 
 from mashumaro import field_options
-from mashumaro.config import TO_DICT_ADD_OMIT_NONE_FLAG, BaseConfig
+from mashumaro.config import TO_DICT_ADD_OMIT_NONE_FLAG
 from mashumaro.mixins.orjson import DataClassORJSONMixin
 
 
@@ -67,6 +67,7 @@ class TemplateType(StrEnum):
 
     TEMPLATE = "TEMPLATE"
     RECIPE = "RECIPE"
+    POST = "POST"  # used for ads
 
 
 @dataclass
@@ -366,13 +367,13 @@ class Ingredient(BaseModel):
 class BringTemplate(BaseModel):
     """Bring recipe."""
 
-    name: str
-    author: str
+    name: str | None = None
+    author: str | None = None
     tagline: str | None = None
-    linkOutUrl: str
-    imageUrl: str
-    imageWidth: int
-    imageHeight: int
+    linkOutUrl: str | None = None
+    imageUrl: str | None = None
+    imageWidth: int | None = None
+    imageHeight: int | None = None
     items: list[Ingredient] = field(default_factory=list)
     requestQuantity: str | None = field(
         default=None, metadata=field_options(alias="yield")
@@ -380,9 +381,9 @@ class BringTemplate(BaseModel):
     baseQuantity: int | None = None
     time: str | None = None
     ingredients: list[Ingredient] = field(default_factory=list)
-    likeCount: int
+    likeCount: int | None = None
     tags: list[str] = field(default_factory=list)
-    enableQuantityChange: bool
+    enableQuantityChange: bool | None = None
     uuid: str | None = None
     contentUuid: str | None = None
     contentVersion: int | None = None
@@ -401,7 +402,7 @@ class BringTemplate(BaseModel):
 
 
 @dataclass(kw_only=True)
-class Inspiration(BaseConfig):
+class Inspiration(BaseModel):
     """Inspiration entry."""
 
     template_type: TemplateType | None = field(
@@ -411,7 +412,32 @@ class Inspiration(BaseConfig):
 
 
 @dataclass(kw_only=True)
-class BringInspirationsResponse(BaseConfig):
+class BringInspirationsResponse(BaseModel):
     """Bring inspirations response."""
 
     entries: list[Inspiration]
+    count: int
+    total: int
+
+
+@dataclass(kw_only=True)
+class InspirationFilter(BaseModel):
+    """Inspiration filter."""
+
+    id: str
+    name: str
+    isSpecial: bool
+    tags: list[str]
+    campaign: str
+    isPromoted: bool
+    isAd: bool
+    backgroundColor: str | None = None
+    foregroundColor: str | None = None
+    imageUrl: str | None = None
+
+
+@dataclass(kw_only=True)
+class BringInspirationFiltersResponse(BaseModel):
+    """Bring inspiration filters response."""
+
+    filters: list[InspirationFilter]

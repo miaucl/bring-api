@@ -41,6 +41,8 @@ from .types import (
     BringAuthResponse,
     BringAuthTokenResponse,
     BringErrorResponse,
+    BringInspirationFiltersResponse,
+    BringInspirationsResponse,
     BringItem,
     BringItemOperation,
     BringItemsResponse,
@@ -1386,3 +1388,81 @@ class Bring:
 
         url = self.url / "v2/bringtemplates" / template_uuid
         await self._request("DELETE", url)
+
+    async def get_inspirations(self, filter: str = "mine") -> BringInspirationsResponse:
+        """Get inspirations (recipes/templates) for a given tag from Bring.
+
+        Parameters
+        ----------
+        filter : str, optional
+            The tag to filter inspirations by. Default is "mine".
+            Possible filter tags: all, mine, bring_trending_recipes, chefkoch.de
+            Other promotional filter tags are available depending on the season
+            and can be retrieved with `get_inspiration_filters`
+
+        Returns
+        -------
+        BringInspirationsResponse
+            A response object containing the inspirations data.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+
+        url = self.url / "v2/bringusers/" / self.uuid / "inspirations"
+
+        params = {
+            "filterTags": filter,
+            "offset": 0,
+            "limit": 2147483647,
+        }
+        try:
+            return BringInspirationsResponse.from_json(
+                await self._request("GET", url, params=params)
+            )
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
+            ) from e
+
+    async def get_inspiration_filters(self) -> BringInspirationFiltersResponse:
+        """Retrieve categories (filters) for the inspiration stream.
+
+        Returns
+        -------
+        BringInspirationFiltersResponse
+            An instance of BringInspirationFiltersResponse containing the filters.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the request response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+
+        url = self.url / "v2/bringusers/" / self.uuid / "inspirationstreamfilters"
+        try:
+            return BringInspirationFiltersResponse.from_json(
+                await self._request("GET", url)
+            )
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
+            ) from e
