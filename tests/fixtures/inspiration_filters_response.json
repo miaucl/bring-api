@@ -1,0 +1,37 @@
+{
+    "filters": [
+        {
+            "id": "allContent",
+            "name": "All",
+            "campaign": "allContent",
+            "isPromoted": false,
+            "isAd": false,
+            "isSpecial": false,
+            "tags": [
+                "all"
+            ]
+        },
+        {
+            "id": "yourContent",
+            "name": "My recipes",
+            "campaign": "yourContent",
+            "isPromoted": false,
+            "isAd": false,
+            "isSpecial": false,
+            "tags": [
+                "mine"
+            ]
+        },
+        {
+            "id": "myChefkochRecipes",
+            "name": "Chefkoch-Sammlung",
+            "campaign": "myChefkochRecipes",
+            "isPromoted": false,
+            "isAd": false,
+            "isSpecial": false,
+            "tags": [
+                "chefkoch.de"
+            ]
+        }
+    ]
+}
