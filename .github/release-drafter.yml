@@ -73,10 +73,10 @@ change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add
 version-resolver:
   major:
     labels:
-      - 'breaking'
+      - ':boom: breaking change'
   minor:
     labels:
-      - 'feature'
+      - ':rocket: feature'
   default: patch
 
 template: |
