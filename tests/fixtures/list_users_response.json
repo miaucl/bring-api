@@ -26,6 +26,12 @@
       "plusTryOut": false,
       "country": "US",
       "language": "en"
+    },
+    {
+      "publicUuid": "7520a9a0-c545-4bf1-a311-37e89f19a879",
+      "pushEnabled": true,
+      "plusTryOut": false,
+      "plusExpiry":  "2017-06-01T00:00:00.000Z"
     }
   ]
 }

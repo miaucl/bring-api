@@ -338,8 +338,9 @@ class BringUser:
     publicUuid: str
     pushEnabled: bool
     plusTryOut: bool
-    country: str
-    language: str
+    plusExpiry: datetime | None = None
+    country: str = "CH"
+    language: str = "de"
     name: str | None = None
     email: str | None = None
     photoPath: str | None = None
