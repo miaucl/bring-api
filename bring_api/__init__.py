@@ -1,6 +1,6 @@
 """Bring API package."""
 
-__version__ = "1.0.2"
+__version__ = "1.1.0"
 
 from .bring import Bring
 from .exceptions import (
