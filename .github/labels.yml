@@ -92,5 +92,5 @@
   description: Minor feature improvement
 - name: 'skip-changelog'
   color: D3D3D3
-  description: Ommits this PR in the changelog
+  description: Omits this PR in the changelog
 
