@@ -14,7 +14,9 @@ authors = [
   { name = "Manfred Dennerlein Rodelo", email = "manfred@dennerlein.name" }
 ]
 dependencies = [
-  "aiohttp"
+  "aiohttp>=3.10",
+  "mashumaro>=3.13",
+  "orjson>=3.10"
 ]
 requires-python = ">=3.11"
 
