@@ -323,7 +323,7 @@ class BringActivityResponse(DataClassORJSONMixin):
 
 @dataclass(kw_only=True)
 class BringErrorResponse(DataClassORJSONMixin):
-    """Error resonse class."""
+    """Error response class."""
 
     message: str
     error: str
