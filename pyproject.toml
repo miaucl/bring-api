@@ -44,7 +44,7 @@ Issues = "https://github.com/miaucl/bring-api/issues"
 "Release notes" = "https://github.com/miaucl/bring-api/releases"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = [
