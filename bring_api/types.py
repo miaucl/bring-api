@@ -227,8 +227,8 @@ class BringUserSettingsResponse(DataClassORJSONMixin):
 class UserLocale(DataClassORJSONMixin):
     """A user locale class."""
 
-    language: str
-    country: str
+    language: str = "de"
+    country: str = "CH"
 
 
 @dataclass(kw_only=True)
