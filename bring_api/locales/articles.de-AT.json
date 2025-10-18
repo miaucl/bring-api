@@ -66,7 +66,6 @@
   "Eier": "Eier",
   "Katzenstreu": "Katzenstreu",
   "Torte": "Torte",
-  "Vorgeschlagene Artikel": "Vorgeschlagene Artikel",
   "Haushalt & Gesundheit": "Haushalt",
   "Pflege & Gesundheit": "Pflege & Gesundheit",
   "Zimt": "Zimt",
@@ -372,12 +371,13 @@
   "Pflanzen": "Pflanzen",
   "Rasenmäher": "Rasenmäher",
   "Mandelmus": "Mandelmus",
-  "Silberzwielen": "Silberzwielen",
+  "Silberzwiebeln": "Silberzwiebeln",
   "Burrata": "Burrata",
-  "Fussball-Fest": "Fussball-Fest",
-  "Adventskalender": "Adventskalender 🎄",
   "Kaffeebohnen": "Kaffeebohnen",
   "Kaffeepads": "Kaffeepads",
   "Kaffeekapseln": "Kaffeekapseln",
-  "Pudding": "Pudding"
+  "Pudding": "Pudding",
+  "Kuchenteig": "Kuchenteig",
+  "Zwieback": "Zwieback",
+  "Kaffeerahm": "Kaffeerahm"
 }
