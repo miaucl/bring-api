@@ -64,6 +64,8 @@ extra-dependencies = [
 ]
 extra-args = ["--cov-report=xml", "-vv"]
 type = "virtual"
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.14", "3.13", "3.12", "3.11"]
 
 [tool.hatch.envs.default.scripts]
 docs-serve = "mkdocs serve"
