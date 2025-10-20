@@ -16,8 +16,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.14"
-      - name: Install dependencies
-        run: pipx install hatch  --python python3.14
+      - name: Install Hatch
+        uses: pypa/hatch@install
       - name: Test with pytest
         run: hatch test --all
       - name: Upload coverage to Codecov

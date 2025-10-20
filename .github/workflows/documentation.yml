@@ -28,10 +28,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
-    - name: Install dependencies
-      run: |
-        pipx install hatch
-        hatch env create
+    - name: Install Hatch
+      uses: pypa/hatch@install
     - name: Build
       run: hatch run docs-build
     - name: Upload artifact
