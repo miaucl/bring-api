@@ -1,13 +1,10 @@
 [build-system]
-requires = [
-    "setuptools>=46.4.0",
-    "wheel"
-]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-regex-commit"]
+build-backend = "hatchling.build"
 
 [project]
 name = "bring-api"
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 description = "Unofficial package to access Bring! shopping lists API."
 authors = [
   { name = "Cyrill Raccaud", email = "cyrill.raccaud+pypi@gmail.com" },
@@ -25,17 +22,54 @@ classifiers = [
     "Operating System :: OS Independent"
 ]
 license = "MIT"
+readme = "README.md"
 
-[tool.setuptools]
-packages = ["bring_api", "bring_api.locales"]
+[tool.hatch.version]
+source = "regex_commit"
+commit_extra_args = ["-e"]
+path = "bring_api/__init__.py"
 
-[tool.setuptools.package-data]
-bring_api = ["py.typed"]
-"bring_api.locales" = ["*.json"]
+[tool.hatch.build.targets.sdist]
+include = [
+    "/bring_api",
+]
 
-[tool.setuptools.dynamic]
-version = {attr = "bring_api.__version__"}
-readme = {file = ["README.md"], content-type = "text/markdown"}
+[tool.hatch.envs.default]
+dependencies = [
+    "aiohttp==3.13.1",
+    "pre-commit>=3.6.1",
+    "python-dotenv>=1.0.1",
+    "ruff~=0.14",
+    "mkdocs-material==9.6.21",
+    "mkdocstrings[python]==0.30.1",
+    "mashumaro>=3.13.1",
+    "orjson>=3.10.12",
+]
+
+[tool.hatch.envs.hatch-static-analysis]
+dependencies = [
+    "ruff==0.14.1",
+    "mypy==1.18.2",
+    "pydantic==2.12.3",
+]
+config-path = "none"
+
+[tool.hatch.envs.hatch-test]
+extra-dependencies = [
+    "python-dotenv==1.1.1",
+    "aioresponses==0.7.8",
+    "pytest-asyncio==1.2.0",
+    "pytest-cov==7.0.0",
+    "syrupy==5.0.0",
+]
+extra-args = ["--cov-report=xml", "-vv"]
+type = "virtual"
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.14", "3.13", "3.12", "3.11"]
+
+[tool.hatch.envs.default.scripts]
+docs-serve = "mkdocs serve"
+docs-build = "mkdocs build"
 
 [project.urls]
 Documentation = "https://miaucl.github.io/bring-api/"
@@ -188,6 +222,7 @@ log_cli = true
 log_cli_level = "DEBUG"
 log_cli_format = "%(asctime)s%(msecs)03d [%(levelname)8s] %(name)s:%(lineno)s %(message)s"
 log_cli_date_format = "%Y%m%dT%H%M%S."
+addopts = "--cov=bring_api/ --cov-report=term-missing"
 
 [tool.coverage.run]
 branch = true
