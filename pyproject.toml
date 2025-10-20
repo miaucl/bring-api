@@ -62,6 +62,8 @@ extra-dependencies = [
     "pytest-cov==7.0.0",
     "syrupy==5.0.0",
 ]
+extra-args = ["--cov-report=xml", "-vv"]
+type = "virtual"
 
 [tool.hatch.envs.default.scripts]
 docs-serve = "mkdocs serve"
@@ -218,6 +220,7 @@ log_cli = true
 log_cli_level = "DEBUG"
 log_cli_format = "%(asctime)s%(msecs)03d [%(levelname)8s] %(name)s:%(lineno)s %(message)s"
 log_cli_date_format = "%Y%m%dT%H%M%S."
+addopts = "--cov=bring_api/ --cov-report=term-missing"
 
 [tool.coverage.run]
 branch = true
