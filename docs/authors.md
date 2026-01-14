@@ -7,7 +7,10 @@
   
 ## Contributors
 
-None yet. Why not be the first?
+* Nid01 [@Nid01](https://github.com/Nid01)
+* tony059 [@tony059](https://github.com/tony059)
+* Linus Dietz [@Dielee](https://github.com/Dielee)
+* Elias Ball [eliasball](https://github.com/eliasball)
 
 ## Further Credits
 
