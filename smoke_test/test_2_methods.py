@@ -76,15 +76,15 @@ class TestMethods:
         }
         for k, v in test_items.items():
             # Save an item an item to
-            bring.user_list_settings[str(test_list.listUuid)][
-                "listArticleLanguage"
-            ] = locale_to
+            bring.user_list_settings[str(test_list.listUuid)]["listArticleLanguage"] = (
+                locale_to
+            )
             await bring.save_item(test_list.listUuid, v)
 
             # Get all the pending items of a list
-            bring.user_list_settings[str(test_list.listUuid)][
-                "listArticleLanguage"
-            ] = locale_from
+            bring.user_list_settings[str(test_list.listUuid)]["listArticleLanguage"] = (
+                locale_from
+            )
             items = await bring.get_list(test_list.listUuid)
             item = next(ii.itemId for ii in items.items.purchase if ii.itemId == k)
             assert item == k
@@ -93,9 +93,9 @@ class TestMethods:
             await bring.remove_item(test_list.listUuid, k)
 
         # reset locale to original value for other tests
-        bring.user_list_settings[str(test_list.listUuid)][
-            "listArticleLanguage"
-        ] = locale_org
+        bring.user_list_settings[str(test_list.listUuid)]["listArticleLanguage"] = (
+            locale_org
+        )
 
     async def test_batch_list_operations(
         self, bring: Bring, test_list: BringList

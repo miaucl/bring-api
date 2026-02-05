@@ -4,6 +4,7 @@ To update locales extract folder catalog from assets/catalog in the android APK
 and copy it to the same directory as this file. Run `python prepare_locales_catalog.py`
 and this script will create the articles.{locale}.json files under bring-api/locales.
 """
+
 import glob
 import json
 import os
