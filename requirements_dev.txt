@@ -7,4 +7,4 @@ ruff~=0.15
 mkdocs-material==9.7.6
 mkdocstrings[python]==1.0.3
 mashumaro>=3.13.1
-orjson>=3.10.12
+orjson>=3.11.7
