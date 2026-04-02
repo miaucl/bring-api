@@ -16,4 +16,4 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: release-drafter/release-drafter/autolabeler@v7 # v7
+      - uses: release-drafter/release-drafter/autolabeler@v7
