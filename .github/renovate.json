@@ -1,0 +1,21 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": ["config:recommended"],
+    "rebaseWhen": "behind-base-branch",
+    "labels": [":recycle: dependencies"],
+    "commitMessagePrefix": "⬆️",
+    "commitMessageTopic": "{{depName}}",
+    "commitMessageAction": "Bump",
+    "poetry": {
+        "enabled": true
+    },
+    "pre-commit": {
+        "enabled": true
+    },
+    "packageRules": [
+        {
+            "matchManagers": ["poetry"],
+            "addLabels": [":snake: python"]
+        }
+    ]
+}
