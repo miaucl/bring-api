@@ -102,8 +102,8 @@ class Content(DataClassORJSONMixin):
     companyBrn: str | None = None
     newItemSection: str | None = None
     newItemIcon: str | None = None
-    activeFrom: str | None = None
-    activeTo: str | None = None
+    activeFrom: datetime | None = None
+    activeTo: datetime | None = None
 
 
 @dataclass(kw_only=True)
