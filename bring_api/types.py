@@ -94,9 +94,16 @@ class BringList(DataClassORJSONMixin):
 class Content(DataClassORJSONMixin):
     """A content class. Represents a single item content."""
 
-    urgent: bool
-    convenient: bool
-    discounted: bool
+    urgent: bool | None = False
+    convenient: bool | None = False
+    discounted: bool | None = False
+    uuid: str | None = None
+    source: str | None = None
+    companyBrn: str | None = None
+    newItemSection: str | None = None
+    newItemIcon: str | None = None
+    activeFrom: datetime | None = None
+    activeTo: datetime | None = None
 
 
 @dataclass(kw_only=True)
