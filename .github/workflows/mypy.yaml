@@ -2,6 +2,9 @@ name: Mypy
 
 on: [ push, pull_request ]
 
+permissions:
+  contents: read
+
 env:
   DEFAULT_PYTHON: "3.12"
 
