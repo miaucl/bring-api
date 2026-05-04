@@ -2,6 +2,9 @@ name: Unit tests
 
 on: [ push, pull_request ]
 
+permissions:
+  contents: read
+
 jobs:
   unit_tests:
 
