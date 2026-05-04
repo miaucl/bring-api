@@ -2,6 +2,9 @@ name: Publish Python 🐍 distribution 📦 to PyPI
 
 on: 'push'
 
+permissions:
+  contents: read
+
 env:
   DEFAULT_PYTHON: "3.12"
 
