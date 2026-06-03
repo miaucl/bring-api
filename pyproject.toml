@@ -14,7 +14,7 @@ authors = [
   { name = "Manfred Dennerlein Rodelo", email = "manfred@dennerlein.name" }
 ]
 dependencies = [
-  "aiohttp>=3.10",
+  "aiohttp~=3.13.0",
   "mashumaro>=3.13",
   "orjson>=3.10"
 ]
