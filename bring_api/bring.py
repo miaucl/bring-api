@@ -1466,3 +1466,82 @@ class Bring:
             raise BringParseException(
                 "Request failed during parsing of request response."
             ) from e
+
+    async def get_user_recipes(self) -> list[BringTemplate]:
+        """Fetch all recipes and templates saved by the user, with full item details.
+
+        Combines :meth:`get_inspirations` (``filter="mine"``) with
+        :meth:`get_template_content` to return complete templates whose
+        ``items`` list is populated with ingredients and staples.
+
+        Returns
+        -------
+        list[BringTemplate]
+            Full templates for every user-created recipe/template (ad entries
+            of type ``POST`` are excluded).  Each template's ``items`` field
+            contains all ingredients; items with ``stock=True`` are staples.
+
+        Raises
+        ------
+        BringRequestException
+            If any request fails.
+        BringParseException
+            If parsing of any response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+        inspirations = await self.get_inspirations("mine")
+        recipes: list[BringTemplate] = []
+        for entry in inspirations.entries:
+            if entry.template_type == TemplateType.POST:
+                continue
+            summary = entry.content
+            if not summary.contentUuid:
+                recipes.append(summary)
+                continue
+            full = await self.get_template_content(summary.contentUuid)
+            # Detail endpoint may omit top-level metadata present in the summary
+            if not full.name:
+                full.name = summary.name or summary.title
+            if not full.linkOutUrl:
+                full.linkOutUrl = summary.linkOutUrl
+            if not full.imageUrl:
+                full.imageUrl = summary.imageUrl
+            recipes.append(full)
+        return recipes
+
+    async def get_template_content(self, content_uuid: str) -> BringTemplate:
+        """Fetch full template content including ingredients by content UUID.
+
+        Parameters
+        ----------
+        content_uuid : str
+            The content UUID of the template (available as ``contentUuid`` on
+            entries returned by :meth:`get_inspirations`).
+
+        Returns
+        -------
+        BringTemplate
+            The full template including items and ingredients.
+
+        Raises
+        ------
+        BringRequestException
+            If the request fails.
+        BringParseException
+            If the parsing of the response fails.
+        BringAuthException
+            If the request fails due to invalid or expired authorization token.
+
+        """
+        url = self.url / "v2/bringtemplates/content" / content_uuid
+        try:
+            return BringTemplate.from_json(await self._request("GET", url))
+        except MissingField as e:
+            raise BringMissingFieldException(e) from e
+        except JSONDecodeError as e:
+            _LOGGER.debug("Exception: Cannot parse response:", exc_info=True)
+            raise BringParseException(
+                "Request failed during parsing of request response."
+            ) from e
