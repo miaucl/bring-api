@@ -621,6 +621,7 @@ class Bring:
         list_uuid: str,
         notification_type: BringNotificationType,
         item_name: str | None = None,
+        *,
         activity: str | Activity | None = None,
         receiver: str | None = None,
         activity_type: ActivityType | None = None,
