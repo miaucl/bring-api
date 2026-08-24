@@ -2,5 +2,5 @@ aioresponses>=0.7.9
 pytest-asyncio>=1.4.0
 pytest-cov>=7.1.0
 pytest>=9.1.1
-python-dotenv>=1.2.2
+python-dotenv>=1.2.3
 syrupy==2026.4.6.124150327040
