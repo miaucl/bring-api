@@ -164,4 +164,16 @@ def aioclient_mock() -> Generator[aioresponses]:
             status=HTTPStatus.OK,
             body=load_fixture("inspiration_filters_response.json"),
         )
+        m.get(
+            "https://api.getbring.com/rest/v2/bringtemplates/content/1f80e479-f04b-4dfa-98fb-bee670536fe8",
+            status=HTTPStatus.OK,
+            body=load_fixture("template_content_response.json"),
+            repeat=True,
+        )
+        m.get(
+            "https://api.getbring.com/rest/v2/bringtemplates/content/9ec60716-ca6b-4511-ae78-925325c64e26",
+            status=HTTPStatus.OK,
+            body=load_fixture("template_content_response.json"),
+            repeat=True,
+        )
         yield m
