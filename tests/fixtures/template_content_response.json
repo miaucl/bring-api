@@ -1,0 +1,17 @@
+{
+  "name": "Spaghetti Bolognese",
+  "linkOutUrl": "https://example.com/recipe/spaghetti-bolognese/",
+  "imageUrl": "https://bring-production.s3.amazonaws.com/bring/templates/00000000-0000-0000-0000-000000000001",
+  "items": [
+    {"itemId": "Spaghetti", "spec": "500g", "stock": false},
+    {"itemId": "Ground Beef", "spec": "400g", "stock": false},
+    {"itemId": "Canned Tomatoes", "spec": "1 can", "stock": false},
+    {"itemId": "Onion", "stock": true}
+  ],
+  "baseQuantity": 4,
+  "nutrition": {},
+  "ingredients": [],
+  "likeCount": 5,
+  "tags": [],
+  "enableQuantityChange": true
+}
