@@ -1,6 +1,6 @@
 aiohttp~=3.13.0
 mypy>=2.4.0
-pydantic>=2.13.5
+pydantic>=2.14.1
 pre-commit>=4.6.2
 python-dotenv>=1.2.4
 ruff~=0.17
