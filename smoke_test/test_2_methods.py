@@ -6,7 +6,12 @@ import uuid
 from dotenv import load_dotenv
 
 from bring_api.bring import Bring
-from bring_api.types import BringItemOperation, BringList, BringNotificationType
+from bring_api.types import (
+    BringItemOperation,
+    BringList,
+    BringNotificationType,
+    BringTemplate,
+)
 
 load_dotenv()
 
@@ -197,3 +202,27 @@ class TestMethods:
         await bring.set_list_article_language(test_list.listUuid, "es-ES")
         await bring.get_list(test_list.listUuid)
         await bring.set_list_article_language(test_list.listUuid, "de-DE")
+
+    async def test_get_template_content(self, bring: Bring) -> None:
+        """Test get_template_content returns a full template with items."""
+        inspirations = await bring.get_inspirations("mine")
+        first = next(
+            e.content for e in inspirations.entries if e.content.contentUuid
+        )
+        result = await bring.get_template_content(first.contentUuid)  # type: ignore[arg-type]
+        assert isinstance(result, BringTemplate)
+        assert result.name
+        _LOGGER.info("Template: %s (%d items)", result.name, len(result.items))
+
+    async def test_get_user_recipes(self, bring: Bring) -> None:
+        """Test get_user_recipes returns all user recipes with full item details."""
+        result = await bring.get_user_recipes()
+        assert isinstance(result, list)
+        assert len(result) > 0
+        assert all(isinstance(r, BringTemplate) for r in result)
+        _LOGGER.info(
+            "Fetched %d recipes; first: %s (%d items)",
+            len(result),
+            result[0].name,
+            len(result[0].items),
+        )
